@@ -3,57 +3,64 @@
 #include <optional>
 #include <sstream>
 #include <vector>
+
+#include "./parser.hpp"
 #include "./tokenization.hpp"
+#include "generation.hpp"
 
+// std::string tokens_to_asm(const std::vector<Token>& tokens) {
+//     std::stringstream output;
+//     output << "global _start\n_start:\n";
+//     for (int i = 0; i < tokens.size(); i++) {
+//         const Token& token = tokens.at(i);
+//         if (token.type == TokenType::exit) {
+//             if (i + 1 < tokens.size() && tokens.at(i + 1).type == TokenType::int_lit) {
+//                 if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::semi) {
+//                     output << "	mov rax, 60\n";
+//                     output << "	mov rdi, " << tokens.at(i + 1).value.value() << "\n";
+//                     output << "	syscall\n";
+//                 }
+//             }
+//         }
+//     }
+//     return output.str();
+// }
 
-std::string tokens_to_asm(const std::vector<Token> &tokens) {
-  std::stringstream output;
-  output << "global _start\n_start:\n";
-  for (int i = 0; i < tokens.size(); i++) {
-    const Token &token = tokens.at(i);
-    if (token.type == TokenType::exit) {
-      if (i + 1 < tokens.size() &&
-          tokens.at(i + 1).type == TokenType::int_lit) {
-        if (i + 2 < tokens.size() && tokens.at(i + 2).type == TokenType::semi) {
-          output << "	mov rax, 60\n";
-          output << "	mov rdi, " << tokens.at(i + 1).value.value() << "\n";
-          output << "	syscall\n";
-        }
-      }
+int main(int argc, char* argv[]) {
+    if (argc != 2) {
+        std::cerr << "incorrect usage.correct usage is..." << std::endl;
+        std::cerr << "precious <input.precious>" << std::endl;
+        return EXIT_FAILURE;
     }
-  }
-  return output.str();
-}
 
-int main(int argc, char *argv[]) {
+    std::string contents;
+    {
+        std::stringstream contents_stream;
+        std::fstream input(argv[1], std::ios::in);
 
-  if (argc != 2) {
-    std::cerr << "incorrect usage.correct usage is..." << std::endl;
-    std::cerr << "precious <input.precious>" << std::endl;
-    return EXIT_FAILURE;
-  }
+        contents_stream << input.rdbuf();
+        contents = contents_stream.str();
+    }
 
-  std::string contents;
-  {
-    std::stringstream contents_stream;
-    std::fstream input(argv[1], std::ios::in);
+    Tokenizer tokenizer(std::move(contents));
+        std::vector<Token> tokens = tokenizer.tokenize();
 
-    contents_stream << input.rdbuf();
-    contents = contents_stream.str();
-  }
+    Parser parser(std::move(tokens));
+        std::optional<NodeExit> tree = parser.parse();
 
-  Tokenizer tokenizer(std::move(contents));
-  std::vector<Token> tokens = tokenizer.tokenize();
+    if (!tree.has_value()){
+            std::cerr << "No exit statement" << std::endl;
+        exit(EXIT_FAILURE);
+    }
 
-  std::cout << tokens_to_asm(tokens) << std::endl;
+    Generator generator(tree.value());
+    {
+        std::fstream file("out.asm", std::ios::out);
+        file << generator.generate();
+    }
 
-  {
-    std::fstream file("out.asm", std::ios::out);
-    file << tokens_to_asm(tokens);
-  }
+    system("nasm -felf64 out.asm");
+    system("ld -o out out.o");
 
-  system("nasm -felf64 out.asm");
-  system("ld -o out out.o");
-
-  return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }

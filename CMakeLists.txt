@@ -10,8 +10,9 @@ file(GLOB HEADER_FILES "*src/*.hpp")
 
 add_executable(precious src/main.cpp ${PRECIOUS_FILES} ${ASM_FILES} ${HEADER_FILES})
 
-add_custom_command(TARGET precious POST_BUILD
-    COMMAND precious src/test.precious
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    COMMENT "Compiling test.precious"
-)
+add_custom_command(
+  TARGET precious
+  POST_BUILD
+  COMMAND precious src/test.precious
+  WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+  COMMENT "Compiling test.precious")
