@@ -35,6 +35,7 @@ _deps/
 # IDE and editor files
 .vscode/
 .idea/
+.qtcreator/
 *.swp
 *.swo
 *~

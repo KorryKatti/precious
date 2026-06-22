@@ -4,4 +4,4 @@ project(precious)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(precious src/main.cpp)
+add_executable(precious src/main.cpp src/test.precious)
