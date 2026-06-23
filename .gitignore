@@ -46,3 +46,4 @@ _deps/
 # OS files
 .DS_Store
 Thumbs.db
+out

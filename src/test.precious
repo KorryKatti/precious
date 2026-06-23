@@ -1,1 +1,3 @@
-gives 10;
+we_haves x = 6;
+we_haves y = 7;
+gives(y);
