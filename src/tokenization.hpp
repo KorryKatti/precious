@@ -6,7 +6,7 @@
 #include <vector>
 #pragma once
 
-enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq};
+enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus};
 
 struct Token {
     TokenType type;
@@ -64,6 +64,10 @@ public:
             else if (peek().value() == '=') {
                 consume();
                 tokens.push_back({.type = TokenType::eq});
+                continue;
+            }else if(peek().value()=='+'){
+                consume();
+                tokens.push_back({.type = TokenType::plus});
                 continue;
             }
             else if (std::isspace(peek().value())) {
