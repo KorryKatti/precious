@@ -6,7 +6,30 @@
 #include <vector>
 #pragma once
 
-enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus};
+enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,sub,div};
+
+bool is_bin_op(TokenType type){
+    switch(type){
+        case TokenType::plus:
+        case TokenType::star:
+            return true;
+        default:
+            return false;
+    }
+}
+
+std::optional<int> bin_prec(TokenType type){
+    switch(type){
+        case TokenType::plus:
+        case TokenType::sub:
+        return 0;
+        case TokenType::star:
+        case TokenType::div:
+        return 1;
+        default:
+        return {};
+    }
+}
 
 struct Token {
     TokenType type;
@@ -68,6 +91,19 @@ public:
             }else if(peek().value()=='+'){
                 consume();
                 tokens.push_back({.type = TokenType::plus});
+                continue;
+            }
+            else if (peek().value()=='*'){
+                consume();
+                tokens.push_back({.type=TokenType::star});
+                continue;
+            }else if(peek().value()=='-'){
+                consume();
+                tokens.push_back({.type=TokenType::sub});
+                continue;
+            }else if (peek().value()=='/'){
+                consume();
+                tokens.push_back({.type=TokenType::div});
                 continue;
             }
             else if (std::isspace(peek().value())) {
