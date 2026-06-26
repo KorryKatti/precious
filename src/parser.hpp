@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <optional>
 #include <variant>
+#include <vector>
 
 #include "./arena.hpp"
 #include "tokenization.hpp"
@@ -43,11 +44,11 @@ struct NodeBinExprDiv {
 };
 
 struct NodeBinExpr {
-    std::variant<NodeBinExprAdd*, NodeBinExprMulti*,NodeBinExprSub*,NodeBinExprDiv*> var;
+    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*> var;
 };
 
 struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdent*,NodeTermParen*> var;
+    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*> var;
 };
 
 struct NodeExpr {
@@ -63,8 +64,19 @@ struct NodeStmtLet {
     NodeExpr* expr;
 };
 
+struct NodeStmt;
+
+struct NodeScope {
+    std::vector<NodeStmt*> stmts;
+};
+
+struct NodeStmtIf {
+    NodeExpr* expr;
+    NodeScope* scope;
+};
+
 struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*> var;
+    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*> var;
 };
 
 struct NodeProg {
@@ -89,20 +101,19 @@ public:
             auto term = m_allocator.alloc<NodeTerm>();
             term->var = expr_ident;
             return term;
-        } else if (auto open_parent = try_consume(TokenType::open_paren)){
+        } else if (auto open_parent = try_consume(TokenType::open_paren)) {
             auto expr = parse_expr();
-            if (!expr.has_value()){
+            if (!expr.has_value()) {
                 std::cerr << "expected expressoin" << std::endl;
                 exit(EXIT_FAILURE);
             }
-            try_consume(TokenType::close_paren,"Expected ')'");
+            try_consume(TokenType::close_paren, "Expected ')'");
             auto term_paren = m_allocator.alloc<NodeTermParen>();
             term_paren->expr = expr.value();
             auto term = m_allocator.alloc<NodeTerm>();
             term->var = term_paren;
             return term;
-        }
-         else {
+        } else {
             return {};
         }
     }
@@ -113,7 +124,7 @@ public:
             return {};
         }
         auto expr_lhs = m_allocator.alloc<NodeExpr>();
-            expr_lhs->var = term_lhs.value();
+        expr_lhs->var = term_lhs.value();
 
         while (true) {
             std::optional<Token> curr_token = peek();
@@ -124,8 +135,6 @@ public:
             if (!prec.has_value() || prec.value() < min_prec) {
                 break;
             }
-
-            
 
             Token op = consume();
 
@@ -141,7 +150,6 @@ public:
 
             auto expr_lhs2 = m_allocator.alloc<NodeExpr>();
 
-
             if (op.type == TokenType::plus) {
                 auto add = m_allocator.alloc<NodeBinExprAdd>();
 
@@ -151,30 +159,40 @@ public:
                 expr->var = add;
             } else if (op.type == TokenType::star) {
                 auto multi = m_allocator.alloc<NodeBinExprMulti>();
-                  expr_lhs2->var = expr_lhs->var;
+                expr_lhs2->var = expr_lhs->var;
                 multi->lhs = expr_lhs2;
                 multi->rhs = expr_rhs.value();
-                expr->var=multi;
-            } else if(op.type==TokenType::sub){
+                expr->var = multi;
+            } else if (op.type == TokenType::minus) {
                 auto sub = m_allocator.alloc<NodeBinExprSub>();
                 expr_lhs2->var = expr_lhs->var;
                 sub->lhs = expr_lhs2;
                 sub->rhs = expr_rhs.value();
                 expr->var = sub;
-            } else if(op.type==TokenType::div){
+            } else if (op.type == TokenType::fslash) {
                 auto div = m_allocator.alloc<NodeBinExprDiv>();
                 expr_lhs2->var = expr_lhs->var;
                 div->lhs = expr_lhs2;
                 div->rhs = expr_rhs.value();
                 expr->var = div;
             } else {
-                assert(false); // unreachable
+                assert(false);  // unreachable
             }
-            expr_lhs->var=expr;
+            expr_lhs->var = expr;
         }
         return expr_lhs;
+    }
 
-        
+    std::optional<NodeScope*> parse_scope() {
+        if (!try_consume(TokenType::open_curly).has_value()) {
+            return {};
+        }
+        auto scope = m_allocator.alloc<NodeScope>();
+        while (auto stmt = parse_stmt()) {
+            scope->stmts.push_back(stmt.value());
+        }
+        try_consume(TokenType::close_curly, "Expected '}'");
+        return scope;
     }
 
     std::optional<NodeStmt*> parse_stmt() {
@@ -211,7 +229,38 @@ public:
             auto stmt = m_allocator.alloc<NodeStmt>();
             stmt->var = stmt_let;
             return stmt;
-        } else {
+        } else if (peek().has_value() && peek().value().type == TokenType::open_curly) {
+            if (auto scope = parse_scope()) {
+                auto stmt = m_allocator.alloc<NodeStmt>();
+                stmt->var = scope.value();
+                return stmt;
+            }else{
+                std::cerr << "Invalid scope" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+        } else if (auto if_ = try_consume(TokenType::if_)) {
+            try_consume(TokenType::open_paren, "Expected '(')");
+            auto stmt_if = m_allocator.alloc<NodeStmtIf>();
+            if (auto expr = parse_expr()) {
+                stmt_if->expr = expr.value();
+            } else {
+                std::cerr << "Invalid expression" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            try_consume(TokenType::close_paren, "Expected ')'");
+            if (auto scope = parse_scope()){
+                stmt_if->scope = scope.value();
+            }else{
+                std::cerr << "invalid scope" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+            auto stmt = m_allocator.alloc<NodeStmt>();
+            stmt->var = stmt_if;
+            return stmt;
+        }
+
+        else {
             return {};
         }
     }

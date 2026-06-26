@@ -6,7 +6,7 @@
 #include <vector>
 #pragma once
 
-enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,sub,div};
+enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,minus,fslash,open_curly,close_curly,if_};
 
 bool is_bin_op(TokenType type){
     switch(type){
@@ -21,10 +21,10 @@ bool is_bin_op(TokenType type){
 std::optional<int> bin_prec(TokenType type){
     switch(type){
         case TokenType::plus:
-        case TokenType::sub:
+        case TokenType::minus:
         return 0;
         case TokenType::star:
-        case TokenType::div:
+        case TokenType::fslash:
         return 1;
         default:
         return {};
@@ -57,7 +57,13 @@ public:
                     tokens.push_back({.type = TokenType::let});
                     buf.clear();
                     continue;
-                } else {
+                } 
+                else if(buf=="if"){
+                    tokens.push_back({.type = TokenType::if_});
+                    buf.clear();
+                    continue;
+                }
+                else {
                     tokens.push_back({.type=TokenType::ident,.value=buf});
                     buf.clear();
                 }
@@ -99,11 +105,19 @@ public:
                 continue;
             }else if(peek().value()=='-'){
                 consume();
-                tokens.push_back({.type=TokenType::sub});
+                tokens.push_back({.type=TokenType::minus});
                 continue;
             }else if (peek().value()=='/'){
                 consume();
-                tokens.push_back({.type=TokenType::div});
+                tokens.push_back({.type=TokenType::fslash});
+                continue;
+            } else if (peek().value()=='{'){
+                consume();
+                tokens.push_back({.type=TokenType::open_curly});
+                continue;
+            }else if (peek().value()=='}'){
+                consume();
+                tokens.push_back({.type=TokenType::close_curly});
                 continue;
             }
             else if (std::isspace(peek().value())) {

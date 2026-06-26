@@ -1,3 +1,9 @@
-we_haves x = (10-2*3)/2;
-we_haves y = x+7;
-gives(x);
+we_haves a = 10;
+we_haves b = 3;
+we_haves c = a - b;
+we_haves d = c * 2;
+if (d) {
+    we_haves e = d + a;
+    gives(e);
+}
+gives(b);
