@@ -18,7 +18,7 @@ bool is_bin_op(TokenType type){
     }
 }
 
-std::optional<int> bin_prec(TokenType type){
+inline std::optional<int> bin_prec(const TokenType type){
     switch(type){
         case TokenType::plus:
         case TokenType::minus:
@@ -38,9 +38,9 @@ struct Token {
 
 class Tokenizer {
 public:
-    inline Tokenizer(const std::string src) : m_src(std::move(src)) {}
+    explicit Tokenizer(const std::string src) : m_src(std::move(src)) {}
 
-    inline std::vector<Token> tokenize() {
+    std::vector<Token> tokenize() {
         std::string buf;
         std::vector<Token> tokens;
         while (peek().has_value()) {
@@ -76,6 +76,34 @@ public:
                 buf.clear();
                 continue;
             }
+            else if (peek().value()=='/' && peek(1).has_value()&&peek(1).value()=='/'){
+                consume();
+                consume();
+                while (peek().has_value()&&peek().value()!='\n'){
+                    consume();
+                }
+                // consume();
+                continue;
+            }
+            else if (peek().value()=='/' && peek(1).has_value()&&peek(1).value()=='*'){
+                consume();
+                consume();
+                while (peek().has_value()){
+                    if (peek().value()=='*' && peek(1).has_value()&&peek(1).value()=='/'){
+                        break;
+                    }
+                    consume();
+                }
+                if (peek().has_value()){
+                    consume();
+                }
+                // consume();
+                if (peek().has_value())consume();
+
+
+                continue;
+            }
+
             else if (peek().value()=='('){
                 consume();
                 tokens.push_back({.type=TokenType::open_paren});
@@ -133,18 +161,18 @@ public:
     }
 
 private:
-    [[nodiscard]] inline std::optional<char> peek(int offset = 0) const {
+    [[nodiscard]] std::optional<char> peek(int offset = 0) const {
         if (m_index + offset >= m_src.length()) {
             return {};
-        } else {
-            return m_src.at(m_index+offset);
         }
+        return m_src.at(m_index+offset);
     }
 
-    inline char consume() { return m_src.at(m_index++); }
+    char consume() { return m_src.at(m_index++); }
 
     const std::string m_src;
     size_t m_index = 0;
 };
 
 #endif  // TOKENIZATION_HPP
+

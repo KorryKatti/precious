@@ -2,8 +2,15 @@ we_haves a = 10;
 we_haves b = 3;
 we_haves c = a - b;
 we_haves d = c * 2;
+// this is a comment
 if (d) {
     we_haves e = d + a;
     gives(e);
 }
+/*
+multi
+line
+comment
+gives(x);
+*/
 gives(b);
