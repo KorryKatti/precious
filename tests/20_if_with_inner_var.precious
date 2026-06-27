@@ -1,0 +1,5 @@
+we_haves x = 1;
+if (x) {
+    we_haves inner = 99;
+    gives(inner);
+}

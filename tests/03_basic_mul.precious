@@ -1,0 +1,4 @@
+we_haves a = 4;
+we_haves b = 5;
+we_haves c = a * b;
+gives(c);

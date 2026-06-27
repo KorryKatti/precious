@@ -1,0 +1,6 @@
+we_haves a = 3;
+we_haves b = 7;
+{
+    we_haves c = a + b;
+    gives(c);
+}

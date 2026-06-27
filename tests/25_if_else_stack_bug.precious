@@ -1,0 +1,8 @@
+we_haves x = 0;
+if (x) {
+    we_haves a = 1;
+} else {
+    we_haves b = 2;
+}
+we_haves y = 5;
+gives(y);

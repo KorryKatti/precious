@@ -1,0 +1,7 @@
+we_haves x = 1;
+if (x) {
+    we_haves a = 10;
+    gives(a);
+} else {
+    gives(0);
+}

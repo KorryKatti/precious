@@ -1,0 +1,4 @@
+we_haves a = 2;
+we_haves b = 3;
+we_haves c = 4;
+gives(a + b * c - a);

@@ -1,0 +1,10 @@
+we_haves x = 0;
+if (x) {
+    gives(1);
+} elif (0) {
+    gives(2);
+} elif (0) {
+    gives(3);
+} else {
+    gives(99);
+}

@@ -1,0 +1,5 @@
+we_haves x = 5;
+{
+    we_haves y = 10;
+    gives(x + y);
+}

@@ -1,4 +1,4 @@
 we_haves a = 10;
 we_haves b = 3;
-we_haves c = a - b;
+we_haves c = a + b;
 gives(c);

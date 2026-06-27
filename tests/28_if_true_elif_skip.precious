@@ -1,0 +1,8 @@
+we_haves x = 1;
+if (x) {
+    gives(10);
+} elif (x) {
+    gives(20);
+} else {
+    gives(30);
+}

@@ -1,0 +1,7 @@
+we_haves x = 3;
+if (x) {
+    we_haves a = 10;
+    if (a) {
+        gives(77);
+    }
+}

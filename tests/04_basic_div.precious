@@ -1,0 +1,4 @@
+we_haves a = 20;
+we_haves b = 4;
+we_haves c = a / b;
+gives(c);

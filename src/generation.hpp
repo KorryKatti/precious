@@ -124,9 +124,9 @@ public:
                 gen.m_output << "    jz " << label << "\n";
                 gen.gen_scope(elif->scope);
 
-                gen.m_output << "  jmp" << end_label << "\n";
+                gen.m_output << "    jmp " << end_label << "\n";
+                gen.m_output << label << ":\n";
                 if (elif->pred.has_value()) {
-                    gen.m_output << label << ":\n";
                     gen.gen_if_pred(elif->pred.value(), end_label);
                 }
 
@@ -134,7 +134,7 @@ public:
             void operator()(const NodeIfPredElse* else_) const { gen.gen_scope(else_->scope); }
         };
 
-        PredVisitor visitor{.gen = *this, end_label};
+        PredVisitor visitor{.gen = *this, .end_label = end_label};
         std::visit(visitor, pred->var);
     }
 
