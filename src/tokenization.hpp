@@ -6,7 +6,7 @@
 #include <vector>
 #pragma once
 
-enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,minus,fslash,open_curly,close_curly,if_};
+enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,minus,fslash,open_curly,close_curly,if_,elif,else_};
 
 bool is_bin_op(TokenType type){
     switch(type){
@@ -63,6 +63,18 @@ public:
                     buf.clear();
                     continue;
                 }
+                else if (buf=="elif"){
+                    tokens.push_back({.type=TokenType::elif});
+                    buf.clear();
+                    continue;
+                }
+                else if (buf == "else"){
+                    tokens.push_back({.type=TokenType::else_});
+                    buf.clear();
+                    continue;
+
+                }
+
                 else {
                     tokens.push_back({.type=TokenType::ident,.value=buf});
                     buf.clear();

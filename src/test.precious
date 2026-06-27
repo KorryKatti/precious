@@ -6,6 +6,10 @@ we_haves d = c * 2;
 if (d) {
     we_haves e = d + a;
     gives(e);
+} elif (x) {
+    gives(68);
+} else {
+    gives(1);
 }
 /*
 multi
