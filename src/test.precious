@@ -1,4 +1,15 @@
-we_haves a = 10;
-we_haves b = 3;
-we_haves c = a - b;
-gives(c);
+we_haves y = (10-2*3)/2;
+we_haves x = 7; // first
+if (1){
+    x = 5+10;
+    gives(x);
+}elif (1){
+    gives(68);
+}else{
+    gives(67);
+}
+
+/*
+exit(4)
+multiline comment test
+*/
