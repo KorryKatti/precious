@@ -1,3 +1,17 @@
+/**
+ * @file tokenization.hpp
+ * @brief Lexer/tokenizer for the Precious programming language.
+ *
+ * The tokenizer converts raw source code text into a stream of tokens that
+ * the parser can consume. It handles:
+ * - Keywords: gives, we_haves, if, elif, else
+ * - Identifiers and integer literals
+ * - Operators: +, -, *, /, =
+ * - Delimiters: (, ), {, }, ;
+ * - Comments: // (line) and /* (block) *\/
+ * - Whitespace and newline tracking for error reporting
+ */
+
 #ifndef TOKENIZATION_HPP
 #define TOKENIZATION_HPP
 #include <iostream>
@@ -6,8 +20,37 @@
 #include <vector>
 #pragma once
 
-enum class TokenType { exit, int_lit, semi, open_paren,close_paren,ident ,let,eq,plus,star,minus,fslash,open_curly,close_curly,if_,elif,else_};
+/**
+ * @enum TokenType
+ * @brief Enumerates all token types recognized by the Precious language.
+ *
+ * Each value represents a distinct lexical element that can appear in source code.
+ */
+enum class TokenType {
+    exit,           ///< Keyword: "gives" (exit/return statement)
+    int_lit,        ///< Integer literal (sequence of digits)
+    semi,           ///< Semicolon: ;
+    open_paren,     ///< Opening parenthesis: (
+    close_paren,    ///< Closing parenthesis: )
+    ident,          ///< User-defined identifier
+    let,            ///< Keyword: "we_haves" (variable declaration)
+    eq,             ///< Assignment operator: =
+    plus,           ///< Addition operator: +
+    star,           ///< Multiplication operator: *
+    minus,          ///< Subtraction operator: -
+    fslash,         ///< Division operator: /
+    open_curly,     ///< Opening brace: {
+    close_curly,    ///< Closing brace: }
+    if_,            ///< Keyword: "if"
+    elif,           ///< Keyword: "elif"
+    else_           ///< Keyword: "else"
+};
 
+/**
+ * @brief Converts a TokenType to its human-readable string representation.
+ * @param type The token type to convert.
+ * @return A string showing the literal token or its name (e.g., "`gives`", "int literal").
+ */
 inline std::string to_string(const TokenType type){
     switch(type){
         case TokenType::exit: return "`gives`";
@@ -31,6 +74,14 @@ inline std::string to_string(const TokenType type){
     assert(false);
 }
 
+/**
+ * @brief Returns the binary operator precedence for a given token type.
+ * @param type The token type to check.
+ * @return The precedence level (0 for plus/minus, 1 for star/slash), or std::nullopt for non-operators.
+ *
+ * Used by the parser to implement correct operator precedence in expressions.
+ * Higher values indicate tighter binding (evaluated first).
+ */
 inline std::optional<int> bin_prec(const TokenType type){
     switch(type){
         case TokenType::plus:
@@ -44,26 +95,64 @@ inline std::optional<int> bin_prec(const TokenType type){
     }
 }
 
+/**
+ * @struct Token
+ * @brief Represents a single lexical token from the source code.
+ *
+ * Each token records its type, source line number (for error messages),
+ * and optionally a string value (for identifiers and integer literals).
+ */
 struct Token {
-    TokenType type;
-    int line;
-    std::optional<std::string> value{};
+    TokenType type;                  ///< The type of this token.
+    int line;                        ///< Source line number where this token appears.
+    std::optional<std::string> value; ///< Optional value (identifier name or literal text).
 };
 
+/**
+ * @class Tokenizer
+ * @brief Converts raw source code into a vector of Token objects.
+ *
+ * The tokenizer performs lexical analysis by scanning the input string character
+ * by character. It groups characters into tokens based on the language's lexical rules.
+ *
+ * Usage:
+ * @code
+ *   Tokenizer tokenizer(source_code);
+ *   std::vector<Token> tokens = tokenizer.tokenize();
+ * @endcode
+ */
 class Tokenizer {
 public:
+    /**
+     * @brief Constructs a tokenizer with the given source code string.
+     * @param src The source code to tokenize.
+     */
     explicit Tokenizer(const std::string src) : m_src(std::move(src)) {}
 
+    /**
+     * @brief Tokenizes the source code and returns a vector of tokens.
+     * @return A vector of Token objects representing the lexical elements.
+     * @throws Exits with EXIT_FAILURE on invalid tokens.
+     *
+     * Scans the entire source string and produces tokens. Handles:
+     * - Multi-character identifiers and keywords
+     * - Multi-digit integer literals
+     * - Single-character operators and delimiters
+     * - Line comments (//) and block comments (/* ... *\/)
+     * - Whitespace and newlines (skipped, but newlines increment line counter)
+     */
     std::vector<Token> tokenize() {
         std::string buf;
         std::vector<Token> tokens;
         int line_count = 1;
         while (peek().has_value()) {
+            // Identifiers and keywords: start with letter or underscore
             if (std::isalpha(peek().value()) || peek().value() == '_') {
                 buf.push_back(consume());
                 while (peek().has_value() && (std::isalnum(peek().value()) || peek().value() == '_')) {
                     buf.push_back(consume());
                 }
+                // Check for reserved keywords
                 if (buf == "gives") {
                     tokens.push_back({.type = TokenType::exit, .line = line_count});
                     buf.clear();
@@ -90,11 +179,14 @@ public:
 
                 }
 
+                // Not a keyword — it's a user-defined identifier
                 else {
                     tokens.push_back({.type=TokenType::ident, .line = line_count, .value=buf});
                     buf.clear();
                 }
-            } else if (std::isdigit(peek().value())) {
+            }
+            // Integer literals: sequence of digits
+            else if (std::isdigit(peek().value())) {
                 buf.push_back(consume());
                 while (peek().has_value() && std::isdigit(peek().value())) {
                     buf.push_back(consume());
@@ -103,6 +195,7 @@ public:
                 buf.clear();
                 continue;
             }
+            // Line comment: // ... (consume until newline)
             else if (peek().value()=='/' && peek(1).has_value()&&peek(1).value()=='/'){
                 consume();
                 consume();
@@ -111,6 +204,7 @@ public:
                 }
                 continue;
             }
+            // Block comment: /* ... */ (consume until closing delimiter)
             else if (peek().value()=='/' && peek(1).has_value()&&peek(1).value()=='*'){
                 consume();
                 consume();
@@ -129,6 +223,7 @@ public:
                 continue;
             }
 
+            // Single-character tokens: parentheses, operators, delimiters
             else if (peek().value()=='('){
                 consume();
                 tokens.push_back({.type=TokenType::open_paren, .line = line_count});
@@ -173,11 +268,13 @@ public:
                 tokens.push_back({.type=TokenType::close_curly, .line = line_count});
                 continue;
             }
+            // Newline: advance line counter for error reporting
             else if (peek().value() == '\n') {
                 consume();
                 line_count++;
                 continue;
             }
+            // Whitespace (space, tab, etc.): skip silently
             else if (std::isspace(peek().value())) {
                 consume();
                 continue;
@@ -191,6 +288,11 @@ public:
     }
 
 private:
+    /**
+     * @brief Peeks at a character at the given offset from current position.
+     * @param offset Number of characters ahead to peek (default 0 = current).
+     * @return The character at that position, or std::nullopt if out of bounds.
+     */
     [[nodiscard]] std::optional<char> peek(int offset = 0) const {
         if (m_index + offset >= m_src.length()) {
             return {};
@@ -198,11 +300,14 @@ private:
         return m_src.at(m_index+offset);
     }
 
+    /**
+     * @brief Consumes and returns the current character, advancing the position.
+     * @return The consumed character.
+     */
     char consume() { return m_src.at(m_index++); }
 
-    const std::string m_src;
-    size_t m_index = 0;
+    const std::string m_src;  ///< The source code string being tokenized.
+    size_t m_index = 0;       ///< Current read position in the source string.
 };
 
 #endif  // TOKENIZATION_HPP
-

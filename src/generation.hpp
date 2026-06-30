@@ -1,4 +1,18 @@
-#pragma once
+/**
+ * @file generation.hpp
+ * @brief Code generator for the Precious programming language.
+ *
+ * This file implements the code generation phase of the compiler. It traverses
+ * the AST (Abstract Syntax Tree) produced by the parser and emits x86-64 assembly
+ * code targeting Linux (NASM syntax, ELF64 format).
+ *
+ * The generated assembly uses a stack-based execution model:
+ * - Expressions push their results onto the stack
+ * - Binary operations pop two operands, compute, and push the result
+ * - Statements manage their own stack frame via begin/end scope
+ *
+ * The output is a complete .asm file that can be assembled with NASM and linked with ld.
+ */
 
 #include <algorithm>
 #include <cassert>
@@ -10,10 +24,39 @@
 
 #include "parser.hpp"
 
+/**
+ * @class Generator
+ * @brief Generates x86-64 assembly from an AST.
+ *
+ * The generator maintains:
+ * - A stack of variables with their stack offsets
+ * - A stack size counter for tracking stack pointer position
+ * - A scope stack for variable lifetime management
+ * - A label counter for generating unique branch labels
+ *
+ * Usage:
+ * @code
+ *   Generator generator(prog);
+ *   std::string assembly = generator.gen_prog();
+ * @endcode
+ */
 class Generator {
 public:
+    /**
+     * @brief Constructs a generator for the given program AST.
+     * @param prog The parsed program to generate code for.
+     */
     inline explicit Generator(NodeProg prog) : m_prog(std::move(prog)) {}
 
+    /**
+     * @brief Generates assembly code for a single term.
+     * @param term The AST term node to generate code for.
+     *
+     * Handles three term types:
+     * - Integer literals: loads immediate value into RAX and pushes
+     * - Parenthesized expressions: delegates to expression generation
+     * - Identifiers: looks up variable on stack and pushes its value
+     */
     void gen_term(const NodeTerm* term) {
         struct TermVisitor {
             Generator& gen;
@@ -47,6 +90,19 @@ public:
         std::visit(visitor, term->var);
     }
 
+    /**
+     * @brief Generates assembly code for a binary expression.
+     * @param bin_expr The AST binary expression node.
+     *
+     * Binary operations follow the pattern:
+     * 1. Generate code for RHS (pushes result)
+     * 2. Generate code for LHS (pushes result)
+     * 3. Pop both operands into RAX and RBX
+     * 4. Perform the operation
+     * 5. Push the result
+     *
+     * This order ensures correct evaluation for non-commutative operations.
+     */
     void gen_bin_expr(const NodeBinExpr* bin_expr) {
         struct BinExprVisitor {
             Generator& gen;
@@ -98,6 +154,12 @@ public:
         std::visit(visitor, bin_expr->var);
     }
 
+    /**
+     * @brief Generates assembly code for an expression.
+     * @param expr The AST expression node.
+     *
+     * Dispatches to gen_term() for single terms or gen_bin_expr() for binary operations.
+     */
     void gen_expr(const NodeExpr* expr) {
         struct ExprVisitor {
             Generator& gen;
@@ -111,6 +173,13 @@ public:
         std::visit(visitor, expr->var);
     }
 
+    /**
+     * @brief Generates assembly code for a scoped block of statements.
+     * @param scope The AST scope node.
+     *
+     * Creates a new scope (recording current variable count), generates all
+     * statements, then ends the scope (removing variables declared within).
+     */
     void gen_scope(const NodeScope* scope) {
         begin_scope();
         for (const NodeStmt* stmt : scope->stmts) {
@@ -119,6 +188,15 @@ public:
         end_scope();
     }
 
+    /**
+     * @brief Generates assembly code for an elif/else predicate.
+     * @param pred The if predicate node (elif or else).
+     * @param end_label The label to jump to when skipping this branch.
+     *
+     * For elif: evaluates condition, jumps to next branch if false, otherwise
+     * executes scope and jumps to end. Recursively handles chained elif/else.
+     * For else: unconditionally executes its scope.
+     */
     void gen_if_pred(const NodeIfPred* pred, const std::string& end_label) {
         struct PredVisitor {
             Generator& gen;
@@ -149,6 +227,17 @@ public:
         std::visit(visitor, pred->var);
     }
 
+    /**
+     * @brief Generates assembly code for a statement.
+     * @param stmt The AST statement node.
+     *
+     * Dispatches to the appropriate code generation method based on statement type:
+     * - Exit: evaluates expression, sets up syscall, exits
+     * - Let: declares variable, evaluates initializer
+     * - Assign: evaluates expression, stores result in existing variable
+     * - Scope: delegates to gen_scope()
+     * - If: generates condition check and branching logic
+     */
     void gen_stmt(const NodeStmt* stmt) {
         struct StmtVisitor {
             Generator& gen;
@@ -223,6 +312,15 @@ public:
         std::visit(visitor, stmt->var);
     }
 
+    /**
+     * @brief Generates the complete assembly program.
+     * @return A string containing the full x86-64 assembly source.
+     *
+     * Outputs:
+     * - global _start entry point
+     * - All statement code
+     * - Exit syscall (exit code 0) at program end
+     */
     [[nodiscard]] std::string gen_prog() {
         m_output << "global _start\n_start:\n\n";
         m_output << "    ;; program start\n\n";
@@ -239,18 +337,39 @@ public:
     }
 
 private:
+    /**
+     * @brief Pushes a register or value onto the stack.
+     * @param reg The register name or memory operand to push.
+     */
     void push(const std::string& reg) {
         m_output << "    push " << reg << "\n";
         m_stack_size++;
     }
 
+    /**
+     * @brief Pops the top of the stack into a register.
+     * @param reg The destination register.
+     */
     void pop(const std::string& reg) {
         m_output << "    pop " << reg << "\n";
         m_stack_size--;
     }
 
+    /**
+     * @brief Begins a new scope by recording the current variable count.
+     *
+     * Used for variable lifetime management. Variables declared after this
+     * call will be removed when end_scope() is called.
+     */
     void begin_scope() { m_scopes.push_back(m_vars.size()); }
 
+    /**
+     * @brief Ends the current scope, removing variables declared within it.
+     *
+     * Calculates how many variables were added since begin_scope(),
+     * adjusts the stack pointer to deallocate them, and removes them from
+     * the variable table.
+     */
     void end_scope() {
         const size_t pop_count = m_vars.size() - m_scopes.back();
         if (pop_count != 0) {
@@ -263,22 +382,31 @@ private:
         m_scopes.pop_back();
     }
 
+    /**
+     * @brief Creates a unique label for branch targets.
+     * @return A unique label string (e.g., "label0", "label1", ...).
+     *
+     * Labels are used for conditional jumps in if/elif/else statements.
+     */
     std::string create_label() {
         std::stringstream ss;
         ss << "label" << m_label_count++;
         return ss.str();
     }
 
+    /**
+     * @struct Var
+     * @brief Represents a variable in the current scope.
+     */
     struct Var {
-        std::string name;
-        size_t stack_loc;
+        std::string name;      ///< The variable's identifier name.
+        size_t stack_loc;      ///< The variable's position on the stack (offset from stack base).
     };
 
-    const NodeProg m_prog;
-    std::stringstream m_output;
-    size_t m_stack_size = 0;
-    std::vector<Var> m_vars{};
-    std::vector<size_t> m_scopes{};
-    // std::map<std::string, Var> m_vars{};
-    int m_label_count = 0;
+    const NodeProg m_prog;              ///< The AST program to generate code for.
+    std::stringstream m_output;         ///< String stream for accumulating generated assembly.
+    size_t m_stack_size = 0;            ///< Current number of items on the stack.
+    std::vector<Var> m_vars{};          ///< Active variables in current scope.
+    std::vector<size_t> m_scopes{};     ///< Stack of scope boundaries (variable counts).
+    int m_label_count = 0;              ///< Counter for generating unique labels.
 };
