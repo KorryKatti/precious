@@ -279,7 +279,8 @@ public:
                 consume();
                 continue;
             } else {
-                std::cerr << "Invalid token" << std::endl;
+                std::cerr << "[ERROR] Nasty little token! '" << peek().value()
+                          << "' is not understood, no it isn't, precious! (line " << line_count << ")" << std::endl;
                 exit(EXIT_FAILURE);
             }
         }

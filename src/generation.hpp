@@ -76,8 +76,8 @@ public:
                     std::as_const(gen.m_vars),
                     [&](const Var& var) { return var.name == term_ident->ident.value.value(); });
                 if (it == gen.m_vars.cend()) {
-                    std::cerr << "Undeclared identifier: " << term_ident->ident.value.value()
-                              << std::endl;
+                    std::cerr << "[ERROR] Nasty little identifier! '" << term_ident->ident.value.value()
+                              << "' is not declared, no it isn't, precious! (line " << term_ident->ident.line << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; variable: " << term_ident->ident.value.value() << "\n";
@@ -255,8 +255,8 @@ public:
                 if (std::ranges::find_if(std::as_const(gen.m_vars), [&](const Var& var) {
                         return var.name == stmt_let->ident.value.value();
                     }) != gen.m_vars.cend()) {
-                    std::cerr << "Identifier already used: " << stmt_let->ident.value.value()
-                              << std::endl;
+                    std::cerr << "[ERROR] We already has it! '" << stmt_let->ident.value.value()
+                              << "' is already declared, precious! (line " << stmt_let->ident.line << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; we_haves " << stmt_let->ident.value.value() << "\n";
@@ -271,7 +271,8 @@ public:
                     return (var.name==stmt_assign->ident.value.value());
                 });
                 if (it==gen.m_vars.end()){
-                    std::cerr << "Undefined identifier" << stmt_assign->ident.value.value() << std::endl;
+                    std::cerr << "[ERROR] Trickses! '" << stmt_assign->ident.value.value()
+                              << "' is not declared, we cannot assigns to it, no no! (line " << stmt_assign->ident.line << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; " << stmt_assign->ident.value.value() << " =\n";

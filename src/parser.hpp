@@ -262,7 +262,9 @@ public:
      * Prints an error message with the line number and exits the program.
      */
     void error_expected(const std::string& msg) const {
-        std::cerr << "[Parse Error] Expected " << msg << " on line " << peek(-1).value().line << std::endl;
+        std::cerr << "[ERROR] Trickses! Trickses! Expected " << msg
+                  << " but the precious found something else on line " << peek(-1).value().line
+                  << "!" << std::endl;
         exit(EXIT_FAILURE);
     }
 

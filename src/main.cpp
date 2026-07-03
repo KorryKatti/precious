@@ -43,8 +43,8 @@
 int main(int argc, char* argv[])
 {
     if (argc != 2) {
-        std::cerr << "Incorrect usage. Correct usage is..." << std::endl;
-        std::cerr << "precious <input.precious>" << std::endl;
+        std::cerr << "[ERROR] Where is the precious?! Correct usage is..." << std::endl;
+        std::cerr << "  precious <input.precious>" << std::endl;
         return EXIT_FAILURE;
     }
 
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
     std::optional<NodeProg> prog = parser.parse_prog();
 
     if (!prog.has_value()) {
-        std::cerr << "Invalid program" << std::endl;
+        std::cerr << "[ERROR] The precious... the precious is broken! Invalid program!" << std::endl;
         exit(EXIT_FAILURE);
     }
 
