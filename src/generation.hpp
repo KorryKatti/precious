@@ -146,6 +146,76 @@ public:
                 gen.m_output << "    div rbx\n";
                 gen.push("rax");
             }
+            // on my own now
+            void operator()(const NodeBinExprEq* eq) const {
+                gen.m_output << "    ;; eq expr\n";
+                gen.gen_expr(eq->rhs);
+                gen.gen_expr(eq->lhs);
+                gen.pop("rax"); // rax is used to store the result of the comparison
+                gen.pop("rbx"); // rbx is used to store the left-hand side value
+                gen.m_output << "    cmp rax, rbx\n"; // compare the two
+                gen.m_output << "    sete al\n"; // set al to 1 if equal , al is the lower 8 bits of rax, in simple terms a boolean value
+                gen.m_output << "    movzx rax, al\n"; // zero-extend al to rax , in simple terms make it a full 64 bit value
+                gen.push("rax");
+                // we made it full 64 bit cuz that's what the rest of the code expects
+            }
+            void operator()(const NodeBinExprNotEq* noteq) const {
+                gen.m_output << "    ;; not eq expr\n";
+                gen.gen_expr(noteq->rhs);
+                gen.gen_expr(noteq->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    cmp rax, rbx\n";
+                gen.m_output << "    setne al\n"; // set al to 1 if not equal , 1 means true , 0 means false
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
+            void operator()(const NodeBinExprLtEq* lteq) const {
+                gen.m_output << "    ;; less than or equal expr\n";
+                gen.gen_expr(lteq->rhs);
+                gen.gen_expr(lteq->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    cmp rax, rbx\n";
+                gen.m_output << "    setle al\n"; // set al to 1 if less than or equal , 1 means true , 0 means false
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
+            void operator()(const NodeBinExprGtEq* gteq) const {
+                gen.m_output << "    ;; greater than or equal expr\n";
+                gen.gen_expr(gteq->rhs);
+                gen.gen_expr(gteq->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    cmp rax, rbx\n";
+                gen.m_output << "    setge al\n"; // set al to 1 if greater than or equal , 1 means true , 0 means false
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
+            void operator()(const NodeBinExprLt* lt) const {
+                gen.m_output << "    ;; less than expr\n";
+                gen.gen_expr(lt->rhs);
+                gen.gen_expr(lt->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    cmp rax, rbx\n";
+                gen.m_output << "    setl al\n"; // set al to 1 if less than , 1 means true , 0 means false
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
+            void operator()(const NodeBinExprGt* gt) const {
+                gen.m_output << "    ;; greater than expr\n";
+                gen.gen_expr(gt->rhs);
+                gen.gen_expr(gt->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    cmp rax, rbx\n";
+                gen.m_output << "    setg al\n"; // set al to 1 if greater than , 1 means true , 0 means false
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
+            // visit error gone , this means we are done with the binary expression generation
+            //i think that shoudl be enough to add comparsion , will test and do compiler error based development now
             void operator()(const NodeTermParen* term_paren) const {
                 gen.gen_expr(term_paren->expr);
             }

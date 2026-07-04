@@ -98,11 +98,66 @@ struct NodeBinExprDiv {
 };
 
 /**
+* @struct NodeBinExprEq
+* @brief AST node for equality comparison: lhs == rhs.
+ */
+ struct NodeBinExprEq {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+ /**
+ * @struct NodeBinExprNotEq
+ * @brief AST node for inequality comparison: lhs != rhs.
+ */
+ struct NodeBinExprNotEq {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprLt
+ * @brief AST node for less-than comparison: lhs < rhs.
+ */
+ struct NodeBinExprLt {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprGt
+ * @brief AST node for greater-than comparison: lhs > rhs.
+ */
+ struct NodeBinExprGt {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprLtEq
+ * @brief AST node for less-than-or-equal comparison: lhs <= rhs.
+ */
+ struct NodeBinExprLtEq {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprGtEq
+ * @brief AST node for greater-than-or-equal comparison: lhs >= rhs.
+ */
+ struct NodeBinExprGtEq {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+
+/**
  * @struct NodeBinExpr
  * @brief AST node for a binary expression (dispatched to specific operation types).
  */
 struct NodeBinExpr {
-    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*> var;
+    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*, NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*, NodeBinExprLtEq*, NodeBinExprGtEq*> var;
 };
 
 /**
@@ -307,9 +362,10 @@ public:
      * @return The parsed expression node, or std::nullopt if no expression is found.
      *
      * Implements the Pratt parsing algorithm for binary expressions.
-     * Operator precedence:
-     * - Level 0: +, - (addition, subtraction)
-     * - Level 1: *, / (multiplication, division)
+     * Operator precedence and comparsion precedence
+     * - Level 0: ==, !=, <, >, <=, >= (comparison operators)
+     * - Level 1: +, - (addition, subtraction)
+     * - Level 2: *, / (multiplication, division)
      */
     std::optional<NodeExpr*> parse_expr(const int min_prec = 0) {
         std::optional<NodeTerm*> term_lhs = parse_term();
@@ -356,7 +412,38 @@ public:
                 expr_lhs2->var = expr_lhs->var;
                 auto div = m_allocator.emplace<NodeBinExprDiv>(expr_lhs2, expr_rhs.value());
                 expr->var = div;
-            } else {
+            }
+            else if (type == TokenType::eqeq) {
+                expr_lhs2->var = expr_lhs->var;
+                auto eqeq = m_allocator.emplace<NodeBinExprEq>(expr_lhs2, expr_rhs.value());
+                expr->var = eqeq;
+            }
+            else if (type == TokenType::noteq) {
+                expr_lhs2->var = expr_lhs->var;
+                auto noteq = m_allocator.emplace<NodeBinExprNotEq>(expr_lhs2, expr_rhs.value());
+                expr->var = noteq;
+            }
+            else if (type == TokenType::lt) {
+                expr_lhs2->var = expr_lhs->var;
+                auto lt = m_allocator.emplace<NodeBinExprLt>(expr_lhs2, expr_rhs.value());
+                expr->var = lt;
+            }
+            else if (type == TokenType::gt) {
+                expr_lhs2->var = expr_lhs->var;
+                auto gt = m_allocator.emplace<NodeBinExprGt>(expr_lhs2, expr_rhs.value());
+                expr->var = gt;
+            }
+            else if (type == TokenType::lteq) {
+                expr_lhs2->var = expr_lhs->var;
+                auto lteq = m_allocator.emplace<NodeBinExprLtEq>(expr_lhs2, expr_rhs.value());
+                expr->var = lteq;
+            }
+            else if (type == TokenType::gteq) {
+                expr_lhs2->var = expr_lhs->var;
+                auto gteq = m_allocator.emplace<NodeBinExprGtEq>(expr_lhs2, expr_rhs.value());
+                expr->var = gteq;
+            }
+            else {
                 assert(false);  // unreachable
             }
             expr_lhs->var = expr;

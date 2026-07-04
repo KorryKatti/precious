@@ -43,7 +43,14 @@ enum class TokenType {
     close_curly,    ///< Closing brace: }
     if_,            ///< Keyword: "if"
     elif,           ///< Keyword: "elif"
-    else_           ///< Keyword: "else"
+    else_,           ///< Keyword: "else"
+    // on my own now
+    eqeq,        ///< Equality operator: ==
+    noteq,       ///< Inequality operator: !=
+    lt,          ///< Less than operator: <
+    gt,          ///< Greater than operator: >
+    lteq,        ///< Less than or equal operator: <=
+    gteq        ///< Greater than or equal operator: >=
 };
 
 /**
@@ -70,6 +77,13 @@ inline std::string to_string(const TokenType type){
         case TokenType::if_: return "`if`";
         case TokenType::elif: return "`elif`";
         case TokenType::else_: return "`else`";
+        // on my own now
+        case TokenType::eqeq: return "`==`";
+        case TokenType::noteq: return "`!=`";
+        case TokenType::lt: return "`<`";
+        case TokenType::gt: return "`>`";
+        case TokenType::lteq: return "`<=`";
+        case TokenType::gteq: return "`>=`";
     }
     assert(false);
 }
@@ -84,12 +98,19 @@ inline std::string to_string(const TokenType type){
  */
 inline std::optional<int> bin_prec(const TokenType type){
     switch(type){
+        case TokenType::eqeq:
+        case TokenType::noteq:
+        case TokenType::lt:
+        case TokenType::gt:
+        case TokenType::lteq:
+        case TokenType::gteq:
+        return 0;
         case TokenType::plus:
         case TokenType::minus:
-        return 0;
+        return 1;
         case TokenType::star:
         case TokenType::fslash:
-        return 1;
+        return 2;
         default:
         return {};
     }
@@ -238,6 +259,42 @@ public:
                 tokens.push_back({.type = TokenType::semi, .line = line_count});
                 continue;
             }
+            // on my own now
+            // equality ops
+            else if (peek().value()=='=' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::eqeq, .line = line_count});
+                continue;
+            }
+            else if (peek().value()=='!' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::noteq, .line = line_count});
+                continue;
+            } // not equal to
+            else if (peek().value()=='<' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::lteq, .line = line_count});
+                continue;
+            } // less than or equal to
+            else if (peek().value()=='>' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::gteq, .line = line_count});
+                continue;
+            } // greater than or equal to
+            else if (peek().value()=='<'){
+                consume();
+                tokens.push_back({.type=TokenType::lt, .line = line_count});
+                continue;
+            } // less than
+            else if (peek().value()=='>'){
+                consume();
+                tokens.push_back({.type=TokenType::gt, .line = line_count});
+                continue;
+            } // greater than
             else if (peek().value() == '=') {
                 consume();
                 tokens.push_back({.type = TokenType::eq, .line = line_count});

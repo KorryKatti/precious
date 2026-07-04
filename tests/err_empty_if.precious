@@ -1,0 +1,5 @@
+we_haves x = 5;
+if () {
+    gives(10);
+}
+gives(0);

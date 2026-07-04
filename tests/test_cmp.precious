@@ -1,0 +1,21 @@
+we_haves x = 5;
+we_haves result = 0;
+if (x == 5) {
+    result = result + 1;
+}
+if (x != 3) {
+    result = result + 2;
+}
+if (x < 10) {
+    result = result + 4;
+}
+if (x > 3) {
+    result = result + 8;
+}
+if (x <= 5) {
+    result = result + 16;
+}
+if (x >= 5) {
+    result = result + 32;
+}
+gives(result);
