@@ -93,6 +93,16 @@ if (x == 1 or x == 5) {
 
 Precedence: `!` (tightest) > `and` > `or` (loosest).
 
+### While Loop
+
+```
+we_haves i = 0;
+while (i < 5) {
+    i = i + 1;
+}
+gives(i);
+```
+
 ### Exit Code
 
 `gives(expr)` sets the process exit code to the value of `expr`. Use `echo $?` to check.

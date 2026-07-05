@@ -53,7 +53,8 @@ enum class TokenType {
     gteq,        ///< Greater than or equal operator: >=
     and_,       /// < and operator ( and )
     or_,        /// < or operator ( or )
-    bang         /// < not operator ( ! )
+    bang,         /// < not operator ( ! )
+    while_     /// < while operator ( while )
 };
 
 /**
@@ -90,6 +91,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::and_: return "`and`";
         case TokenType::or_: return "`or`";
         case TokenType::bang: return "`!`";
+        case TokenType::while_: return "`while`";
         default: return "unknown token type";
     }
     assert(false);
@@ -218,6 +220,10 @@ public:
                     tokens.push_back({.type=TokenType::or_, .line = line_count});
                     buf.clear();
                     continue;
+                }else if (buf=="while"){
+                    tokens.push_back({.type=TokenType::while_, .line = line_count});
+                    buf.clear();
+                    continue;
                 }
 
                 // Not a keyword — it's a user-defined identifier
@@ -344,6 +350,10 @@ public:
                 consume();
                 tokens.push_back({.type=TokenType::close_curly, .line = line_count});
                 continue;
+            }else if (peek().value()=='!'){
+                consume();
+                tokens.push_back({.type=TokenType::bang, .line = line_count});
+                continue;
             }
             // Newline: advance line counter for error reporting
             else if (peek().value() == '\n') {
@@ -356,24 +366,6 @@ public:
                 consume();
                 continue;
             }
-            // on my own now
-            else if (peek().value()=='a' && peek(1).has_value() && peek(1).value()=='n' && peek(2).has_value() && peek(2).value()=='d'){
-                consume();
-                consume();
-                consume();
-                tokens.push_back({.type=TokenType::and_, .line = line_count});
-                continue;
-            }else if (peek().value()=='o' && peek(1).has_value() && peek(1).value()=='r'){
-                consume();
-                consume();
-                tokens.push_back({.type=TokenType::or_, .line = line_count});
-                continue;
-            }else if (peek().value()=='!'){
-                consume();
-                tokens.push_back({.type=TokenType::bang, .line = line_count});
-                continue;
-            }
-            
             else {
                 std::cerr << "[ERROR] Nasty little token! '" << peek().value()
                           << "' is not understood, no it isn't, precious! (line " << line_count << ")" << std::endl;

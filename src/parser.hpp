@@ -292,11 +292,20 @@ struct NodeStmtAssign{
 };
 
 /**
+* @struct NodeStmtWhile
+* @brief AST node for a while loop statement.
+*/
+struct NodeStmtWhile {
+    NodeExpr* expr;  ///< The loop condition expression.
+    NodeScope* scope; ///< The scope executed while the condition is true.
+};
+
+/**
  * @struct NodeStmt
  * @brief AST node for a statement (top-level unit of code).
  */
 struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,NodeStmtAssign*> var;
+    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*> var;
 };
 
 /**
@@ -645,6 +654,23 @@ public:
             }
             stmt_if->pred = parse_if_pred();
             auto stmt = m_allocator.emplace<NodeStmt>(stmt_if);
+            return stmt;
+        }
+        if (auto while_ = try_consume(TokenType::while_)) {
+            try_consume_err(TokenType::open_paren);
+            auto stmt_while = m_allocator.alloc<NodeStmtWhile>();
+            if (const auto expr = parse_expr()) {
+                stmt_while->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::close_paren);
+            if (const auto scope = parse_scope()) {
+                stmt_while->scope = scope.value();
+            } else {
+                error_expected("scope");
+            }
+            auto stmt = m_allocator.emplace<NodeStmt>(stmt_while);
             return stmt;
         }
         return {};

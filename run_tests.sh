@@ -87,6 +87,9 @@ run_test "$TESTS_DIR/28_if_true_elif_skip.precious" 10
 run_test "$TESTS_DIR/29_div_var.precious" 5
 run_test "$TESTS_DIR/30_parens_multiply.precious" 49
 
+# While loops
+run_test "$TESTS_DIR/31_while_basic.precious" 5
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

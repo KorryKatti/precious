@@ -89,11 +89,15 @@ public:
             }
             void operator()(const NodeTermNot* term_not) const {
                 gen.m_output << "    ;; not expr\n";
-                gen.gen_expr(term_not->expr);  // evaluate the inner expression, result pushed onto stack
-                gen.pop("rax");  // pop the result into rax
-                gen.m_output << "    test rax, rax\n";  // test if rax is zero or non-zero (sets zero flag)
-                gen.m_output << "    setz al\n";  // set al to 1 if zero flag is set (rax was 0), 0 otherwise — this flips the boolean
-                gen.m_output << "    movzx rax, al\n";  // zero extend al to rax so we can push a full 64-bit value
+                gen.gen_expr(
+                    term_not->expr);  // evaluate the inner expression, result pushed onto stack
+                gen.pop("rax");       // pop the result into rax
+                gen.m_output
+                    << "    test rax, rax\n";  // test if rax is zero or non-zero (sets zero flag)
+                gen.m_output << "    setz al\n";  // set al to 1 if zero flag is set (rax was 0), 0
+                                                  // otherwise — this flips the boolean
+                gen.m_output << "    movzx rax, al\n";  // zero extend al to rax so we can push a
+                                                        // full 64-bit value
                 gen.push("rax");
             }
         };
@@ -442,6 +446,33 @@ public:
                     gen.m_output << label << ":\n";
                 }
                 gen.m_output << "    ;; /if\n";
+            }
+
+            void operator()(const NodeStmtWhile* stmt_while) const {
+                gen.m_output << "    ;; while\n";
+
+                // Create labels for loop start and end
+                const std::string loop_start = gen.create_label();
+                const std::string loop_end = gen.create_label();
+
+                // Loop start label
+                gen.m_output << loop_start << ":\n";
+
+                // Evaluate condition
+                gen.gen_expr(stmt_while->expr);
+                gen.pop("rax");
+                gen.m_output << "    test rax, rax\n";
+                gen.m_output << "    jz " << loop_end << "\n";  // exit loop if condition is 0
+
+                // Loop body
+                gen.gen_scope(stmt_while->scope);
+
+                // Jump back to start
+                gen.m_output << "    jmp " << loop_start << "\n";
+
+                // Loop end label
+                gen.m_output << loop_end << ":\n";
+                gen.m_output << "    ;; /while\n";
             }
         };
 
