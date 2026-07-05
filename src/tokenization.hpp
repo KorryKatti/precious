@@ -50,7 +50,10 @@ enum class TokenType {
     lt,          ///< Less than operator: <
     gt,          ///< Greater than operator: >
     lteq,        ///< Less than or equal operator: <=
-    gteq        ///< Greater than or equal operator: >=
+    gteq,        ///< Greater than or equal operator: >=
+    and_,       /// < and operator ( and )
+    or_,        /// < or operator ( or )
+    bang         /// < not operator ( ! )
 };
 
 /**
@@ -84,6 +87,10 @@ inline std::string to_string(const TokenType type){
         case TokenType::gt: return "`>`";
         case TokenType::lteq: return "`<=`";
         case TokenType::gteq: return "`>=`";
+        case TokenType::and_: return "`and`";
+        case TokenType::or_: return "`or`";
+        case TokenType::bang: return "`!`";
+        default: return "unknown token type";
     }
     assert(false);
 }
@@ -98,19 +105,24 @@ inline std::string to_string(const TokenType type){
  */
 inline std::optional<int> bin_prec(const TokenType type){
     switch(type){
+
+        case TokenType::or_:
+        return 0;
+        case TokenType::and_:
+        return 1;
         case TokenType::eqeq:
         case TokenType::noteq:
         case TokenType::lt:
         case TokenType::gt:
         case TokenType::lteq:
         case TokenType::gteq:
-        return 0;
+        return 2;
         case TokenType::plus:
         case TokenType::minus:
-        return 1;
+        return 3;
         case TokenType::star:
         case TokenType::fslash:
-        return 2;
+        return 4;
         default:
         return {};
     }
@@ -198,6 +210,14 @@ public:
                     buf.clear();
                     continue;
 
+                }else if (buf=="and"){
+                    tokens.push_back({.type=TokenType::and_, .line = line_count});
+                    buf.clear();
+                    continue;
+                }else if (buf=="or"){
+                    tokens.push_back({.type=TokenType::or_, .line = line_count});
+                    buf.clear();
+                    continue;
                 }
 
                 // Not a keyword — it's a user-defined identifier
@@ -335,7 +355,26 @@ public:
             else if (std::isspace(peek().value())) {
                 consume();
                 continue;
-            } else {
+            }
+            // on my own now
+            else if (peek().value()=='a' && peek(1).has_value() && peek(1).value()=='n' && peek(2).has_value() && peek(2).value()=='d'){
+                consume();
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::and_, .line = line_count});
+                continue;
+            }else if (peek().value()=='o' && peek(1).has_value() && peek(1).value()=='r'){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::or_, .line = line_count});
+                continue;
+            }else if (peek().value()=='!'){
+                consume();
+                tokens.push_back({.type=TokenType::bang, .line = line_count});
+                continue;
+            }
+            
+            else {
                 std::cerr << "[ERROR] Nasty little token! '" << peek().value()
                           << "' is not understood, no it isn't, precious! (line " << line_count << ")" << std::endl;
                 exit(EXIT_FAILURE);

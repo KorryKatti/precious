@@ -76,14 +76,25 @@ public:
                     std::as_const(gen.m_vars),
                     [&](const Var& var) { return var.name == term_ident->ident.value.value(); });
                 if (it == gen.m_vars.cend()) {
-                    std::cerr << "[ERROR] Nasty little identifier! '" << term_ident->ident.value.value()
-                              << "' is not declared, no it isn't, precious! (line " << term_ident->ident.line << ")" << std::endl;
+                    std::cerr << "[ERROR] Nasty little identifier! '"
+                              << term_ident->ident.value.value()
+                              << "' is not declared, no it isn't, precious! (line "
+                              << term_ident->ident.line << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; variable: " << term_ident->ident.value.value() << "\n";
                 std::stringstream offset;
                 offset << "QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8 << "]";
                 gen.push(offset.str());
+            }
+            void operator()(const NodeTermNot* term_not) const {
+                gen.m_output << "    ;; not expr\n";
+                gen.gen_expr(term_not->expr);  // evaluate the inner expression, result pushed onto stack
+                gen.pop("rax");  // pop the result into rax
+                gen.m_output << "    test rax, rax\n";  // test if rax is zero or non-zero (sets zero flag)
+                gen.m_output << "    setz al\n";  // set al to 1 if zero flag is set (rax was 0), 0 otherwise — this flips the boolean
+                gen.m_output << "    movzx rax, al\n";  // zero extend al to rax so we can push a full 64-bit value
+                gen.push("rax");
             }
         };
         TermVisitor visitor{.gen = *this};
@@ -151,11 +162,13 @@ public:
                 gen.m_output << "    ;; eq expr\n";
                 gen.gen_expr(eq->rhs);
                 gen.gen_expr(eq->lhs);
-                gen.pop("rax"); // rax is used to store the result of the comparison
-                gen.pop("rbx"); // rbx is used to store the left-hand side value
-                gen.m_output << "    cmp rax, rbx\n"; // compare the two
-                gen.m_output << "    sete al\n"; // set al to 1 if equal , al is the lower 8 bits of rax, in simple terms a boolean value
-                gen.m_output << "    movzx rax, al\n"; // zero-extend al to rax , in simple terms make it a full 64 bit value
+                gen.pop("rax");  // rax is used to store the result of the comparison
+                gen.pop("rbx");  // rbx is used to store the left-hand side value
+                gen.m_output << "    cmp rax, rbx\n";  // compare the two
+                gen.m_output << "    sete al\n";  // set al to 1 if equal , al is the lower 8 bits
+                                                  // of rax, in simple terms a boolean value
+                gen.m_output << "    movzx rax, al\n";  // zero-extend al to rax , in simple terms
+                                                        // make it a full 64 bit value
                 gen.push("rax");
                 // we made it full 64 bit cuz that's what the rest of the code expects
             }
@@ -166,7 +179,8 @@ public:
                 gen.pop("rax");
                 gen.pop("rbx");
                 gen.m_output << "    cmp rax, rbx\n";
-                gen.m_output << "    setne al\n"; // set al to 1 if not equal , 1 means true , 0 means false
+                gen.m_output
+                    << "    setne al\n";  // set al to 1 if not equal , 1 means true , 0 means false
                 gen.m_output << "    movzx rax, al\n";
                 gen.push("rax");
             }
@@ -177,7 +191,8 @@ public:
                 gen.pop("rax");
                 gen.pop("rbx");
                 gen.m_output << "    cmp rax, rbx\n";
-                gen.m_output << "    setle al\n"; // set al to 1 if less than or equal , 1 means true , 0 means false
+                gen.m_output << "    setle al\n";  // set al to 1 if less than or equal , 1 means
+                                                   // true , 0 means false
                 gen.m_output << "    movzx rax, al\n";
                 gen.push("rax");
             }
@@ -188,7 +203,8 @@ public:
                 gen.pop("rax");
                 gen.pop("rbx");
                 gen.m_output << "    cmp rax, rbx\n";
-                gen.m_output << "    setge al\n"; // set al to 1 if greater than or equal , 1 means true , 0 means false
+                gen.m_output << "    setge al\n";  // set al to 1 if greater than or equal , 1 means
+                                                   // true , 0 means false
                 gen.m_output << "    movzx rax, al\n";
                 gen.push("rax");
             }
@@ -199,7 +215,8 @@ public:
                 gen.pop("rax");
                 gen.pop("rbx");
                 gen.m_output << "    cmp rax, rbx\n";
-                gen.m_output << "    setl al\n"; // set al to 1 if less than , 1 means true , 0 means false
+                gen.m_output
+                    << "    setl al\n";  // set al to 1 if less than , 1 means true , 0 means false
                 gen.m_output << "    movzx rax, al\n";
                 gen.push("rax");
             }
@@ -210,12 +227,60 @@ public:
                 gen.pop("rax");
                 gen.pop("rbx");
                 gen.m_output << "    cmp rax, rbx\n";
-                gen.m_output << "    setg al\n"; // set al to 1 if greater than , 1 means true , 0 means false
+                gen.m_output << "    setg al\n";  // set al to 1 if greater than , 1 means true , 0
+                                                  // means false
                 gen.m_output << "    movzx rax, al\n";
                 gen.push("rax");
             }
             // visit error gone , this means we are done with the binary expression generation
-            //i think that shoudl be enough to add comparsion , will test and do compiler error based development now
+            // i think that shoudl be enough to add comparsion , will test and do compiler error
+            // based development now
+            void operator()(const NodeBinExprAnd* and_) const {
+                gen.m_output << "  ;; and expr\n";
+                gen.gen_expr(and_->rhs);  // this is used to evaluate the right hand side of the
+                                          // expression first , this is because we want to short
+                                          // circuit the evaluation if the left hand side is false.
+                                          // the function gen_expr will push the result of the
+                                          // expression onto the stack , so we can pop it later
+                gen.gen_expr(and_->lhs);
+                gen.pop(
+                    "rax");  // rax is used to store the result of the right hand side expression
+                gen.pop("rbx");  // rbx is used to store the result of the left hand side expression
+                gen.m_output
+                    << "    test rax, rax\n";  // test if the right hand side is true or false
+                gen.m_output
+                    << "    setnz al\n";  // set al to 1 if the right hand side is true , 0 if
+                                          // false. al is the lower 8 bits of rax , so we can use it
+                                          // to store the result of the and operation
+                gen.m_output
+                    << "    test rbx, rbx\n";  // test if the left hand side is true or false
+                gen.m_output
+                    << "    setnz bl\n";  // set bl to 1 if the left hand side is true , 0 if false.
+                                          // bl is the lower 8 bits of rbx , so we can use it to
+                                          // store the result of the and operation
+                gen.m_output
+                    << "    and al, bl\n";  // perform the and operation on the two results , if
+                                            // both are true , al will be 1 , otherwise 0
+                gen.m_output << "    movzx rax, al\n";  // zero extend al to rax , so we can push it
+                                                        // onto the stack
+                gen.push("rax");
+            }
+            void operator()(const NodeBinExprOr* or_) const {
+                gen.m_output << "  ;; or expr\n";
+                gen.gen_expr(or_->rhs);
+                gen.gen_expr(or_->lhs);
+                gen.pop("rax");
+                gen.pop("rbx");
+                gen.m_output << "    test rax, rax\n";
+                gen.m_output << "    setnz al\n";
+                gen.m_output << "    test rbx, rbx\n";
+                gen.m_output << "    setnz bl\n";
+                gen.m_output
+                    << "    or al, bl\n";  // perform the or operation on the two results , if
+                                           // either is true , al will be 1 , otherwise 0
+                gen.m_output << "    movzx rax, al\n";
+                gen.push("rax");
+            }
             void operator()(const NodeTermParen* term_paren) const {
                 gen.gen_expr(term_paren->expr);
             }
@@ -285,7 +350,6 @@ public:
                 if (elif->pred.has_value()) {
                     gen.gen_if_pred(elif->pred.value(), end_label);
                 }
-
             }
             void operator()(const NodeIfPredElse* else_) const {
                 gen.m_output << "    ;; else\n";
@@ -326,7 +390,8 @@ public:
                         return var.name == stmt_let->ident.value.value();
                     }) != gen.m_vars.cend()) {
                     std::cerr << "[ERROR] We already has it! '" << stmt_let->ident.value.value()
-                              << "' is already declared, precious! (line " << stmt_let->ident.line << ")" << std::endl;
+                              << "' is already declared, precious! (line " << stmt_let->ident.line
+                              << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; we_haves " << stmt_let->ident.value.value() << "\n";
@@ -337,18 +402,20 @@ public:
             }
 
             void operator()(const NodeStmtAssign* stmt_assign) const {
-                const auto it = std::ranges::find_if(gen.m_vars,[&](const Var& var){
-                    return (var.name==stmt_assign->ident.value.value());
+                const auto it = std::ranges::find_if(gen.m_vars, [&](const Var& var) {
+                    return (var.name == stmt_assign->ident.value.value());
                 });
-                if (it==gen.m_vars.end()){
+                if (it == gen.m_vars.end()) {
                     std::cerr << "[ERROR] Trickses! '" << stmt_assign->ident.value.value()
-                              << "' is not declared, we cannot assigns to it, no no! (line " << stmt_assign->ident.line << ")" << std::endl;
+                              << "' is not declared, we cannot assigns to it, no no! (line "
+                              << stmt_assign->ident.line << ")" << std::endl;
                     exit(EXIT_FAILURE);
                 }
                 gen.m_output << "    ;; " << stmt_assign->ident.value.value() << " =\n";
                 gen.gen_expr(stmt_assign->expr);
                 gen.pop("rax");
-                gen.m_output << "    mov QWORD [rsp + " << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
+                gen.m_output << "    mov QWORD [rsp + "
+                             << (gen.m_stack_size - it->stack_loc - 1) * 8 << "], rax\n";
             }
 
             void operator()(const NodeScope* scope) const {
@@ -371,8 +438,7 @@ public:
                     gen.m_output << label << ":\n";
                     gen.gen_if_pred(stmt_if->pred.value(), end_label);
                     gen.m_output << end_label << ":\n";
-                }
-                else {
+                } else {
                     gen.m_output << label << ":\n";
                 }
                 gen.m_output << "    ;; /if\n";
@@ -470,14 +536,14 @@ private:
      * @brief Represents a variable in the current scope.
      */
     struct Var {
-        std::string name;      ///< The variable's identifier name.
-        size_t stack_loc;      ///< The variable's position on the stack (offset from stack base).
+        std::string name;  ///< The variable's identifier name.
+        size_t stack_loc;  ///< The variable's position on the stack (offset from stack base).
     };
 
-    const NodeProg m_prog;              ///< The AST program to generate code for.
-    std::stringstream m_output;         ///< String stream for accumulating generated assembly.
-    size_t m_stack_size = 0;            ///< Current number of items on the stack.
-    std::vector<Var> m_vars{};          ///< Active variables in current scope.
-    std::vector<size_t> m_scopes{};     ///< Stack of scope boundaries (variable counts).
-    int m_label_count = 0;              ///< Counter for generating unique labels.
+    const NodeProg m_prog;           ///< The AST program to generate code for.
+    std::stringstream m_output;      ///< String stream for accumulating generated assembly.
+    size_t m_stack_size = 0;         ///< Current number of items on the stack.
+    std::vector<Var> m_vars{};       ///< Active variables in current scope.
+    std::vector<size_t> m_scopes{};  ///< Stack of scope boundaries (variable counts).
+    int m_label_count = 0;           ///< Counter for generating unique labels.
 };

@@ -13,6 +13,13 @@ i might change the theme if it gets annoying ngl idk it was just funny at that t
 - this <a href="https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs" target="_blank"> playlist </a> was very helpful
 - i am still very new to all this so i might make naive mistakes
 
+
+**Resources:**
+- Pratt parsing: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
+- Crafting Interpreters (free book, covers parsing + codegen): https://craftinginterpreters.com/
+- x86-64 NASM tutorial: https://cs.lmu.edu/~ray/notes/nasmtutorial/
+- Lets make a compiler : https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs
+
 ## Quick Start
 
 ```bash
@@ -66,6 +73,25 @@ we_haves x = 5;
 ### Comparison Operators
 
 `==`, `!=`, `<`, `>`, `<=`, `>=` — return 1 (true) or 0 (false).
+
+### Boolean Operators
+
+`and`, `or`, `!` — logical connectives for combining conditions.
+
+```
+we_haves x = 5;
+if (x > 0 and x < 10) {
+    gives(1);
+}
+if (!0) {
+    gives(2);
+}
+if (x == 1 or x == 5) {
+    gives(3);
+}
+```
+
+Precedence: `!` (tightest) > `and` > `or` (loosest).
 
 ### Exit Code
 

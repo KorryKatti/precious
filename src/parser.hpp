@@ -153,11 +153,39 @@ struct NodeBinExprDiv {
 
 
 /**
+* @struct NodeBinExprAnd
+ * @brief AST node for logical AND: lhs and rhs.
+ */
+ struct NodeBinExprAnd {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprOr
+ * @brief AST node for logical OR: lhs or rhs.
+ */
+ struct NodeBinExprOr {
+    NodeExpr* lhs;  ///< Left-hand side expression.
+    NodeExpr* rhs;  ///< Right-hand side expression.
+ };
+
+  /**
+ * @struct NodeBinExprNot
+ * @brief AST node for logical NOT: !expr.
+ */
+ struct NodeTermNot {
+    NodeExpr* expr;  ///< Expression to negate.
+ };
+
+
+
+/**
  * @struct NodeBinExpr
  * @brief AST node for a binary expression (dispatched to specific operation types).
  */
 struct NodeBinExpr {
-    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*, NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*, NodeBinExprLtEq*, NodeBinExprGtEq*> var;
+    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*, NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*, NodeBinExprLtEq*, NodeBinExprGtEq*, NodeBinExprAnd*, NodeBinExprOr*> var;
 };
 
 /**
@@ -167,7 +195,7 @@ struct NodeBinExpr {
  * A term can be an integer literal, an identifier, or a parenthesized expression.
  */
 struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*> var;
+    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*> var;
 };
 
 /**
@@ -353,6 +381,15 @@ public:
             auto term = m_allocator.emplace<NodeTerm>(term_paren);
             return term;
         }
+        if (auto bang = try_consume(TokenType::bang)) {
+            auto expr = parse_expr(5);  // NOT has highest precedence
+            if (!expr.has_value()) {
+                error_expected("expression");
+            }
+            auto term_not = m_allocator.emplace<NodeTermNot>(expr.value());
+            auto term = m_allocator.emplace<NodeTerm>(term_not);
+            return term;
+        }
         return {};
     }
 
@@ -442,6 +479,14 @@ public:
                 expr_lhs2->var = expr_lhs->var;
                 auto gteq = m_allocator.emplace<NodeBinExprGtEq>(expr_lhs2, expr_rhs.value());
                 expr->var = gteq;
+            }else if (type==TokenType::and_){
+                expr_lhs2->var = expr_lhs->var;
+                auto and_ = m_allocator.emplace<NodeBinExprAnd>(expr_lhs2, expr_rhs.value());
+                expr->var = and_;
+            }else if (type==TokenType::or_){
+                expr_lhs2->var = expr_lhs->var;
+                auto or_ = m_allocator.emplace<NodeBinExprOr>(expr_lhs2, expr_rhs.value());
+                expr->var = or_;
             }
             else {
                 assert(false);  // unreachable
