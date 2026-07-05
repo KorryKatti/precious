@@ -1,5 +1,5 @@
 // Complex program: compute GCD using subtraction-based algorithm
-// Tests: comparisons, and/or/not, nested if/elif/else, scopes, arithmetic
+// Tests: comparisons, and/or/not, nested if/elif/else, scopes, arithmetic, say()
 
 we_haves a = 48;
 we_haves b = 18;
@@ -11,6 +11,9 @@ if (a < b) {
     a = b;
     b = temp;
 }
+
+say(a);
+say(b);
 
 // GCD by repeated subtraction
 we_haves done = 0;
@@ -38,6 +41,8 @@ if (!done) {
     if (counter != 3 or a == b) {
         check = check + 1;
     }
+    say(counter);
+    say(check);
     gives(check);
 }
 

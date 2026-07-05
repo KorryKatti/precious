@@ -12,14 +12,12 @@ run_test() {
     local name=$(basename "$file" .precious)
     TOTAL=$((TOTAL + 1))
 
-    # Compile (compiler runs nasm + ld internally)
     if ! $COMPILER "$file" > /dev/null 2>&1; then
         echo "FAIL [$name] - compilation error (expected exit: $expected)"
         FAIL=$((FAIL + 1))
         return
     fi
 
-    # Run and capture exit code
     set +e
     ./out > /dev/null 2>&1
     local actual=$?
@@ -30,6 +28,42 @@ run_test() {
         PASS=$((PASS + 1))
     else
         echo "FAIL [$name] - expected: $expected, got: $actual"
+        FAIL=$((FAIL + 1))
+    fi
+}
+
+run_test_output() {
+    local file="$1"
+    local expected_output="$2"
+    local expected_exit="$3"
+    local name=$(basename "$file" .precious)
+    TOTAL=$((TOTAL + 1))
+
+    if ! $COMPILER "$file" > /dev/null 2>&1; then
+        echo "FAIL [$name] - compilation error"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    set +e
+    local actual_output
+    actual_output=$(./out 2>&1)
+    local actual_exit=$?
+    set -e
+
+    if [ "$actual_exit" -ne "$expected_exit" ]; then
+        echo "FAIL [$name] - exit code: expected $expected_exit, got $actual_exit"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    if [ "$actual_output" = "$expected_output" ]; then
+        echo "PASS [$name] - output matches, exit: $actual_exit"
+        PASS=$((PASS + 1))
+    else
+        echo "FAIL [$name] - output mismatch"
+        echo "  expected: $expected_output"
+        echo "  got:      $actual_output"
         FAIL=$((FAIL + 1))
     fi
 }
@@ -89,6 +123,12 @@ run_test "$TESTS_DIR/30_parens_multiply.precious" 49
 
 # While loops
 run_test "$TESTS_DIR/31_while_basic.precious" 5
+
+# Say/print
+run_test_output "$TESTS_DIR/32_say_basic.precious" "$(printf '42\n50\n300')" 0
+
+# Complex bool + say
+run_test_output "$TESTS_DIR/test_complex_bool.precious" "$(printf '48\n18\n3\n100')" 100
 
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="

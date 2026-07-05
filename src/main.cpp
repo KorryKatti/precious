@@ -6,9 +6,8 @@
  * 1. Read source file
  * 2. Tokenize (lexer)
  * 3. Parse (build AST)
- * 4. Generate x86-64 assembly
- * 5. Assemble with NASM
- * 6. Link with ld
+ * 4. Generate C source code
+ * 5. Compile with gcc
  *
  * Usage:
  *   precious <input.precious>
@@ -35,10 +34,9 @@
  * 2. Reads the input .precious file into a string
  * 3. Tokenizes the source code into a token stream
  * 4. Parses tokens into an AST
- * 5. Generates x86-64 assembly from the AST
- * 6. Writes assembly to out.asm
- * 7. Assembles out.asm to out.o using NASM
- * 8. Links out.o to create the final executable using ld
+ * 5. Generates C source code from the AST
+ * 6. Writes C code to out.c
+ * 7. Compiles out.c with gcc to produce the final executable
  */
 int main(int argc, char* argv[])
 {
@@ -69,12 +67,11 @@ int main(int argc, char* argv[])
 
     {
         Generator generator(prog.value());
-        std::fstream file("out.asm", std::ios::out);
+        std::fstream file("out.c", std::ios::out);
         file << generator.gen_prog();
     }
 
-    system("nasm -felf64 out.asm");
-    system("ld -o out out.o");
+    system("gcc -o out out.c -w");
 
     return EXIT_SUCCESS;
 }
