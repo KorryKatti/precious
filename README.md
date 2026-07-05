@@ -1,6 +1,6 @@
 # Precious
 
-A Gollum-themed programming language that compiles to x86-64 assembly.
+A Gollum-themed programming language that compiles to C.
 <!--
 i might change the theme if it gets annoying ngl idk it was just funny at that time
  -->
@@ -17,7 +17,6 @@ i might change the theme if it gets annoying ngl idk it was just funny at that t
 **Resources:**
 - Pratt parsing: https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html
 - Crafting Interpreters (free book, covers parsing + codegen): https://craftinginterpreters.com/
-- x86-64 NASM tutorial: https://cs.lmu.edu/~ray/notes/nasmtutorial/
 - Lets make a compiler : https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs
 
 ## Quick Start
@@ -29,7 +28,11 @@ cmake --build build
 ./out
 ```
 
-The compiler outputs a Linux x86-64 ELF binary named `out`.
+The compiler outputs a Linux ELF binary named `out` (via gcc).
+
+### Why C instead of handwritten assembly?
+
+The compiler originally emitted x86-64 NASM assembly directly. That works fine for tiny programs, but as the language grows, handwritten assembly gets painful fast — every new feature means writing dozens of `push`/`pop`/`mov`/`cmp` instructions by hand. Meanwhile gcc with `-O2` does register allocation, instruction combining, and dead code elimination for free. So the compiler now generates C source code and lets gcc handle the hard parts. <!--ofc i didnt write this line-->
 
 ## Syntax
 
@@ -106,6 +109,16 @@ gives(i);
 ### Exit Code
 
 `gives(expr)` sets the process exit code to the value of `expr`. Use `echo $?` to check.
+
+### Print
+
+`say(expr)` prints the value of `expr` to stdout as an integer.
+
+```
+we_haves x = 42;
+say(x);        // prints 42
+say(x + 8);    // prints 50
+```
 
 ## Examples
 
