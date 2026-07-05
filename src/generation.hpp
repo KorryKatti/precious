@@ -474,6 +474,21 @@ public:
                 gen.m_output << loop_end << ":\n";
                 gen.m_output << "    ;; /while\n";
             }
+
+            void operator()(const NodeStmtPrint* stmt_print)
+            const {
+                gen.m_output << "    ;; say(expr)\n";
+                gen.gen_expr(stmt_print->expr);
+                gen.pop("rax"); // rax = integer to print
+                gen.m_output << "    ;; convert rax to string at print_buf\n";
+                gen.m_output << "    mov rdi, print_buf ;; buffer pointer\n "; // destination buffer
+                gen.m_output << "    mov rcx, 0  ;; buffer index\n";
+                gen.m_output << "    mov rbx, 10 ;; divisor for decimal conversion\n";
+
+                gen.m_output << ";; handle zero\n";
+                gen.m_output << "    test rax, rax\n";// check if rax is zero , will indicate if we need to print '0' or not
+                gen.m_output << " jnz .not_zero\n";
+            }
         };
 
         StmtVisitor visitor{.gen = *this};
@@ -490,8 +505,15 @@ public:
      * - Exit syscall (exit code 0) at program end
      */
     [[nodiscard]] std::string gen_prog() {
+        m_output << "section .bss\n";
+        m_output << "    print_buf: resb 32\n\n";
+        m_output << "    ;; 32 byte buffer for integer to string conversion";
+        // i know this is not the best way to do this and there is a big code for some mov little endian and all that but for now this should do the work
+        // TODO
+        // make it the better version
         m_output << "global _start\n_start:\n\n";
         m_output << "    ;; program start\n\n";
+
 
         for (const NodeStmt* stmt : m_prog.stmts) {
             gen_stmt(stmt);

@@ -301,11 +301,19 @@ struct NodeStmtWhile {
 };
 
 /**
+ * @struct NodeStmtPrint
+ * @brief AST node for a print statement.
+ */
+struct NodeStmtPrint {
+    NodeExpr* expr;  ///< The expression to print.
+};
+
+/**
  * @struct NodeStmt
  * @brief AST node for a statement (top-level unit of code).
  */
 struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*> var;
+    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*> var;
 };
 
 /**
@@ -673,6 +681,23 @@ public:
             auto stmt = m_allocator.emplace<NodeStmt>(stmt_while);
             return stmt;
         }
+
+        // should i pass arguments ? for now i guess not
+        if (peek().has_value() && peek().value().type == TokenType::print_ && peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+            consume();
+            consume();
+            auto stmt_print = m_allocator.alloc<NodeStmtPrint>();
+            if (const auto expr = parse_expr()) {
+                stmt_print->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::close_paren);
+            try_consume_err(TokenType::semi);
+            auto stmt = m_allocator.emplace<NodeStmt>(stmt_print);
+            return stmt;
+        }
+
         return {};
     }
 

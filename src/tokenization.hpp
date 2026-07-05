@@ -54,7 +54,8 @@ enum class TokenType {
     and_,       /// < and operator ( and )
     or_,        /// < or operator ( or )
     bang,         /// < not operator ( ! )
-    while_     /// < while operator ( while )
+    while_,     /// < while operator ( while )
+    print_,     /// < print operator ( print )
 };
 
 /**
@@ -92,6 +93,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::or_: return "`or`";
         case TokenType::bang: return "`!`";
         case TokenType::while_: return "`while`";
+        case TokenType::print_: return "`say`";
         default: return "unknown token type";
     }
     assert(false);
@@ -222,6 +224,10 @@ public:
                     continue;
                 }else if (buf=="while"){
                     tokens.push_back({.type=TokenType::while_, .line = line_count});
+                    buf.clear();
+                    continue;
+                } else if (buf=="say"){
+                    tokens.push_back({.type=TokenType::print_, .line = line_count});
                     buf.clear();
                     continue;
                 }
