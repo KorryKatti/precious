@@ -178,7 +178,35 @@ struct NodeBinExprDiv {
     NodeExpr* expr;  ///< Expression to negate.
  };
 
+// oh my god bruh
+/**
+* @struct NodeFnParam
+* @brief AST node for param identifier
+*/
+struct NodeFnParam {
+    Token name; // parameter identifier
+};
 
+struct NodeScope;
+
+/**
+* @struct NodeStmtFn
+* @brief AST node for function declaration
+*/
+struct NodeStmtFn {
+    Token name; // function name (ident token)
+    std::vector<NodeFnParam> params; // function parameters , empty for now
+    NodeScope* body; // the function body
+};
+
+/**
+*   @struct NodeTermFnCall
+*   @brief AST node for function name and args
+*/
+struct NodeTermFnCall {
+    Token name; // function name to call
+    std::vector<NodeExpr*> args; // empty for now
+};
 
 /**
  * @struct NodeBinExpr
@@ -195,7 +223,7 @@ struct NodeBinExpr {
  * A term can be an integer literal, an identifier, or a parenthesized expression.
  */
 struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*> var;
+    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*, NodeTermFnCall*> var;
 };
 
 /**
@@ -309,11 +337,19 @@ struct NodeStmtPrint {
 };
 
 /**
+ * @struct NodeStmtExpr
+ * @brief AST node for an expression used as a statement (e.g., function calls).
+ */
+struct NodeStmtExpr {
+    NodeExpr* expr;  ///< The expression to evaluate.
+};
+
+/**
  * @struct NodeStmt
  * @brief AST node for a statement (top-level unit of code).
  */
 struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*> var;
+    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*> var;
 };
 
 /**
@@ -383,8 +419,18 @@ public:
             auto term = m_allocator.emplace<NodeTerm>(term_int_lit);
             return term;
         }
-        if (auto ident = try_consume(TokenType::ident)) {
-            auto expr_ident = m_allocator.emplace<NodeTermIdent>(ident.value());
+        if (peek().has_value() && peek().value().type == TokenType::ident) {
+            // Could be a variable or a function call — peek ahead to decide
+            if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+                auto fn_call = m_allocator.emplace<NodeTermFnCall>();
+                fn_call->name = consume(); // consume ident
+                consume(); // consume '('
+                try_consume_err(TokenType::close_paren);
+                fn_call->args = {};
+                auto term = m_allocator.emplace<NodeTerm>(fn_call);
+                return term;
+            }
+            auto expr_ident = m_allocator.emplace<NodeTermIdent>(consume());
             auto term = m_allocator.emplace<NodeTerm>(expr_ident);
             return term;
         }
@@ -399,7 +445,7 @@ public:
             return term;
         }
         if (auto bang = try_consume(TokenType::bang)) {
-            auto expr = parse_expr(5);  // NOT has highest precedence
+            auto expr = parse_expr(5);
             if (!expr.has_value()) {
                 error_expected("expression");
             }
@@ -637,6 +683,22 @@ public:
             return stmt;
         }
 
+        // <ident>(...); — function call as statement
+        if (peek().has_value() && peek().value().type == TokenType::ident &&
+            peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+            auto fn_call = m_allocator.alloc<NodeTermFnCall>();
+            fn_call->name = consume(); // ident
+            consume(); // '('
+            try_consume_err(TokenType::close_paren);
+            try_consume_err(TokenType::semi);
+            fn_call->args = {};
+            auto term = m_allocator.emplace<NodeTerm>(fn_call);
+            auto expr = m_allocator.emplace<NodeExpr>(term);
+            auto stmt_expr = m_allocator.emplace<NodeStmtExpr>(expr);
+            auto stmt = m_allocator.emplace<NodeStmt>(stmt_expr);
+            return stmt;
+        }
+
         // { ... } (scoped block)
         if (peek().has_value() && peek().value().type == TokenType::open_curly) {
             if (auto scope = parse_scope()) {
@@ -696,6 +758,37 @@ public:
             try_consume_err(TokenType::semi);
             auto stmt = m_allocator.emplace<NodeStmt>(stmt_print);
             return stmt;
+        }
+
+        // function calling
+        if (peek().has_value() && peek().value().type == TokenType::fn_){
+            auto fn_stmt = m_allocator.emplace<NodeStmtFn>();
+            consume(); // consume 'fn'
+            // expect ident (function name)
+            if (!peek().has_value() || peek().value().type!=TokenType::ident){
+                error_expected("function name");
+            }
+            fn_stmt->name = consume();
+            // expect open paren
+            if (!peek().has_value() || peek().value().type!=TokenType::open_paren){
+                error_expected("open paren");
+            }
+            consume(); // consume '('
+            // no paramters for now
+            // expect ')'
+            if (!peek().has_value() || peek().value().type!=TokenType::close_paren){
+                error_expected("close paren");
+            }
+            consume(); // consume ')'
+            // expect '{'
+            auto body = parse_scope();
+            if (!body.has_value()){
+                error_expected("function body");
+            }
+            fn_stmt->body = body.value();
+            fn_stmt->params = {}; // no params for now
+            auto stmt = m_allocator.emplace<NodeStmt>(fn_stmt);
+            return stmt; 
         }
 
         return {};

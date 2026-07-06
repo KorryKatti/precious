@@ -16,6 +16,11 @@ public:
     inline explicit Generator(NodeProg prog) : m_prog(std::move(prog)) {}
 
     void gen_term(const NodeTerm* term) {
+        if (std::holds_alternative<NodeTermFnCall*>(term->var)){
+            auto fn_call = std::get<NodeTermFnCall*>(term->var);
+            m_output << fn_call->name.value.value() << "()";
+            return;
+        }
         struct TermVisitor {
             Generator& gen;
 
@@ -38,6 +43,11 @@ public:
                 gen.gen_expr(term_not->expr);
                 gen.m_output << ")";
             }
+
+            void operator()(const NodeTermFnCall* term_fn_call) const {
+                gen.m_output << term_fn_call->name.value.value() << "()";
+            }
+
         };
         TermVisitor visitor{.gen = *this};
         std::visit(visitor, term->var);
@@ -226,24 +236,64 @@ public:
                 gen.gen_expr(stmt_print->expr);
                 gen.m_output << ");\n";
             }
+
+            void operator()(const NodeStmtFn*) const {
+                // Function definitions are handled in gen_prog(), not gen_stmt()
+            }
+
+            void operator()(const NodeStmtExpr* stmt_expr) const {
+                gen.m_output << "    ";
+                gen.gen_expr(stmt_expr->expr);
+                gen.m_output << ";\n";
+            }
         };
 
         StmtVisitor visitor{.gen = *this};
         std::visit(visitor, stmt->var);
     }
 
+    void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
+        out << "void " << fn->name.value.value() << "() {\n";
+        // Save and restore m_output to capture scope output
+        std::string saved = m_output.str();
+        m_output.str("");
+        m_output.clear();
+        gen_scope(fn->body);
+        out << m_output.str();
+        m_output.str(saved);
+        m_output.clear();
+        m_output << saved;
+        out << "}\n\n";
+    }
+
     [[nodiscard]] std::string gen_prog() {
-        m_output << "#include <stdio.h>\n";
-        m_output << "#include <stdlib.h>\n\n";
-        m_output << "int main() {\n";
+        std::stringstream decls;
+        std::stringstream fns;
 
         for (const NodeStmt* stmt : m_prog.stmts) {
-            gen_stmt(stmt);
+            if (std::holds_alternative<NodeStmtFn*>(stmt->var)) {
+                auto fn = std::get<NodeStmtFn*>(stmt->var);
+                decls << "void " << fn->name.value.value() << "();\n";
+                gen_fn_def(fn, fns);
+            }
         }
 
-        m_output << "    return 0;\n";
-        m_output << "}\n";
-        return m_output.str();
+        for (const NodeStmt* stmt : m_prog.stmts) {
+            if (!std::holds_alternative<NodeStmtFn*>(stmt->var)) {
+                gen_stmt(stmt);
+            }
+        }
+
+        std::stringstream out;
+        out << "#include <stdio.h>\n";
+        out << "#include <stdlib.h>\n\n";
+        out << decls.str() << "\n";
+        out << "int main() {\n";
+        out << m_output.str();
+        out << "    return 0;\n";
+        out << "}\n\n";
+        out << fns.str();
+        return out.str();
     }
 
 private:

@@ -130,6 +130,13 @@ run_test_output "$TESTS_DIR/32_say_basic.precious" "$(printf '42\n50\n300')" 0
 # Complex bool + say
 run_test_output "$TESTS_DIR/test_complex_bool.precious" "$(printf '48\n18\n3\n100')" 100
 
+# Functions
+run_test_output "$TESTS_DIR/33_fn_basic.precious" "7" 0
+run_test_output "$TESTS_DIR/34_fn_say.precious" "99" 0
+run_test_output "$TESTS_DIR/35_fn_multiple.precious" "$(printf '10\n20')" 0
+run_test_output "$TESTS_DIR/36_fn_with_vars.precious" "5" 0
+run_test_output "$TESTS_DIR/37_fn_call_in_say.precious" "$(printf '10\n42')" 0
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

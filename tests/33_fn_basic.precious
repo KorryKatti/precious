@@ -1,0 +1,5 @@
+fn greet() {
+    say(7);
+}
+
+greet();

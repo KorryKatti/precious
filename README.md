@@ -120,6 +120,20 @@ say(x);        // prints 42
 say(x + 8);    // prints 50
 ```
 
+### Functions
+
+Define reusable code blocks with `fn`, call them by name.
+
+```
+fn greet() {
+    say(42);
+}
+
+greet();        // prints 42
+```
+
+Functions use forward declarations internally — the compiler emits prototypes before `main()` and definitions after it. **Currently only basic no-parameter functions are supported.** Parameters and return values are coming next.
+
 ## Examples
 
 ```

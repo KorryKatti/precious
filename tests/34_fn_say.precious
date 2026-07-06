@@ -1,0 +1,5 @@
+fn print_hello() {
+    say(99);
+}
+
+print_hello();

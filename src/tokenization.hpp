@@ -56,6 +56,8 @@ enum class TokenType {
     bang,         /// < not operator ( ! )
     while_,     /// < while operator ( while )
     print_,     /// < print operator ( print )
+    // shiver me timber
+    fn_,        /// < function operator ( fn )
 };
 
 /**
@@ -94,6 +96,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::bang: return "`!`";
         case TokenType::while_: return "`while`";
         case TokenType::print_: return "`say`";
+        case TokenType::fn_: return "`fn`";
         default: return "unknown token type";
     }
     assert(false);
@@ -228,6 +231,10 @@ public:
                     continue;
                 } else if (buf=="say"){
                     tokens.push_back({.type=TokenType::print_, .line = line_count});
+                    buf.clear();
+                    continue;
+                } else if (buf=="fn"){
+                    tokens.push_back({.type=TokenType::fn_, .line = line_count});
                     buf.clear();
                     continue;
                 }
