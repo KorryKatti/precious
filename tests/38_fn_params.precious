@@ -1,0 +1,5 @@
+fn add(a, b) {
+    say(a + b);
+}
+
+add(2, 3);

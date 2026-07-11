@@ -58,6 +58,7 @@ enum class TokenType {
     print_,     /// < print operator ( print )
     // shiver me timber
     fn_,        /// < function operator ( fn )
+    comma_,     /// < comma for functions ( , )
 };
 
 /**
@@ -97,6 +98,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::while_: return "`while`";
         case TokenType::print_: return "`say`";
         case TokenType::fn_: return "`fn`";
+        case TokenType::comma_: return "`.`";
         default: return "unknown token type";
     }
     assert(false);
@@ -233,7 +235,7 @@ public:
                     tokens.push_back({.type=TokenType::print_, .line = line_count});
                     buf.clear();
                     continue;
-                } else if (buf=="fn"){
+                }                 else if (buf=="fn"){
                     tokens.push_back({.type=TokenType::fn_, .line = line_count});
                     buf.clear();
                     continue;
@@ -355,7 +357,11 @@ public:
                 consume();
                 tokens.push_back({.type=TokenType::fslash, .line = line_count});
                 continue;
-            } else if (peek().value()=='{'){
+            }             else if (peek().value()==','){
+                consume();
+                tokens.push_back({.type=TokenType::comma_, .line = line_count});
+                continue;
+            }else if (peek().value()=='{'){
                 consume();
                 tokens.push_back({.type=TokenType::open_curly, .line = line_count});
                 continue;

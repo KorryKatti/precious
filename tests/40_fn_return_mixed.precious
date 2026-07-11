@@ -1,0 +1,11 @@
+fn add(a, b) {
+    gives(a + b);
+}
+
+fn greet() {
+    say(42);
+}
+
+we_haves x = add(10, 20);
+say(x);
+greet();

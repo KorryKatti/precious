@@ -1,18 +1,26 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void emit();
+long max(long a, long b);
 
 int main() {
-    long x = 10;
+    long x = max(10, 20);
+    long y = max(30, 15);
     printf("%ld\n", x);
-    emit();
+    printf("%ld\n", y);
     return 0;
 }
 
-void emit() {
+long max(long a, long b) {
 {
-    printf("%ld\n", 42);
+    if (a > b)
+{
+    return a;
+}
+ else
+{
+    return b;
+}
 }
 }
 

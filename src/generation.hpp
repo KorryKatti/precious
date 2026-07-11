@@ -13,14 +13,20 @@
 
 class Generator {
 public:
+    /**
+     * @brief Constructs a code generator for the given AST program.
+     * @param prog The parsed program to generate C code from.
+     */
     inline explicit Generator(NodeProg prog) : m_prog(std::move(prog)) {}
 
+    /**
+     * @brief Generates C code for a single term (literal, identifier, or paren expression).
+     * @param term The AST term node to emit.
+     *
+     * Handles: integer literals, identifiers, parenthesized expressions, logical NOT,
+     * and function calls (with arguments).
+     */
     void gen_term(const NodeTerm* term) {
-        if (std::holds_alternative<NodeTermFnCall*>(term->var)){
-            auto fn_call = std::get<NodeTermFnCall*>(term->var);
-            m_output << fn_call->name.value.value() << "()";
-            return;
-        }
         struct TermVisitor {
             Generator& gen;
 
@@ -45,7 +51,12 @@ public:
             }
 
             void operator()(const NodeTermFnCall* term_fn_call) const {
-                gen.m_output << term_fn_call->name.value.value() << "()";
+                gen.m_output << term_fn_call->name.value.value() << "(";
+                for (size_t i = 0; i < term_fn_call->args.size(); i++) {
+                    if (i > 0) gen.m_output << ", ";
+                    gen.gen_expr(term_fn_call->args[i]);
+                }
+                gen.m_output << ")";
             }
 
         };
@@ -53,6 +64,13 @@ public:
         std::visit(visitor, term->var);
     }
 
+    /**
+     * @brief Generates C code for a binary expression.
+     * @param bin_expr The AST binary expression node to emit.
+     *
+     * Emits the left-hand side, the operator, and the right-hand side.
+     * Supports: +, -, *, /, ==, !=, <, >, <=, >=, and, or.
+     */
     void gen_bin_expr(const NodeBinExpr* bin_expr) {
         struct BinExprVisitor {
             Generator& gen;
@@ -125,6 +143,12 @@ public:
         std::visit(visitor, bin_expr->var);
     }
 
+    /**
+     * @brief Generates C code for an expression node.
+     * @param expr The AST expression node to emit.
+     *
+     * Dispatches to gen_term() or gen_bin_expr() depending on the variant type.
+     */
     void gen_expr(const NodeExpr* expr) {
         struct ExprVisitor {
             Generator& gen;
@@ -137,6 +161,13 @@ public:
         std::visit(visitor, expr->var);
     }
 
+    /**
+     * @brief Generates C code for a scoped block of statements.
+     * @param scope The AST scope node to emit.
+     *
+     * Emits opening/closing braces and tracks declared variables for
+     * proper scope cleanup (variable declarations are popped on scope exit).
+     */
     void gen_scope(const NodeScope* scope) {
         m_declared_scopes.push_back(m_declared.size());
         m_output << "{\n";
@@ -151,6 +182,13 @@ public:
         m_declared_scopes.pop_back();
     }
 
+    /**
+     * @brief Generates C code for an if/elif/else predicate chain.
+     * @param pred The AST predicate node (elif or else branch).
+     * @param end_label Unused label kept for interface consistency.
+     *
+     * Recursively processes elif branches and the optional else branch.
+     */
     void gen_if_pred(const NodeIfPred* pred, const std::string& end_label) {
         struct PredVisitor {
             Generator& gen;
@@ -174,6 +212,14 @@ public:
         std::visit(visitor, pred->var);
     }
 
+    /**
+     * @brief Generates C code for a single statement.
+     * @param stmt The AST statement node to emit.
+     *
+     * Handles: gives (return), we_haves (let), assignment, scopes, if/elif/else,
+     * while loops, say (printf), function definitions (no-op here), and
+     * expression statements (function calls).
+     */
     void gen_stmt(const NodeStmt* stmt) {
         struct StmtVisitor {
             Generator& gen;
@@ -252,9 +298,42 @@ public:
         std::visit(visitor, stmt->var);
     }
 
+    /**
+     * @brief Generates C code for a function call expression.
+     * @param fn_call The AST function call node to emit.
+     *
+     * Emits the function name followed by comma-separated arguments in parentheses.
+     * Note: This method is currently unused; gen_term() handles function calls directly.
+     */
+    void gen_term_call(const NodeTermFnCall* fn_call){
+        m_output << fn_call->name.value.value() << "(";
+        for (size_t i=0;i<fn_call->args.size();i++){
+            if (i>0){
+                m_output << ", ";
+            }
+            gen_expr(fn_call->args[i]);
+        }
+        m_output << ")";
+    }
+
+    /**
+     * @brief Generates a complete C function definition.
+     * @param fn The AST function node to emit.
+     * @param out The output stream to write the function definition to.
+     *
+     * Emits a C function with return type void, long-typed parameters,
+     * and the function body. Temporarily redirects m_output to capture
+     * the scope's generated code, then writes it to the out stream.
+     */
     void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
-        out << "void " << fn->name.value.value() << "() {\n";
-        // Save and restore m_output to capture scope output
+        std::string ret_type = has_return(fn->body) ? "long" : "void";
+        out << ret_type << " " << fn->name.value.value() << "(";
+        for (size_t i=0;i<fn->params.size();i++){
+            if (i>0) out << ", ";
+            out << "long " << fn->params[i].name.value.value();
+        }
+
+        out << ") {\n";
         std::string saved = m_output.str();
         m_output.str("");
         m_output.clear();
@@ -266,6 +345,17 @@ public:
         out << "}\n\n";
     }
 
+    /**
+     * @brief Generates the complete C program from the AST.
+     * @return A string containing the full C source code.
+     *
+     * Three-phase generation:
+     * 1. Emit forward declarations for all functions (with param types)
+     * 2. Emit everything except functions inside main()
+     * 3. Append all function definitions after main()
+     *
+     * The generated C file includes stdio.h and stdlib.h headers.
+     */
     [[nodiscard]] std::string gen_prog() {
         std::stringstream decls;
         std::stringstream fns;
@@ -273,7 +363,13 @@ public:
         for (const NodeStmt* stmt : m_prog.stmts) {
             if (std::holds_alternative<NodeStmtFn*>(stmt->var)) {
                 auto fn = std::get<NodeStmtFn*>(stmt->var);
-                decls << "void " << fn->name.value.value() << "();\n";
+                std::string ret_type = has_return(fn->body) ? "long" : "void";
+                decls << ret_type << " " << fn->name.value.value() << "(";
+                for (size_t i = 0; i < fn->params.size(); i++) {
+                    if (i > 0) decls << ", ";
+                    decls << "long " << fn->params[i].name.value.value();
+                }
+                decls << ");\n";
                 gen_fn_def(fn, fns);
             }
         }
@@ -297,9 +393,65 @@ public:
     }
 
 private:
-    const NodeProg m_prog;
-    std::stringstream m_output;
-    int m_if_count = 0;
-    std::vector<std::string> m_declared;
-    std::vector<size_t> m_declared_scopes;
+    /**
+     * @brief Checks if a function body contains a gives (return) statement.
+     * @param body The function body scope to search.
+     * @return true if a gives/return statement exists anywhere in the body, false otherwise.
+     *
+     * Recursively searches through nested scopes, if/elif/else branches,
+     * and while loop bodies to detect any gives statement.
+     */
+    bool has_return(const NodeScope* body) const {
+        for (const NodeStmt* stmt : body->stmts) {
+            if (std::holds_alternative<NodeStmtExit*>(stmt->var)) {
+                return true;
+            }
+            if (std::holds_alternative<NodeScope*>(stmt->var)) {
+                if (has_return(std::get<NodeScope*>(stmt->var))) {
+                    return true;
+                }
+            }
+            if (std::holds_alternative<NodeStmtIf*>(stmt->var)) {
+                auto if_stmt = std::get<NodeStmtIf*>(stmt->var);
+                if (has_return(if_stmt->scope)) {
+                    return true;
+                }
+                if (if_stmt->pred.has_value()) {
+                    if (has_return_pred(if_stmt->pred.value())) {
+                        return true;
+                    }
+                }
+            }
+            if (std::holds_alternative<NodeStmtWhile*>(stmt->var)) {
+                if (has_return(std::get<NodeStmtWhile*>(stmt->var)->scope)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * @brief Checks if an if/elif/else predicate chain contains a gives statement.
+     * @param pred The predicate chain to search.
+     * @return true if a gives/return statement exists in any branch.
+     */
+    bool has_return_pred(const NodeIfPred* pred) const {
+        if (std::holds_alternative<NodeIfPredElif*>(pred->var)) {
+            auto elif = std::get<NodeIfPredElif*>(pred->var);
+            if (has_return(elif->scope)) return true;
+            if (elif->pred.has_value()) {
+                return has_return_pred(elif->pred.value());
+            }
+        } else if (std::holds_alternative<NodeIfPredElse*>(pred->var)) {
+            return has_return(std::get<NodeIfPredElse*>(pred->var)->scope);
+        }
+        return false;
+    }
+
+    const NodeProg m_prog;                 ///< The parsed program AST to generate code from.
+    std::stringstream m_output;            ///< Current output buffer for generated C code.
+    int m_if_count = 0;                    ///< Counter for unique if-statement labels.
+    std::vector<std::string> m_declared;   ///< Stack of declared variable names (for scope tracking).
+    std::vector<size_t> m_declared_scopes; ///< Stack of scope boundaries (indices into m_declared).
 };

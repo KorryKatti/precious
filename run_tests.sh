@@ -137,6 +137,14 @@ run_test_output "$TESTS_DIR/35_fn_multiple.precious" "$(printf '10\n20')" 0
 run_test_output "$TESTS_DIR/36_fn_with_vars.precious" "5" 0
 run_test_output "$TESTS_DIR/37_fn_call_in_say.precious" "$(printf '10\n42')" 0
 
+# Function parameters (5b)
+run_test_output "$TESTS_DIR/38_fn_params.precious" "5" 0
+
+# Function return values (5c)
+run_test_output "$TESTS_DIR/39_fn_return.precious" "5" 0
+run_test_output "$TESTS_DIR/40_fn_return_mixed.precious" "$(printf '30\n42')" 0
+run_test_output "$TESTS_DIR/41_fn_return_if.precious" "$(printf '20\n30')" 0
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

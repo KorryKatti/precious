@@ -195,7 +195,7 @@ struct NodeScope;
 */
 struct NodeStmtFn {
     Token name; // function name (ident token)
-    std::vector<NodeFnParam> params; // function parameters , empty for now
+    std::vector<NodeFnParam> params; // function parameters
     NodeScope* body; // the function body
 };
 
@@ -205,7 +205,7 @@ struct NodeStmtFn {
 */
 struct NodeTermFnCall {
     Token name; // function name to call
-    std::vector<NodeExpr*> args; // empty for now
+    std::vector<NodeExpr*> args; // arguments to pass to the function
 };
 
 /**
@@ -425,8 +425,22 @@ public:
                 auto fn_call = m_allocator.emplace<NodeTermFnCall>();
                 fn_call->name = consume(); // consume ident
                 consume(); // consume '('
-                try_consume_err(TokenType::close_paren);
-                fn_call->args = {};
+
+                while (peek().has_value() && peek().value().type != TokenType::close_paren) {
+                    auto arg_expr = parse_expr();
+                    if (!arg_expr.has_value()) {
+                        error_expected("expression");
+                    }
+                    fn_call->args.push_back(arg_expr.value());
+
+                    if (peek().has_value() && peek().value().type == TokenType::comma_) {
+                        consume(); // consume ','
+                    } else {
+                        break; // no more arguments
+                    }
+                }
+
+                try_consume_err(TokenType::close_paren); // consume closing paren
                 auto term = m_allocator.emplace<NodeTerm>(fn_call);
                 return term;
             }
@@ -689,9 +703,22 @@ public:
             auto fn_call = m_allocator.alloc<NodeTermFnCall>();
             fn_call->name = consume(); // ident
             consume(); // '('
+
+            while (peek().has_value() && peek().value().type != TokenType::close_paren) {
+                auto arg_expr = parse_expr();
+                if (!arg_expr.has_value()) {
+                    error_expected("expression");
+                }
+                fn_call->args.push_back(arg_expr.value());
+                if (peek().has_value() && peek().value().type == TokenType::comma_) {
+                    consume();
+                } else {
+                    break;
+                }
+            }
+
             try_consume_err(TokenType::close_paren);
             try_consume_err(TokenType::semi);
-            fn_call->args = {};
             auto term = m_allocator.emplace<NodeTerm>(fn_call);
             auto expr = m_allocator.emplace<NodeExpr>(term);
             auto stmt_expr = m_allocator.emplace<NodeStmtExpr>(expr);
@@ -774,10 +801,17 @@ public:
                 error_expected("open paren");
             }
             consume(); // consume '('
-            // no paramters for now
-            // expect ')'
-            if (!peek().has_value() || peek().value().type!=TokenType::close_paren){
-                error_expected("close paren");
+            
+            // parse parameters
+            while (peek().has_value() && peek().value().type != TokenType::close_paren) {
+                if (peek().has_value() && peek().value().type == TokenType::ident) {
+                    auto param = m_allocator.alloc<NodeFnParam>();
+                    param->name = consume();
+                    fn_stmt->params.push_back(*param);
+                }
+                if (peek().has_value() && peek().value().type == TokenType::comma_) {
+                    consume();
+                }
             }
             consume(); // consume ')'
             // expect '{'
@@ -786,7 +820,6 @@ public:
                 error_expected("function body");
             }
             fn_stmt->body = body.value();
-            fn_stmt->params = {}; // no params for now
             auto stmt = m_allocator.emplace<NodeStmt>(fn_stmt);
             return stmt; 
         }

@@ -132,7 +132,28 @@ fn greet() {
 greet();        // prints 42
 ```
 
-Functions use forward declarations internally — the compiler emits prototypes before `main()` and definitions after it. **Currently only basic no-parameter functions are supported.** Parameters and return values are coming next.
+Functions support parameters:
+
+```
+fn add(a, b) {
+    say(a + b);
+}
+
+add(2, 3);      // prints 5
+```
+
+Functions can return values using `gives`:
+
+```
+fn add(a, b) {
+    gives(a + b);
+}
+
+we_haves result = add(2, 3);
+say(result);    // prints 5
+```
+
+The compiler automatically detects whether a function uses `gives` and emits the correct return type (`long` for returning functions, `void` otherwise). Functions can call each other regardless of declaration order — the compiler emits forward declarations before `main()` and definitions after it.
 
 ## Examples
 

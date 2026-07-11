@@ -1,0 +1,6 @@
+fn add(a, b) {
+    gives(a + b);
+}
+
+we_haves result = add(2, 3);
+say(result);

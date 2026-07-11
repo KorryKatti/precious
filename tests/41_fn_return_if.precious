@@ -1,0 +1,12 @@
+fn max(a, b) {
+    if (a > b) {
+        gives(a);
+    } else {
+        gives(b);
+    }
+}
+
+we_haves x = max(10, 20);
+we_haves y = max(30, 15);
+say(x);
+say(y);
