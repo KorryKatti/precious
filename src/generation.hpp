@@ -174,9 +174,13 @@ public:
      * Emits opening/closing braces and tracks declared variables for
      * proper scope cleanup (variable declarations are popped on scope exit).
      */
-    void gen_scope(const NodeScope* scope) {
+    void gen_scope(const NodeScope* scope, bool inline_brace = false) {
         m_declared_scopes.push_back(m_declared.size());
-        m_output << "{\n";
+        if (inline_brace) {
+            m_output << " {\n";
+        } else {
+            m_output << "{\n";
+        }
         for (const NodeStmt* stmt : scope->stmts) {
             gen_stmt(stmt);
         }
@@ -203,15 +207,15 @@ public:
             void operator()(const NodeIfPredElif* elif) const {
                 gen.m_output << " else if (";
                 gen.gen_expr(elif->expr);
-                gen.m_output << ")\n";
-                gen.gen_scope(elif->scope);
+                gen.m_output << ")";
+                gen.gen_scope(elif->scope, true);
                 if (elif->pred.has_value()) {
                     gen.gen_if_pred(elif->pred.value(), end_label);
                 }
             }
             void operator()(const NodeIfPredElse* else_) const {
-                gen.m_output << " else\n";
-                gen.gen_scope(else_->scope);
+                gen.m_output << " else";
+                gen.gen_scope(else_->scope, true);
             }
         };
 
@@ -273,8 +277,8 @@ public:
             void operator()(const NodeStmtIf* stmt_if) const {
                 gen.m_output << "    if (";
                 gen.gen_expr(stmt_if->expr);
-                gen.m_output << ")\n";
-                gen.gen_scope(stmt_if->scope);
+                gen.m_output << ")";
+                gen.gen_scope(stmt_if->scope, true);
                 if (stmt_if->pred.has_value()) {
                     std::string end_label = "end_if_" + std::to_string(gen.m_if_count++);
                     gen.gen_if_pred(stmt_if->pred.value(), end_label);
@@ -284,8 +288,8 @@ public:
             void operator()(const NodeStmtWhile* stmt_while) const {
                 gen.m_output << "    while (";
                 gen.gen_expr(stmt_while->expr);
-                gen.m_output << ")\n";
-                gen.gen_scope(stmt_while->scope);
+                gen.m_output << ")";
+                gen.gen_scope(stmt_while->scope, true);
             }
 
             void operator()(const NodeStmtPrint* stmt_print) const {
@@ -352,7 +356,7 @@ public:
             out << param_type << " " << fn->params[i].name.value.value();
         }
 
-        out << ") {\n";
+        out << ")\n";
         std::string saved = m_output.str();
         m_output.str("");
         m_output.clear();
@@ -375,7 +379,7 @@ public:
         m_output.str(saved);
         m_output.clear();
         m_output << saved;
-        out << "}\n\n";
+        out << "\n";
     }
 
     /**
@@ -423,7 +427,6 @@ public:
         out << decls.str() << "\n";
         out << "int main() {\n";
         out << m_output.str();
-        out << "    return 0;\n";
         out << "}\n\n";
         out << fns.str();
         return out.str();
