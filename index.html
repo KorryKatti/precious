@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Precious</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{font-family:'Georgia',serif;background:#0a0a0a;color:#bbb;line-height:1.7}
+  a{color:#c9a84c;text-decoration:none}
+  a:hover{text-decoration:underline}
+
+  /* hero */
+  .hero{
+    display:flex;align-items:center;justify-content:center;
+    gap:4rem;padding:4rem 3rem;min-height:60vh;
+    border-bottom:1px solid #1a1a1a;
+  }
+  .hero-pre{
+    font-size:.78rem;line-height:.95;color:#c9a84c;white-space:pre;
+    text-shadow:0 0 30px rgba(201,168,76,.25);flex-shrink:0;
+    background:transparent;border:none;padding:0;margin:0;border-radius:0;
+    overflow:hidden;
+  }
+  .hero-text{max-width:400px}
+  .hero-text h1{
+    font-size:2.4rem;color:#e8e8e8;font-weight:400;
+    letter-spacing:.06em;margin-bottom:.6rem;
+  }
+  .hero-text .sub{font-size:1rem;color:#666;margin-bottom:1rem}
+  .hero-text .tagline{font-size:.9rem;color:#555;font-style:italic;line-height:1.6}
+
+  /* content */
+  .content{max-width:780px;margin:0 auto;padding:3rem 2rem}
+
+  section{margin-bottom:3rem}
+  h2{
+    font-size:1.2rem;color:#e0e0e0;font-weight:400;
+    letter-spacing:.04em;margin-bottom:.8rem;
+    padding-bottom:.4rem;border-bottom:1px solid #1a1a1a;
+  }
+  h3{color:#ddd;font-size:.95rem;font-weight:400;margin:1.2rem 0 .5rem}
+  p{margin-bottom:.7rem;font-size:.92rem}
+
+  pre,code{font-family:'Courier New',monospace;font-size:.85rem}
+  pre{
+    background:#0d0d0d;border:1px solid #181818;
+    padding:.9rem 1.1rem;border-radius:3px;overflow-x:auto;
+    margin:.6rem 0 1rem;line-height:1.5;color:#999;
+  }
+  code{
+    background:#0d0d0d;padding:.12rem .35rem;border-radius:2px;
+    border:1px solid #181818;color:#c9a84c;
+  }
+  pre code{background:none;border:none;padding:0;color:inherit}
+
+  table{width:100%;border-collapse:collapse;margin:.6rem 0 1rem;font-size:.88rem}
+  th{text-align:left;padding:.4rem .7rem;border-bottom:1px solid #c9a84c;color:#e0e0e0;font-weight:400}
+  td{padding:.4rem .7rem;border-bottom:1px solid #1a1a1a}
+
+  ul{margin:.4rem 0 .8rem 1.3rem;font-size:.9rem}
+  li{margin-bottom:.25rem}
+
+  .install{
+    background:#0d0d0d;border:1px solid #181818;
+    padding:1rem 1.2rem;border-radius:3px;margin:.8rem 0;
+  }
+  .install code{color:#c9a84c;font-size:.88rem}
+
+  footer{
+    text-align:center;padding:2rem;font-size:.75rem;color:#333;
+    border-top:1px solid #111;margin-top:2rem;
+  }
+
+  @media(max-width:700px){
+    .hero{flex-direction:column;gap:2rem;padding:3rem 1.5rem;text-align:center}
+    .hero-pre{font-size:.32rem}
+    .hero-text h1{font-size:1.8rem}
+    .content{padding:2rem 1.2rem}
+  }
+</style>
+</head>
+<body>
+
+<div class="hero">
+<pre class="hero-pre">
+  ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡀⠤⠒⠒⠀⣈⠙⣿⣷⠶⣦⣄⡀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠔⠊⠁⠀⢀⣤⣶⢿⣶⠿⠿⢥⡴⠈⠙⢿⣶⣄⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⠴⠊⠀⠀⠀⣠⣴⣮⡿⠛⠁⣺⠀⠀⠀⠀⠀⢀⣀⣿⡿⣿⢄⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⢠⠔⠁⢀⡀⢀⢴⣺⡙⠋⢸⡏⠀⠀⡏⣀⢠⣴⠶⠭⠗⠛⠋⠙⠿⣾⣂⠀
+⠀⠀⠀⠀⠀⢀⠔⢡⠀⠀⣨⣗⣏⠋⠀⡇⠀⢸⣃⠤⣒⢽⡊⠭⠒⠈⠏⠉⢿⣷⣶⣄⠸⡟⡄
+⠀⠀⠀⢀⡔⠁⠀⣼⣦⣖⡗⠋⢸⠀⢀⣧⡶⢛⣥⡾⠃⠁⠀⠀⠀⠘⠀⢧⢸⣿⣮⣿⣇⡼⡇
+⠀⠀⢠⠊⢀⣄⡀⢸⣹⡍⠀⠀⣸⣴⡿⠋⡠⠘⠁⠀⠀⠀⠀⠀⠰⢣⣄⣼⣿⡟⢿⣿⣿⡃⡇
+⠀⣠⠏⣀⣿⣵⡣⠀⠀⣇⣤⣾⣿⠏⡠⠊⠀⠀⠀⠀⠀⠀⠀⡰⠓⢦⣿⣧⣿⠻⡼⢏⣿⣷⠃
+⠀⡐⢹⠀⣟⠏⡞⢃⢀⣰⣿⣿⡿⡫⠊⠀⠀⠀⠀⠀⠀⠀⢀⡔⢁⠀⠸⣻⣿⣷⣄⢳⡼⣝⡎
+⢰⠁⢿⣠⣟⢍⣇⣸⣾⣿⣿⢏⠔⠀⠀⠀⠀⠀⠀⠀⠀⡠⠊⠀⢘⣆⣴⡿⠙⢿⣫⣴⣿⡟⠀⠀
+⡆⠀⢘⣿⣿⣿⣿⣿⣿⣿⡿⡣⠋⠀⠀⠀⠀⠀⠀⠀⡠⠊⠀⠀⠀⣸⣾⢿⡁⢠⣿⣿⣟⠟⠀⠀⠀
+⡇⣆⣞⡟⢟⠿⣿⣿⣿⡿⡱⠁⠀⠀⠀⠀⠀⢀⡠⠊⠀⠀⣤⡤⡄⠉⠁⢸⣿⣿⣿⢿⠏⠀⠀⠀⠀
+⡇⢻⣻⣄⠈⢧⠀⡼⠱⠁⠀⠀⠀⢀⡠⠖⠁⠀⠀⣰⣶⢽⡹⡟⠀⣠⣾⣾⣿⠕⠁⠀⠀⠀⠀⠀
+⢠⢸⡧⠈⢆⠈⢡⣇⣇⣀⣠⡔⠢⡁⠀⠀⣤⣲⣦⣿⣉⡾⢀⣷⣾⣿⠟⡻⠊⠀⠀⠀⠀⠀⠀⠀
+⠈⢺⣷⣄⠀⠢⢸⣸⣿⣿⣿⣯⣶⣷⣤⣶⡿⢿⢻⠁⣩⣔⣿⣿⢟⡵⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠻⡬⠳⣄⠀⡟⣿⣿⣿⣿⣿⣿⣿⣟⣥⡧⢼⣿⣯⣿⠟⣫⠖⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠈⠪⢆⠀⠐⡙⢿⣿⣯⡝⣍⣧⣤⣷⡿⢛⣩⠔⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠁⠒⠬⢐⣭⣉⣉⣩⠭⠽⠟⠊⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
+⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</pre>
+  <div class="hero-text">
+    <h1>Precious</h1>
+    <p class="sub">A Gollum-themed programming language that compiles to C.</p>
+    <p style="margin-top:1.2rem"><a href="https://github.com/korrykatti/precious" target="_blank">github.com/korrykatti/precious</a></p>
+  </div>
+</div>
+
+<div class="content">
+
+<section id="install">
+  <h2>Install</h2>
+  <div class="install">
+    <code>cmake -B build && cmake --build build</code><br>
+    <code>./build/precious your_file.precious</code><br>
+    <code>./out</code>
+  </div>
+  <p>Outputs a Linux ELF binary named <code>out</code> via gcc. The compiler generates C source code and lets gcc handle register allocation, optimization, and code generation.</p>
+</section>
+
+<section id="syntax">
+  <h2>Variables</h2>
+  <p>Declare with <code>we_haves</code>. Assign with <code>=</code>.</p>
+<pre><code>we_haves x = 42;
+x = 10;</code></pre>
+</section>
+
+<section id="types">
+  <h2>Type Annotations</h2>
+  <p>Optional <code>: type</code> after the variable name. Inferred if omitted.</p>
+  <table>
+    <tr><th>Precious</th><th>C type</th><th>Description</th></tr>
+    <tr><td><code>number</code></td><td><code>long</code></td><td>64-bit integers</td></tr>
+    <tr><td><code>word</code></td><td><code>const char*</code></td><td>Strings</td></tr>
+    <tr><td><code>question</code></td><td><code>long</code></td><td>Booleans</td></tr>
+    <tr><td><code>decimal</code></td><td><code>double</code></td><td>Floating-point</td></tr>
+    <tr><td><code>letter</code></td><td><code>char</code></td><td>Single characters</td></tr>
+  </table>
+<pre><code>we_haves x: number = 5;
+we_haves name: word = "gollum";
+we_haves y = 10;              // inferred as number
+we_haves msg = "hello";       // inferred as word</code></pre>
+</section>
+
+<section id="operators">
+  <h2>Operators</h2>
+  <h3>Arithmetic</h3>
+<pre><code>we_haves result = 2 + 3 * 4 - 1;  // 13
+gives(result);</code></pre>
+  <h3>Comparison</h3>
+  <p><code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> — return 1 or 0.</p>
+  <h3>Boolean</h3>
+  <p><code>and</code>, <code>or</code>, <code>!</code> — precedence: <code>!</code> &gt; <code>and</code> &gt; <code>or</code>.</p>
+<pre><code>if (x > 0 and x < 10) { gives(1); }
+if (!0) { gives(2); }
+if (x == 1 or x == 5) { gives(3); }</code></pre>
+</section>
+
+<section id="control">
+  <h2>If / Elif / Else</h2>
+<pre><code>we_haves x = 5;
+if (x == 5) {
+    gives(10);
+} elif (x > 3) {
+    gives(20);
+} else {
+    gives(30);
+}</code></pre>
+</section>
+
+<section>
+  <h2>While Loop</h2>
+<pre><code>we_haves i = 0;
+while (i < 5) {
+    i = i + 1;
+}
+gives(i);</code></pre>
+</section>
+
+<section>
+  <h2>Scopes</h2>
+<pre><code>we_haves x = 5;
+{
+    we_haves y = 10;
+    gives(x + y);
+}</code></pre>
+</section>
+
+<section>
+  <h2>Print</h2>
+  <p><code>say(expr)</code> prints to stdout. Works with integers, string literals, and string variables.</p>
+<pre><code>say(42);          // prints 42
+say("hello");     // prints hello
+
+we_haves msg: word = "gollum";
+say(msg);         // prints gollum</code></pre>
+</section>
+
+<section id="functions">
+  <h2>Functions</h2>
+  <p>Define with <code>fn</code>. Return with <code>gives</code>. Parameters support type annotations.</p>
+<pre><code>fn add(a, b) {
+    say(a + b);
+}
+add(2, 3);          // prints 5
+
+fn greet(name: word) {
+    say(name);
+}
+greet("precious");  // prints precious
+
+fn multiply(a, b) {
+    gives(a * b);
+}
+we_haves result = multiply(6, 7);
+say(result);        // prints 42</code></pre>
+  <p>Return type is auto-detected. Functions can call each other regardless of declaration order.</p>
+</section>
+
+<section>
+  <h2>Keywords</h2>
+  <table>
+    <tr><th>Keyword</th><th>What it does</th></tr>
+    <tr><td><code>we_haves</code></td><td>Declare a variable</td></tr>
+    <tr><td><code>gives</code></td><td>Return a value / set exit code</td></tr>
+    <tr><td><code>fn</code></td><td>Define a function</td></tr>
+    <tr><td><code>say</code></td><td>Print to stdout</td></tr>
+    <tr><td><code>if</code> / <code>elif</code> / <code>else</code></td><td>Conditionals</td></tr>
+    <tr><td><code>while</code></td><td>Loop</td></tr>
+    <tr><td><code>and</code> / <code>or</code> / <code>!</code></td><td>Boolean logic</td></tr>
+    <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>Tests</h2>
+<pre><code>bash run_tests.sh</code></pre>
+</section>
+
+<section>
+  <h2>Resources</h2>
+  <ul>
+    <li><a href="https://craftinginterpreters.com/" target="_blank">Crafting Interpreters</a></li>
+    <li><a href="https://matklad.github.io/2020/04/13/simple-but-powerful-pratt-parsing.html" target="_blank">Pratt Parsing</a></li>
+    <li><a href="https://www.sigbus.info/nonebook" target="_blank">Writing a Compiler from Scratch</a></li>
+    <li><a href="https://www.youtube.com/playlist?list=PLUDlas_Zy_qC7c5tCgTMYq2idyyT241qs" target="_blank">Let's Make a Compiler</a></li>
+  </ul>
+</section>
+
+</div>
+
+</body>
+</html>
