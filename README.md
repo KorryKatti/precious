@@ -160,14 +160,18 @@ fn greet() {
 greet();        // prints 42
 ```
 
-Functions support parameters:
+Functions support parameters, with optional type annotations:
 
 ```
 fn add(a, b) {
     say(a + b);
 }
-
 add(2, 3);      // prints 5
+
+fn greet(name: word) {
+    say(name);
+}
+greet("precious");  // prints precious
 ```
 
 Functions can return values using `gives`:

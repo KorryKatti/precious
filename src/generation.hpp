@@ -346,14 +346,31 @@ public:
         for (size_t i = 0; i < fn->params.size(); i++) {
             if (i > 0)
                 out << ", ";
-            out << "long " << fn->params[i].name.value.value();
+            std::string param_type = fn->params[i].type_annotation.has_value()
+                ? resolve_type(fn->params[i].type_annotation.value())
+                : "long";
+            out << param_type << " " << fn->params[i].name.value.value();
         }
 
         out << ") {\n";
         std::string saved = m_output.str();
         m_output.str("");
         m_output.clear();
+        // register params in scope tracking so they're available in the body
+        for (const auto& param : fn->params) {
+            std::string pname = param.name.value.value();
+            std::string ptype = param.type_annotation.has_value()
+                ? resolve_type(param.type_annotation.value())
+                : "long";
+            m_declared.push_back(pname);
+            m_var_types[pname] = ptype;
+        }
         gen_scope(fn->body);
+        // clean up params from type tracking
+        for (size_t i = 0; i < fn->params.size(); i++) {
+            m_var_types.erase(fn->params[i].name.value.value());
+            m_declared.pop_back();
+        }
         out << m_output.str();
         m_output.str(saved);
         m_output.clear();
@@ -384,7 +401,10 @@ public:
                 for (size_t i = 0; i < fn->params.size(); i++) {
                     if (i > 0)
                         decls << ", ";
-                    decls << "long " << fn->params[i].name.value.value();
+                    std::string param_type = fn->params[i].type_annotation.has_value()
+                        ? resolve_type(fn->params[i].type_annotation.value())
+                        : "long";
+                    decls << param_type << " " << fn->params[i].name.value.value();
                 }
                 decls << ");\n";
                 gen_fn_def(fn, fns);

@@ -1,0 +1,5 @@
+fn greet(name: word) {
+    say(name);
+}
+we_haves title = "gollum";
+greet(title);

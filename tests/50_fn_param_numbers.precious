@@ -1,0 +1,4 @@
+fn add(a: number, b: number) {
+    say(a + b);
+}
+add(10, 20);

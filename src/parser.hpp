@@ -183,7 +183,8 @@ struct NodeTermNot {
  * @brief AST node for param identifier
  */
 struct NodeFnParam {
-    Token name;  // parameter identifier
+    Token name;
+    std::optional<TokenType> type_annotation;
 };
 
 struct NodeScope;
@@ -837,6 +838,21 @@ public:
                 if (peek().has_value() && peek().value().type == TokenType::ident) {
                     auto param = m_allocator.alloc<NodeFnParam>();
                     param->name = consume();
+                    // optional type annotation on param
+                    if (peek().has_value() && peek().value().type == TokenType::colon_) {
+                        consume();  // consume ':'
+                        if (peek().has_value() && (peek().value().type == TokenType::type_number_ ||
+                                                   peek().value().type == TokenType::type_word_ ||
+                                                   peek().value().type == TokenType::type_question_ ||
+                                                   peek().value().type == TokenType::type_decimal_ ||
+                                                   peek().value().type == TokenType::type_letter)) {
+                            param->type_annotation = consume().type;
+                        } else {
+                            error_expected("type annotation (number, word, question, decimal, letter)");
+                        }
+                    } else {
+                        param->type_annotation = std::nullopt;
+                    }
                     fn_stmt->params.push_back(*param);
                 }
                 if (peek().has_value() && peek().value().type == TokenType::comma_) {

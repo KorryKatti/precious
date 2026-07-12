@@ -84,6 +84,12 @@ fn add(a, b) {
 }
 add(10, 20);        // 30
 
+// --- Functions: param type annotations ---
+fn greet(name: word) {
+    say(name);
+}
+greet("precious");  // precious
+
 // --- Functions: return values ---
 fn multiply(a, b) {
     gives(a * b);

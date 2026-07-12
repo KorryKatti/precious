@@ -156,6 +156,12 @@ run_test_output "$TESTS_DIR/46_type_number_inferred.precious" "42" 0
 run_test_output "$TESTS_DIR/47_type_mixed.precious" "$(printf '10\nhey')" 0
 run_test_output "$TESTS_DIR/48_type_string_reassign.precious" "b" 0
 
+# Function parameter type annotations
+run_test_output "$TESTS_DIR/49_fn_param_string.precious" "precious" 0
+run_test_output "$TESTS_DIR/50_fn_param_numbers.precious" "30" 0
+run_test_output "$TESTS_DIR/51_fn_param_return.precious" "10" 0
+run_test_output "$TESTS_DIR/52_fn_param_string_var.precious" "gollum" 0
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 
