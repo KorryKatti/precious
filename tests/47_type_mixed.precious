@@ -1,0 +1,4 @@
+we_haves x = 10;
+we_haves s = "hey";
+say(x);
+say(s);

@@ -98,114 +98,121 @@ struct NodeBinExprDiv {
 };
 
 /**
-* @struct NodeBinExprEq
-* @brief AST node for equality comparison: lhs == rhs.
+ * @struct NodeBinExprEq
+ * @brief AST node for equality comparison: lhs == rhs.
  */
- struct NodeBinExprEq {
+struct NodeBinExprEq {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
- /**
+/**
  * @struct NodeBinExprNotEq
  * @brief AST node for inequality comparison: lhs != rhs.
  */
- struct NodeBinExprNotEq {
+struct NodeBinExprNotEq {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprLt
  * @brief AST node for less-than comparison: lhs < rhs.
  */
- struct NodeBinExprLt {
+struct NodeBinExprLt {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprGt
  * @brief AST node for greater-than comparison: lhs > rhs.
  */
- struct NodeBinExprGt {
+struct NodeBinExprGt {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprLtEq
  * @brief AST node for less-than-or-equal comparison: lhs <= rhs.
  */
- struct NodeBinExprLtEq {
+struct NodeBinExprLtEq {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprGtEq
  * @brief AST node for greater-than-or-equal comparison: lhs >= rhs.
  */
- struct NodeBinExprGtEq {
+struct NodeBinExprGtEq {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
-
+};
 
 /**
-* @struct NodeBinExprAnd
+ * @struct NodeBinExprAnd
  * @brief AST node for logical AND: lhs and rhs.
  */
- struct NodeBinExprAnd {
+struct NodeBinExprAnd {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprOr
  * @brief AST node for logical OR: lhs or rhs.
  */
- struct NodeBinExprOr {
+struct NodeBinExprOr {
     NodeExpr* lhs;  ///< Left-hand side expression.
     NodeExpr* rhs;  ///< Right-hand side expression.
- };
+};
 
-  /**
+/**
  * @struct NodeBinExprNot
  * @brief AST node for logical NOT: !expr.
  */
- struct NodeTermNot {
+struct NodeTermNot {
     NodeExpr* expr;  ///< Expression to negate.
- };
+};
 
 // oh my god bruh
 /**
-* @struct NodeFnParam
-* @brief AST node for param identifier
-*/
+ * @struct NodeFnParam
+ * @brief AST node for param identifier
+ */
 struct NodeFnParam {
-    Token name; // parameter identifier
+    Token name;  // parameter identifier
 };
 
 struct NodeScope;
 
 /**
-* @struct NodeStmtFn
-* @brief AST node for function declaration
-*/
-struct NodeStmtFn {
-    Token name; // function name (ident token)
-    std::vector<NodeFnParam> params; // function parameters
-    NodeScope* body; // the function body
+ * @struct NodeTermStringLit
+ * @brief AST node for string literal, contains string value
+ */
+struct NodeTermStringLit {
+    Token string_lit;  // string literal token
 };
 
 /**
-*   @struct NodeTermFnCall
-*   @brief AST node for function name and args
-*/
+ * @struct NodeStmtFn
+ * @brief AST node for function declaration
+ */
+struct NodeStmtFn {
+    Token name;                       // function name (ident token)
+    std::vector<NodeFnParam> params;  // function parameters
+    NodeScope* body;                  // the function body
+};
+
+/**
+ *   @struct NodeTermFnCall
+ *   @brief AST node for function name and args
+ */
 struct NodeTermFnCall {
-    Token name; // function name to call
-    std::vector<NodeExpr*> args; // arguments to pass to the function
+    Token name;                   // function name to call
+    std::vector<NodeExpr*> args;  // arguments to pass to the function
 };
 
 /**
@@ -213,7 +220,10 @@ struct NodeTermFnCall {
  * @brief AST node for a binary expression (dispatched to specific operation types).
  */
 struct NodeBinExpr {
-    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*, NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*, NodeBinExprLtEq*, NodeBinExprGtEq*, NodeBinExprAnd*, NodeBinExprOr*> var;
+    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*,
+                 NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*,
+                 NodeBinExprLtEq*, NodeBinExprGtEq*, NodeBinExprAnd*, NodeBinExprOr*>
+        var;
 };
 
 /**
@@ -223,7 +233,9 @@ struct NodeBinExpr {
  * A term can be an integer literal, an identifier, or a parenthesized expression.
  */
 struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*, NodeTermFnCall*> var;
+    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*, NodeTermStringLit*,
+                 NodeTermFnCall*>
+        var;
 };
 
 /**
@@ -254,8 +266,10 @@ struct NodeStmtExit {
  * Usage: we_haves <name> = <expression>;
  */
 struct NodeStmtLet {
-    Token ident;    ///< The variable name token.
-    NodeExpr* expr; ///< The initializer expression.
+    Token ident;                               ///< The variable name token.
+    NodeExpr* expr;                            ///< The initializer expression.
+    std::optional<TokenType> type_annotation;  ///< Optional type annotation (e.g., number, word).
+                                               ///< or nullpoint if not present
 };
 
 struct NodeStmt;
@@ -275,9 +289,9 @@ struct NodeIfPred;
  * @brief AST node for an "elif" branch in an if/elif/else chain.
  */
 struct NodeIfPredElif {
-    NodeExpr* expr;                          ///< The elif condition.
-    NodeScope* scope;                        ///< The scope executed if condition is true.
-    std::optional<NodeIfPred*> pred;         ///< Optional subsequent elif/else branch.
+    NodeExpr* expr;                   ///< The elif condition.
+    NodeScope* scope;                 ///< The scope executed if condition is true.
+    std::optional<NodeIfPred*> pred;  ///< Optional subsequent elif/else branch.
 };
 
 /**
@@ -292,8 +306,8 @@ struct NodeIfPredElse {
  * @struct NodeIfPred
  * @brief AST node for an if/elif/else predicate chain.
  */
-struct NodeIfPred{
-    std::variant<NodeIfPredElif*,NodeIfPredElse*> var;
+struct NodeIfPred {
+    std::variant<NodeIfPredElif*, NodeIfPredElse*> var;
 };
 
 /**
@@ -303,9 +317,9 @@ struct NodeIfPred{
  * Usage: if (<condition>) { ... } elif (<condition>) { ... } else { ... }
  */
 struct NodeStmtIf {
-    NodeExpr* expr{};                      ///< The if condition.
-    NodeScope* scope{};                    ///< The scope executed if condition is true.
-    std::optional<NodeIfPred*> pred;       ///< Optional elif/else branches.
+    NodeExpr* expr{};                 ///< The if condition.
+    NodeScope* scope{};               ///< The scope executed if condition is true.
+    std::optional<NodeIfPred*> pred;  ///< Optional elif/else branches.
 };
 
 /**
@@ -314,18 +328,18 @@ struct NodeStmtIf {
  *
  * Usage: <name> = <expression>;
  */
-struct NodeStmtAssign{
-    Token ident;    ///< The variable name to assign to.
-    NodeExpr* expr; ///< The expression to assign.
+struct NodeStmtAssign {
+    Token ident;     ///< The variable name to assign to.
+    NodeExpr* expr;  ///< The expression to assign.
 };
 
 /**
-* @struct NodeStmtWhile
-* @brief AST node for a while loop statement.
-*/
+ * @struct NodeStmtWhile
+ * @brief AST node for a while loop statement.
+ */
 struct NodeStmtWhile {
-    NodeExpr* expr;  ///< The loop condition expression.
-    NodeScope* scope; ///< The scope executed while the condition is true.
+    NodeExpr* expr;    ///< The loop condition expression.
+    NodeScope* scope;  ///< The scope executed while the condition is true.
 };
 
 /**
@@ -349,7 +363,9 @@ struct NodeStmtExpr {
  * @brief AST node for a statement (top-level unit of code).
  */
 struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*> var;
+    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*,
+                 NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*>
+        var;
 };
 
 /**
@@ -387,9 +403,7 @@ public:
      * Initializes the arena allocator with 4 MB of memory for AST nodes.
      */
     explicit Parser(std::vector<Token> tokens)
-        : m_tokens(std::move(tokens))
-          , m_allocator(1024 * 1024 * 4) {
-    }
+        : m_tokens(std::move(tokens)), m_allocator(1024 * 1024 * 4) {}
 
     /**
      * @brief Reports a parse error and exits.
@@ -423,8 +437,8 @@ public:
             // Could be a variable or a function call — peek ahead to decide
             if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
                 auto fn_call = m_allocator.emplace<NodeTermFnCall>();
-                fn_call->name = consume(); // consume ident
-                consume(); // consume '('
+                fn_call->name = consume();  // consume ident
+                consume();                  // consume '('
 
                 while (peek().has_value() && peek().value().type != TokenType::close_paren) {
                     auto arg_expr = parse_expr();
@@ -434,13 +448,13 @@ public:
                     fn_call->args.push_back(arg_expr.value());
 
                     if (peek().has_value() && peek().value().type == TokenType::comma_) {
-                        consume(); // consume ','
+                        consume();  // consume ','
                     } else {
-                        break; // no more arguments
+                        break;  // no more arguments
                     }
                 }
 
-                try_consume_err(TokenType::close_paren); // consume closing paren
+                try_consume_err(TokenType::close_paren);  // consume closing paren
                 auto term = m_allocator.emplace<NodeTerm>(fn_call);
                 return term;
             }
@@ -465,6 +479,11 @@ public:
             }
             auto term_not = m_allocator.emplace<NodeTermNot>(expr.value());
             auto term = m_allocator.emplace<NodeTerm>(term_not);
+            return term;
+        }
+        if (auto string_lit = try_consume(TokenType::string_lit)) {
+            auto term_string_lit = m_allocator.emplace<NodeTermStringLit>(string_lit.value());
+            auto term = m_allocator.emplace<NodeTerm>(term_string_lit);
             return term;
         }
         return {};
@@ -526,46 +545,39 @@ public:
                 expr_lhs2->var = expr_lhs->var;
                 auto div = m_allocator.emplace<NodeBinExprDiv>(expr_lhs2, expr_rhs.value());
                 expr->var = div;
-            }
-            else if (type == TokenType::eqeq) {
+            } else if (type == TokenType::eqeq) {
                 expr_lhs2->var = expr_lhs->var;
                 auto eqeq = m_allocator.emplace<NodeBinExprEq>(expr_lhs2, expr_rhs.value());
                 expr->var = eqeq;
-            }
-            else if (type == TokenType::noteq) {
+            } else if (type == TokenType::noteq) {
                 expr_lhs2->var = expr_lhs->var;
                 auto noteq = m_allocator.emplace<NodeBinExprNotEq>(expr_lhs2, expr_rhs.value());
                 expr->var = noteq;
-            }
-            else if (type == TokenType::lt) {
+            } else if (type == TokenType::lt) {
                 expr_lhs2->var = expr_lhs->var;
                 auto lt = m_allocator.emplace<NodeBinExprLt>(expr_lhs2, expr_rhs.value());
                 expr->var = lt;
-            }
-            else if (type == TokenType::gt) {
+            } else if (type == TokenType::gt) {
                 expr_lhs2->var = expr_lhs->var;
                 auto gt = m_allocator.emplace<NodeBinExprGt>(expr_lhs2, expr_rhs.value());
                 expr->var = gt;
-            }
-            else if (type == TokenType::lteq) {
+            } else if (type == TokenType::lteq) {
                 expr_lhs2->var = expr_lhs->var;
                 auto lteq = m_allocator.emplace<NodeBinExprLtEq>(expr_lhs2, expr_rhs.value());
                 expr->var = lteq;
-            }
-            else if (type == TokenType::gteq) {
+            } else if (type == TokenType::gteq) {
                 expr_lhs2->var = expr_lhs->var;
                 auto gteq = m_allocator.emplace<NodeBinExprGtEq>(expr_lhs2, expr_rhs.value());
                 expr->var = gteq;
-            }else if (type==TokenType::and_){
+            } else if (type == TokenType::and_) {
                 expr_lhs2->var = expr_lhs->var;
                 auto and_ = m_allocator.emplace<NodeBinExprAnd>(expr_lhs2, expr_rhs.value());
                 expr->var = and_;
-            }else if (type==TokenType::or_){
+            } else if (type == TokenType::or_) {
                 expr_lhs2->var = expr_lhs->var;
                 auto or_ = m_allocator.emplace<NodeBinExprOr>(expr_lhs2, expr_rhs.value());
                 expr->var = or_;
-            }
-            else {
+            } else {
                 assert(false);  // unreachable
             }
             expr_lhs->var = expr;
@@ -599,31 +611,30 @@ public:
      * - elif (<expr>) { ... } [elif/else...]
      * - else { ... }
      */
-    std::optional<NodeIfPred*> parse_if_pred(){
-        if (try_consume(TokenType::elif)){
+    std::optional<NodeIfPred*> parse_if_pred() {
+        if (try_consume(TokenType::elif)) {
             try_consume_err(TokenType::open_paren);
             const auto elif = m_allocator.alloc<NodeIfPredElif>();
-            if (auto expr = parse_expr()){
-                elif->expr=expr.value();
-            }else{
+            if (auto expr = parse_expr()) {
+                elif->expr = expr.value();
+            } else {
                 error_expected("expression");
             }
             try_consume_err(TokenType::close_paren);
-            if (auto scope = parse_scope()){
+            if (auto scope = parse_scope()) {
                 elif->scope = scope.value();
-            }else{
+            } else {
                 error_expected("scope");
             }
             elif->pred = parse_if_pred();
             auto pred = m_allocator.emplace<NodeIfPred>(elif);
             return pred;
         }
-        if (try_consume(TokenType::else_)){
+        if (try_consume(TokenType::else_)) {
             auto else_ = m_allocator.alloc<NodeIfPredElse>();
-            if (const auto scope = parse_scope()){
+            if (const auto scope = parse_scope()) {
                 else_->scope = scope.value();
-            }
-            else{
+            } else {
                 error_expected("scope");
             }
             auto pred = m_allocator.emplace<NodeIfPred>(else_);
@@ -661,15 +672,33 @@ public:
             return stmt;
         }
 
-
-        // we_haves <ident> = <expr>;
-        if (peek().has_value() && peek().value().type == TokenType::let &&
-                   peek(1).has_value() && peek(1).value().type == TokenType::ident &&
-                   peek(2).has_value() && peek(2).value().type == TokenType::eq) {
+        // we_haves <ident> [: type] = <expr>;
+        if (peek().has_value() && peek().value().type == TokenType::let && peek(1).has_value() &&
+            peek(1).value().type == TokenType::ident && peek(2).has_value() &&
+            (peek(2).value().type == TokenType::eq || peek(2).value().type == TokenType::colon_)) {
             consume();
             auto stmt_let = m_allocator.alloc<NodeStmtLet>();
             stmt_let->ident = consume();
-            consume();
+            // type check
+            if (peek().has_value() && peek().value().type == TokenType::colon_) {
+                consume();  // consume the ':'
+                // next token must be a type keyword
+                if (peek().has_value() && (peek().value().type == TokenType::type_number_ ||
+                                           peek().value().type == TokenType::type_word_ ||
+                                           peek().value().type == TokenType::type_question_ ||
+                                           peek().value().type == TokenType::type_decimal_ ||
+                                           peek().value().type == TokenType::type_letter)) {
+                    stmt_let->type_annotation = consume().type;
+                } else {
+                    error_expected("type annotation (number, word, question, decimal, letter)");
+                }
+            }else{
+                stmt_let->type_annotation = std::nullopt;  // no type annotation
+                // me personally , i dont want to allow a non type declared variable , but i guess i will keep it for now. 
+            }
+
+
+            consume(); // consumes the '='
             if (const auto expr = parse_expr()) {
                 stmt_let->expr = expr.value();
             } else {
@@ -681,15 +710,15 @@ public:
         }
 
         // <ident> = <expr>;
-        if (peek().has_value()&&peek().value().type == TokenType::ident && peek(1).has_value() && peek(1).value().type==TokenType::eq){
-            
+        if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value() &&
+            peek(1).value().type == TokenType::eq) {
             const auto assign = m_allocator.alloc<NodeStmtAssign>();
-            assign->ident=consume();
+            assign->ident = consume();
             consume();
-            if (auto expr = parse_expr()){
-                assign->expr=expr.value();
+            if (auto expr = parse_expr()) {
+                assign->expr = expr.value();
 
-            }else{
+            } else {
                 error_expected("expression");
             }
             try_consume_err(TokenType::semi);
@@ -698,11 +727,11 @@ public:
         }
 
         // <ident>(...); — function call as statement
-        if (peek().has_value() && peek().value().type == TokenType::ident &&
-            peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+        if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value() &&
+            peek(1).value().type == TokenType::open_paren) {
             auto fn_call = m_allocator.alloc<NodeTermFnCall>();
-            fn_call->name = consume(); // ident
-            consume(); // '('
+            fn_call->name = consume();  // ident
+            consume();                  // '('
 
             while (peek().has_value() && peek().value().type != TokenType::close_paren) {
                 auto arg_expr = parse_expr();
@@ -772,7 +801,8 @@ public:
         }
 
         // should i pass arguments ? for now i guess not
-        if (peek().has_value() && peek().value().type == TokenType::print_ && peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+        if (peek().has_value() && peek().value().type == TokenType::print_ && peek(1).has_value() &&
+            peek(1).value().type == TokenType::open_paren) {
             consume();
             consume();
             auto stmt_print = m_allocator.alloc<NodeStmtPrint>();
@@ -788,20 +818,20 @@ public:
         }
 
         // function calling
-        if (peek().has_value() && peek().value().type == TokenType::fn_){
+        if (peek().has_value() && peek().value().type == TokenType::fn_) {
             auto fn_stmt = m_allocator.emplace<NodeStmtFn>();
-            consume(); // consume 'fn'
+            consume();  // consume 'fn'
             // expect ident (function name)
-            if (!peek().has_value() || peek().value().type!=TokenType::ident){
+            if (!peek().has_value() || peek().value().type != TokenType::ident) {
                 error_expected("function name");
             }
             fn_stmt->name = consume();
             // expect open paren
-            if (!peek().has_value() || peek().value().type!=TokenType::open_paren){
+            if (!peek().has_value() || peek().value().type != TokenType::open_paren) {
                 error_expected("open paren");
             }
-            consume(); // consume '('
-            
+            consume();  // consume '('
+
             // parse parameters
             while (peek().has_value() && peek().value().type != TokenType::close_paren) {
                 if (peek().has_value() && peek().value().type == TokenType::ident) {
@@ -813,15 +843,15 @@ public:
                     consume();
                 }
             }
-            consume(); // consume ')'
+            consume();  // consume ')'
             // expect '{'
             auto body = parse_scope();
-            if (!body.has_value()){
+            if (!body.has_value()) {
                 error_expected("function body");
             }
             fn_stmt->body = body.value();
             auto stmt = m_allocator.emplace<NodeStmt>(fn_stmt);
-            return stmt; 
+            return stmt;
         }
 
         return {};
@@ -855,7 +885,7 @@ private:
         if (m_index + offset < 0 || m_index + offset >= m_tokens.size()) {
             return {};
         }
-        return m_tokens.at(m_index+offset);
+        return m_tokens.at(m_index + offset);
     }
 
     /**

@@ -1,15 +1,124 @@
-we_haves y = (10-2*3)/2;
-we_haves x = 7; // first
-if (1){
-    x = 5+10;
-    gives(x);
-}elif (1){
-    gives(68);
-}else{
-    gives(67);
+// ============================================================
+// Precious Language — Comprehensive Showcase
+// ============================================================
+// This file exercises every feature currently implemented.
+// Run with: ./build/precious src/test.precious && ./out
+
+// --- Variables & Type Annotations ---
+we_haves count: number = 42;
+we_haves greeting: word = "hello";
+we_haves inferred_num = 99;
+we_haves inferred_str = "world";
+
+// --- Arithmetic ---
+we_haves a = 10;
+we_haves b = 3;
+say(a + b);         // 13
+say(a - b);         // 7
+say(a * b);         // 30
+say(a / b);         // 3
+say(a + b * 2);     // 16  (precedence: * before +)
+say((a + b) * 2);   // 26  (parens override)
+
+// --- Comparison Operators ---
+say(a == b);        // 0
+say(a != b);        // 1
+say(a > b);         // 1
+say(a < b);         // 0
+say(a >= 10);       // 1
+say(b <= 5);        // 1
+
+// --- Boolean Operators ---
+we_haves x = 5;
+if (x > 0 and x < 10) {
+    say(1);         // prints 1
+}
+if (x == 1 or x == 5) {
+    say(2);         // prints 2
+}
+if (!0) {
+    say(3);         // prints 3
 }
 
-/*
-exit(4)
-multiline comment test
-*/
+// --- String Variables with say ---
+we_haves name: word = "gollum";
+say(name);          // gollum
+we_haves msg = "the precious";
+say(msg);           // the precious
+
+// --- If / Elif / Else ---
+we_haves score = 85;
+if (score >= 90) {
+    say(100);
+} elif (score >= 80) {
+    say(90);        // prints 90
+} elif (score >= 70) {
+    say(80);
+} else {
+    say(0);
+}
+
+// --- While Loop ---
+we_haves i = 0;
+while (i < 5) {
+    i = i + 1;
+}
+say(i);             // 5
+
+// --- Scopes ---
+we_haves outer = 10;
+{
+    we_haves inner = 5;
+    say(outer + inner); // 15
+}
+
+// --- Functions: no params, no return ---
+fn say_hello() {
+    say(42);
+}
+say_hello();        // 42
+
+// --- Functions: with params ---
+fn add(a, b) {
+    say(a + b);
+}
+add(10, 20);        // 30
+
+// --- Functions: return values ---
+fn multiply(a, b) {
+    gives(a * b);
+}
+we_haves product = multiply(6, 7);
+say(product);       // 42
+
+// --- Functions: mixed (void and returning) ---
+fn print_double(x) {
+    say(x * 2);
+}
+fn square(x) {
+    gives(x * x);
+}
+print_double(5);    // 10
+we_haves sq = square(8);
+say(sq);            // 64
+
+// --- Function call in expression ---
+we_haves result = square(3) + square(4);
+say(result);        // 25  (9 + 16)
+
+// --- Functions calling functions ---
+fn double_it(x) {
+    gives(x * 2);
+}
+fn add_doubles(a, b) {
+    gives(double_it(a) + double_it(b));
+}
+we_haves dd = add_doubles(3, 4);
+say(dd);            // 14  (6 + 8)
+
+// --- String variables used with say ---
+we_haves title = "master";
+say(title);         // master
+
+// --- Final exit code ---
+gives(0);

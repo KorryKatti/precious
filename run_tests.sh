@@ -145,6 +145,17 @@ run_test_output "$TESTS_DIR/39_fn_return.precious" "5" 0
 run_test_output "$TESTS_DIR/40_fn_return_mixed.precious" "$(printf '30\n42')" 0
 run_test_output "$TESTS_DIR/41_fn_return_if.precious" "$(printf '20\n30')" 0
 
+# String literals
+run_test_output "$TESTS_DIR/42_string_literal.precious" "$(printf 'hello world\n42')" 0
+
+# Type annotations (Feature 7)
+run_test_output "$TESTS_DIR/43_type_string_explicit.precious" "hi" 0
+run_test_output "$TESTS_DIR/44_type_string_inferred.precious" "hi" 0
+run_test_output "$TESTS_DIR/45_type_number_explicit.precious" "42" 0
+run_test_output "$TESTS_DIR/46_type_number_inferred.precious" "42" 0
+run_test_output "$TESTS_DIR/47_type_mixed.precious" "$(printf '10\nhey')" 0
+run_test_output "$TESTS_DIR/48_type_string_reassign.precious" "b" 0
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

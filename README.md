@@ -38,10 +38,33 @@ The compiler originally emitted x86-64 NASM assembly directly. That works fine f
 
 ### Variables
 
+Declare variables with `we_haves`. Assignment uses `=`.
+
 ```
 we_haves x = 42;
 x = 10;
 ```
+
+### Type Annotations
+
+Optionally annotate variables with a type after `:`. Types are inferred if omitted.
+
+| Precious | C type    | Description |
+|----------|-----------|-------------|
+| `number` | `long`    | 64-bit integers (default) |
+| `word`   | `const char*` | Null-terminated strings |
+| `question` | `long`  | Booleans (0 or 1) |
+| `decimal` | `double` | Floating-point numbers |
+| `letter` | `char`    | Single characters |
+
+```
+we_haves x: number = 5;           // explicit type
+we_haves name: word = "gollum";   // explicit type
+we_haves y = 10;                  // inferred as number
+we_haves msg = "hello";           // inferred as word
+```
+
+The compiler picks the right `printf` format (`%ld` vs `%s`) based on the declared type.
 
 ### Arithmetic
 
@@ -112,12 +135,17 @@ gives(i);
 
 ### Print
 
-`say(expr)` prints the value of `expr` to stdout as an integer.
+`say(expr)` prints the value of `expr` to stdout. Works with integers, string literals, and string variables.
 
 ```
 we_haves x = 42;
-say(x);        // prints 42
-say(x + 8);    // prints 50
+say(x);            // prints 42
+say(x + 8);        // prints 50
+say("hello");      // prints hello
+say("precious");   // prints precious
+
+we_haves msg: word = "gollum";
+say(msg);          // prints gollum
 ```
 
 ### Functions
@@ -158,6 +186,7 @@ The compiler automatically detects whether a function uses `gives` and emits the
 ## Examples
 
 ```
+// math.precious
 we_haves a = 2;
 we_haves b = 3;
 gives(a + b * 4);
@@ -167,6 +196,21 @@ gives(a + b * 4);
 ./build/precious examples/math.precious
 ./out
 echo $?   # prints 14
+```
+
+```
+// greet.precious
+fn greet(name) {
+    say(name);
+}
+
+we_haves msg: word = "precious";
+greet(msg);
+```
+
+```bash
+./build/precious examples/greet.precious
+./out   # prints: precious
 ```
 
 ## Running Tests

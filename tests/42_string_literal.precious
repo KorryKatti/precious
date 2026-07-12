@@ -1,0 +1,2 @@
+say("hello world");
+say(42);

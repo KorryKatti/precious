@@ -59,6 +59,14 @@ enum class TokenType {
     // shiver me timber
     fn_,        /// < function operator ( fn )
     comma_,     /// < comma for functions ( , )
+    string_lit, /// < string literal ( "..." )
+    colon_,     /// < colon for type declaration like a:number = 50;
+    type_number_, /// < int type declaration ( number )
+    type_word_, /// < string type declaration ( word )
+    type_question_, /// < bool type declaration ( question )
+    type_decimal_, /// < float type declaration ( decimal )
+    type_letter, /// < char type declaration ( letter )
+
 };
 
 /**
@@ -99,6 +107,13 @@ inline std::string to_string(const TokenType type){
         case TokenType::print_: return "`say`";
         case TokenType::fn_: return "`fn`";
         case TokenType::comma_: return "`.`";
+        case TokenType::string_lit: return "string_literal";
+        case TokenType::colon_: return "`:`";
+        case TokenType::type_number_: return "number";
+        case TokenType::type_word_: return "word";
+        case TokenType::type_question_: return "question";
+        case TokenType::type_decimal_: return "decimal";
+        case TokenType::type_letter: return "letter";
         default: return "unknown token type";
     }
     assert(false);
@@ -240,6 +255,33 @@ public:
                     buf.clear();
                     continue;
                 }
+                // todo , add in docs to remind people that number and word and others are keywords and they may not use it
+                else if (buf=="number"){
+                    tokens.push_back({.type=TokenType::type_number_, .line = line_count});
+                    buf.clear();
+                    continue;
+                }
+                else if (buf=="word"){
+                    tokens.push_back({.type=TokenType::type_word_, .line = line_count});
+                    buf.clear();
+                    continue;
+                }
+                else if (buf=="question"){
+                    tokens.push_back({.type=TokenType::type_question_, .line = line_count});
+                    buf.clear();
+                    continue;
+                }
+                else if (buf=="decimal"){
+                    tokens.push_back({.type=TokenType::type_decimal_, .line = line_count});
+                    buf.clear();
+                    continue;
+                }
+                else if (buf=="letter"){
+                    tokens.push_back({.type=TokenType::type_letter, .line = line_count});
+                    buf.clear();
+                    continue;
+                }
+                
 
                 // Not a keyword — it's a user-defined identifier
                 else {
@@ -374,12 +416,36 @@ public:
                 tokens.push_back({.type=TokenType::bang, .line = line_count});
                 continue;
             }
+            // colon for type declaration
+            else if (peek().value()==':'){
+                consume();
+                tokens.push_back({.type=TokenType::colon_, .line = line_count});
+                continue;
+            }
             // Newline: advance line counter for error reporting
             else if (peek().value() == '\n') {
                 consume();
                 line_count++;
                 continue;
             }
+
+            // string lieral
+            else if (peek().value() == '"') {
+                consume(); // consume opening quote
+                while (peek().has_value() && peek().value() != '"') {
+                    buf.push_back(consume());
+                }
+                if (peek().has_value() && peek().value() == '"') {
+                    consume(); // consume closing quote
+                    tokens.push_back({.type = TokenType::string_lit, .line = line_count, .value = buf});
+                    buf.clear();
+                    continue;
+                } else {
+                    std::cerr << "[ERROR] Unterminated string literal at line " << line_count << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+            }
+
             // Whitespace (space, tab, etc.): skip silently
             else if (std::isspace(peek().value())) {
                 consume();

@@ -6,8 +6,10 @@
  */
 
 #include <sstream>
-#include <vector>
+#include <string>
+#include <unordered_map>
 #include <variant>
+#include <vector>
 
 #include "parser.hpp"
 
@@ -53,12 +55,16 @@ public:
             void operator()(const NodeTermFnCall* term_fn_call) const {
                 gen.m_output << term_fn_call->name.value.value() << "(";
                 for (size_t i = 0; i < term_fn_call->args.size(); i++) {
-                    if (i > 0) gen.m_output << ", ";
+                    if (i > 0)
+                        gen.m_output << ", ";
                     gen.gen_expr(term_fn_call->args[i]);
                 }
                 gen.m_output << ")";
             }
 
+            void operator()(const NodeTermStringLit* term_string_lit) const {
+                gen.m_output << "\"" << term_string_lit->string_lit.value.value() << "\"";
+            }
         };
         TermVisitor visitor{.gen = *this};
         std::visit(visitor, term->var);
@@ -177,6 +183,7 @@ public:
         m_output << "}\n";
         const size_t pop_count = m_declared.size() - m_declared_scopes.back();
         for (size_t i = 0; i < pop_count; i++) {
+            m_var_types.erase(m_declared.back());
             m_declared.pop_back();
         }
         m_declared_scopes.pop_back();
@@ -232,19 +239,25 @@ public:
 
             void operator()(const NodeStmtLet* stmt_let) const {
                 const std::string& name = stmt_let->ident.value.value();
-                const size_t scope_start = gen.m_declared_scopes.empty()
-                    ? 0 : gen.m_declared_scopes.back();
+                const size_t scope_start =
+                    gen.m_declared_scopes.empty() ? 0 : gen.m_declared_scopes.back();
                 for (size_t i = scope_start; i < gen.m_declared.size(); i++) {
                     if (gen.m_declared[i] == name) {
-                        std::cerr << "[ERROR] We already has it! '"
-                                  << name
+                        std::cerr << "[ERROR] We already has it! '" << name
                                   << "' is already declared, precious! (line "
                                   << stmt_let->ident.line << ")" << std::endl;
                         exit(EXIT_FAILURE);
                     }
                 }
                 gen.m_declared.push_back(name);
-                gen.m_output << "    long " << name << " = ";
+                std::string c_type;
+                if (stmt_let->type_annotation.has_value()) {
+                    c_type = gen.resolve_type(stmt_let->type_annotation.value());
+                } else {
+                    c_type = gen.infer_type(stmt_let->expr);
+                }
+                gen.m_var_types[name] = c_type;
+                gen.m_output << "    " << c_type << " " << name << " = ";
                 gen.gen_expr(stmt_let->expr);
                 gen.m_output << ";\n";
             }
@@ -255,9 +268,7 @@ public:
                 gen.m_output << ";\n";
             }
 
-            void operator()(const NodeScope* scope) const {
-                gen.gen_scope(scope);
-            }
+            void operator()(const NodeScope* scope) const { gen.gen_scope(scope); }
 
             void operator()(const NodeStmtIf* stmt_if) const {
                 gen.m_output << "    if (";
@@ -278,7 +289,11 @@ public:
             }
 
             void operator()(const NodeStmtPrint* stmt_print) const {
-                gen.m_output << "    printf(\"%ld\\n\", ";
+                if (gen.is_string_expr(stmt_print->expr)) {
+                    gen.m_output << "    printf(\"%s\\n\", ";
+                } else {
+                    gen.m_output << "    printf(\"%ld\\n\", ";
+                }
                 gen.gen_expr(stmt_print->expr);
                 gen.m_output << ");\n";
             }
@@ -305,10 +320,10 @@ public:
      * Emits the function name followed by comma-separated arguments in parentheses.
      * Note: This method is currently unused; gen_term() handles function calls directly.
      */
-    void gen_term_call(const NodeTermFnCall* fn_call){
+    void gen_term_call(const NodeTermFnCall* fn_call) {
         m_output << fn_call->name.value.value() << "(";
-        for (size_t i=0;i<fn_call->args.size();i++){
-            if (i>0){
+        for (size_t i = 0; i < fn_call->args.size(); i++) {
+            if (i > 0) {
                 m_output << ", ";
             }
             gen_expr(fn_call->args[i]);
@@ -328,8 +343,9 @@ public:
     void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
         std::string ret_type = has_return(fn->body) ? "long" : "void";
         out << ret_type << " " << fn->name.value.value() << "(";
-        for (size_t i=0;i<fn->params.size();i++){
-            if (i>0) out << ", ";
+        for (size_t i = 0; i < fn->params.size(); i++) {
+            if (i > 0)
+                out << ", ";
             out << "long " << fn->params[i].name.value.value();
         }
 
@@ -366,7 +382,8 @@ public:
                 std::string ret_type = has_return(fn->body) ? "long" : "void";
                 decls << ret_type << " " << fn->name.value.value() << "(";
                 for (size_t i = 0; i < fn->params.size(); i++) {
-                    if (i > 0) decls << ", ";
+                    if (i > 0)
+                        decls << ", ";
                     decls << "long " << fn->params[i].name.value.value();
                 }
                 decls << ");\n";
@@ -393,6 +410,76 @@ public:
     }
 
 private:
+    /**
+     * @brief Resolves a TokenType to its corresponding C type as a string.
+     * @param type The TokenType to resolve.
+     * @return A string representing the C type (e.g., "long", "const char*").
+     *
+     * Used for variable declarations and type annotations in the generated code.
+     */
+    std::string resolve_type(TokenType type) const {
+        switch (type) {
+            case TokenType::type_number_:
+                return "long";
+            case TokenType::type_word_:
+                return "const char*";
+            case TokenType::type_question_:
+                return "long";
+            case TokenType::type_decimal_:
+                return "double";
+            case TokenType::type_letter:
+                return "char";
+            default:
+                return "long";
+        }
+    }
+
+    /**
+     * @brief Infers the C type of an expression based on its AST structure.
+     * @param expr The AST expression node to analyze.
+     * @return A string representing the inferred C type (e.g., "long", "const char*").
+     *
+     * If the expression is a literal, returns the corresponding C type.
+     * If it's an identifier, looks up its declared type in m_var_types.
+     * Defaults to "long" if the type cannot be determined.
+     */
+    std::string infer_type(const NodeExpr* expr) const {
+        if (!std::holds_alternative<NodeTerm*>(expr->var))
+            return "long";
+        auto term = std::get<NodeTerm*>(expr->var);
+        if (std::holds_alternative<NodeTermStringLit*>(term->var))
+            return "const char*";
+        if (std::holds_alternative<NodeTermIntLit*>(term->var))
+            return "long";
+        if (std::holds_alternative<NodeTermIdent*>(term->var)) {
+            auto ident = std::get<NodeTermIdent*>(term->var);
+            auto it = m_var_types.find(ident->ident.value.value());
+            if (it != m_var_types.end())
+                return it->second;
+        }
+        return "long";
+    }
+
+    /**
+     * @brief Checks if an expression is a string literal.
+     * @param expr The expression to check.
+     * @return true if the expression is a NodeTerm containing NodeTermStringLit.
+     */
+    bool is_string_expr(const NodeExpr* expr) const {
+        if (!std::holds_alternative<NodeTerm*>(expr->var))
+            return false;
+        auto term = std::get<NodeTerm*>(expr->var);
+        if (std::holds_alternative<NodeTermStringLit*>(term->var))
+            return true;
+        if (std::holds_alternative<NodeTermIdent*>(term->var)) {
+            auto ident = std::get<NodeTermIdent*>(term->var);
+            auto it = m_var_types.find(ident->ident.value.value());
+            if (it != m_var_types.end() && it->second == "const char*")
+                return true;  // returns true if the identifier is declared as a string type
+        }
+        return false;
+    }
+
     /**
      * @brief Checks if a function body contains a gives (return) statement.
      * @param body The function body scope to search.
@@ -439,7 +526,8 @@ private:
     bool has_return_pred(const NodeIfPred* pred) const {
         if (std::holds_alternative<NodeIfPredElif*>(pred->var)) {
             auto elif = std::get<NodeIfPredElif*>(pred->var);
-            if (has_return(elif->scope)) return true;
+            if (has_return(elif->scope))
+                return true;
             if (elif->pred.has_value()) {
                 return has_return_pred(elif->pred.value());
             }
@@ -449,9 +537,13 @@ private:
         return false;
     }
 
-    const NodeProg m_prog;                 ///< The parsed program AST to generate code from.
-    std::stringstream m_output;            ///< Current output buffer for generated C code.
-    int m_if_count = 0;                    ///< Counter for unique if-statement labels.
-    std::vector<std::string> m_declared;   ///< Stack of declared variable names (for scope tracking).
-    std::vector<size_t> m_declared_scopes; ///< Stack of scope boundaries (indices into m_declared).
+    const NodeProg m_prog;       ///< The parsed program AST to generate code from.
+    std::stringstream m_output;  ///< Current output buffer for generated C code.
+    int m_if_count = 0;          ///< Counter for unique if-statement labels.
+    std::vector<std::string>
+        m_declared;  ///< Stack of declared variable names (for scope tracking).
+    std::vector<size_t>
+        m_declared_scopes;  ///< Stack of scope boundaries (indices into m_declared).
+    std::unordered_map<std::string, std::string>
+        m_var_types;  ///< Map of variable names to their types
 };
