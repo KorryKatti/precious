@@ -126,5 +126,24 @@ say(dd);            // 14  (6 + 8)
 my title = "master";
 say(title);         // master
 
+// --- Arrays ---
+my numbers: number[3] = [10, 20, 30];
+say(numbers[0]);    // 10
+say(numbers[1]);    // 20
+say(numbers[2]);    // 30
+
+// Array assignment
+numbers[1] = 99;
+say(numbers[1]);    // 99
+
+// String arrays
+my words: word[2] = ["hello", "world"];
+say(words[0]);      // hello
+say(words[1]);      // world
+
+// Array with variable index
+my idx: number = 2;
+say(numbers[idx]);    // 30
+
 // --- Final exit code ---
 gives(0);

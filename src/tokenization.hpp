@@ -66,6 +66,8 @@ enum class TokenType {
     type_question_, /// < bool type declaration ( question )
     type_decimal_, /// < float type declaration ( decimal )
     type_letter, /// < char type declaration ( letter )
+    open_square, /// < open square bracket ( [ )
+    close_square, /// < close square bracket ( ] )
 
 };
 
@@ -114,6 +116,8 @@ inline std::string to_string(const TokenType type){
         case TokenType::type_question_: return "question";
         case TokenType::type_decimal_: return "decimal";
         case TokenType::type_letter: return "letter";
+        case TokenType::open_square: return "`[`";
+        case TokenType::close_square: return "`]`";
         default: return "unknown token type";
     }
     assert(false);
@@ -444,6 +448,16 @@ public:
                     std::cerr << "[ERROR] Unterminated string literal at line " << line_count << std::endl;
                     exit(EXIT_FAILURE);
                 }
+            }
+
+            else if (peek().value() == '[') {
+                consume();
+                tokens.push_back({.type = TokenType::open_square, .line = line_count});
+                continue;
+            } else if (peek().value() == ']') {
+                consume();
+                tokens.push_back({.type = TokenType::close_square, .line = line_count});
+                continue;
             }
 
             // Whitespace (space, tab, etc.): skip silently

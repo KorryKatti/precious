@@ -1,0 +1,4 @@
+my arr: number[3] = [10, 20, 30];
+say(arr[0]);
+say(arr[1]);
+say(arr[2]);

@@ -1,0 +1,4 @@
+my arr: number[3] = [1, 2, 3];
+say(arr[1]);
+arr[1] = 99;
+say(arr[1]);

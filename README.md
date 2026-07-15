@@ -187,6 +187,33 @@ say(result);    // prints 5
 
 The compiler automatically detects whether a function uses `gives` and emits the correct return type (`long` for returning functions, `void` otherwise). Functions can call each other regardless of declaration order — the compiler emits forward declarations before `main()` and definitions after it.
 
+### Arrays
+
+Indexed collections of values. Arrays require explicit type annotations.
+
+```
+my numbers: number[3] = [10, 20, 30];
+say(numbers[0]);    // prints 10
+say(numbers[2]);    // prints 30
+
+numbers[1] = 99;
+say(numbers[1]);    // prints 99
+```
+
+String arrays work too:
+
+```
+my words: word[2] = ["hello", "world"];
+say(words[0]);      // prints hello
+```
+
+Use variables as indices:
+
+```
+my i: number = 1;
+say(numbers[i]);    // prints value at index 1
+```
+
 ## Examples
 
 ```

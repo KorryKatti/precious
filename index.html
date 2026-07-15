@@ -223,6 +223,23 @@ say(result);        // prints 42</code></pre>
   <p>Return type is auto-detected. Functions can call each other regardless of declaration order.</p>
 </section>
 
+<section id="arrays">
+  <h2>Arrays</h2>
+  <p>Indexed collections. Require explicit type annotations: <code>type[size]</code>.</p>
+<pre><code>we_haves numbers: number[3] = [10, 20, 30];
+say(numbers[0]);    // prints 10
+say(numbers[2]);    // prints 30
+
+numbers[1] = 99;
+say(numbers[1]);    // prints 99
+
+we_haves words: word[2] = ["hello", "world"];
+say(words[0]);      // prints hello
+
+we_haves i: number = 1;
+say(numbers[i]);    // prints value at index 1</code></pre>
+</section>
+
 <section>
   <h2>Keywords</h2>
   <table>
@@ -235,6 +252,7 @@ say(result);        // prints 42</code></pre>
     <tr><td><code>while</code></td><td>Loop</td></tr>
     <tr><td><code>and</code> / <code>or</code> / <code>!</code></td><td>Boolean logic</td></tr>
     <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
+    <tr><td><code>[</code> <code>]</code></td><td>Array literals and index access</td></tr>
   </table>
 </section>
 

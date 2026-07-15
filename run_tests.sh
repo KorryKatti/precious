@@ -162,6 +162,12 @@ run_test_output "$TESTS_DIR/50_fn_param_numbers.precious" "30" 0
 run_test_output "$TESTS_DIR/51_fn_param_return.precious" "10" 0
 run_test_output "$TESTS_DIR/52_fn_param_string_var.precious" "gollum" 0
 
+# Arrays
+run_test_output "$TESTS_DIR/53_array_literal.precious" "$(printf '10\n20\n30')" 0
+run_test_output "$TESTS_DIR/54_array_assignment.precious" "$(printf '2\n99')" 0
+run_test_output "$TESTS_DIR/55_array_string.precious" "$(printf 'hello\nworld')" 0
+run_test_output "$TESTS_DIR/56_array_variable_index.precious" "20" 0
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

@@ -65,6 +65,25 @@ public:
             void operator()(const NodeTermStringLit* term_string_lit) const {
                 gen.m_output << "\"" << term_string_lit->string_lit.value.value() << "\"";
             }
+
+            // Array literal: [1, 2, 3] -> {1, 2, 3}
+            void operator()(const NodeTermArrayLit* term_array_lit) const {
+                gen.m_output << "{";
+                for (size_t i = 0; i < term_array_lit->elements.size(); i++) {
+                    if (i > 0)
+                        gen.m_output << ", ";
+                    gen.gen_expr(term_array_lit->elements[i]);
+                }
+                gen.m_output << "}";
+            }
+
+            // Array index access: arr[i] -> arr[i]
+            void operator()(const NodeTermArrayIndex* term_array_index) const {
+                gen.gen_expr(term_array_index->ident);
+                gen.m_output << "[";
+                gen.gen_expr(term_array_index->index);
+                gen.m_output << "]";
+            }
         };
         TermVisitor visitor{.gen = *this};
         std::visit(visitor, term->var);
@@ -255,13 +274,22 @@ public:
                 }
                 gen.m_declared.push_back(name);
                 std::string c_type;
+                std::string arr_suffix;
                 if (stmt_let->type_annotation.has_value()) {
                     c_type = gen.resolve_type(stmt_let->type_annotation.value());
+                    // Handle array type suffix: number[] or number[5]
+                    if (stmt_let->is_array) {
+                        if (stmt_let->array_size.has_value()) {
+                            arr_suffix = "[" + stmt_let->array_size.value().value.value() + "]";
+                        } else {
+                            arr_suffix = "[]";
+                        }
+                    }
                 } else {
                     c_type = gen.infer_type(stmt_let->expr);
                 }
                 gen.m_var_types[name] = c_type;
-                gen.m_output << "    " << c_type << " " << name << " = ";
+                gen.m_output << "    " << c_type << " " << name << arr_suffix << " = ";
                 gen.gen_expr(stmt_let->expr);
                 gen.m_output << ";\n";
             }
@@ -309,6 +337,15 @@ public:
             void operator()(const NodeStmtExpr* stmt_expr) const {
                 gen.m_output << "    ";
                 gen.gen_expr(stmt_expr->expr);
+                gen.m_output << ";\n";
+            }
+
+            // Array assignment: arr[i] = val; -> arr[i] = val;
+            void operator()(const NodeStmtArrayAssign* stmt_arr_assign) const {
+                gen.m_output << "    " << stmt_arr_assign->ident.value.value() << "[";
+                gen.gen_expr(stmt_arr_assign->index);
+                gen.m_output << "] = ";
+                gen.gen_expr(stmt_arr_assign->expr);
                 gen.m_output << ";\n";
             }
         };
@@ -498,7 +535,20 @@ private:
             auto ident = std::get<NodeTermIdent*>(term->var);
             auto it = m_var_types.find(ident->ident.value.value());
             if (it != m_var_types.end() && it->second == "const char*")
-                return true;  // returns true if the identifier is declared as a string type
+                return true;
+        }
+        // Array index: arr[i] where arr is const char*[]
+        if (std::holds_alternative<NodeTermArrayIndex*>(term->var)) {
+            auto arr_idx = std::get<NodeTermArrayIndex*>(term->var);
+            if (std::holds_alternative<NodeTerm*>(arr_idx->ident->var)) {
+                auto ident_term = std::get<NodeTerm*>(arr_idx->ident->var);
+                if (std::holds_alternative<NodeTermIdent*>(ident_term->var)) {
+                    auto ident = std::get<NodeTermIdent*>(ident_term->var);
+                    auto it = m_var_types.find(ident->ident.value.value());
+                    if (it != m_var_types.end() && it->second.find("const char*") != std::string::npos)
+                        return true;
+                }
+            }
         }
         return false;
     }

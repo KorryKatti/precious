@@ -228,6 +228,44 @@ struct NodeBinExpr {
 };
 
 /**
+ * @struct NodeTermArrayLit
+ * @brief AST node for an array literal expression.
+ *
+ * Represents: [1, 2, 3] or ["hello", "world"]
+ * The elements vector holds the expressions inside the brackets.
+ * Used in: my arr: number[3] = [1, 2, 3];
+ */
+struct NodeTermArrayLit {
+    std::vector<NodeExpr*> elements;  ///< Expressions for each element in the array
+};
+
+/**
+ * @struct NodeTermArrayIndex
+ * @brief AST node for array index access expression.
+ *
+ * Represents: arr[0] or arr[i + 1]
+ * The ident is the array name, index is the position expression.
+ * Used in: say(arr[0]); or my x = arr[i];
+ */
+struct NodeTermArrayIndex {
+    NodeExpr* ident;  ///< The array variable (wrapped as expression)
+    NodeExpr* index;  ///< The index expression (can be literal, variable, or arithmetic)
+};
+
+/**
+ * @struct NodeStmtArrayAssign
+ * @brief AST node for array element assignment statement.
+ *
+ * Represents: arr[0] = 99; or arr[i] = x + 1;
+ * Separate from NodeStmtAssign because syntax differs: arr[i] = val vs x = val
+ */
+struct NodeStmtArrayAssign {
+    Token ident;      ///< The array variable name
+    NodeExpr* index;  ///< Which element to assign to
+    NodeExpr* expr;   ///< The value to assign
+};
+
+/**
  * @struct NodeTerm
  * @brief AST node for a term (the basic unit of an expression).
  *
@@ -235,7 +273,7 @@ struct NodeBinExpr {
  */
 struct NodeTerm {
     std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*, NodeTermStringLit*,
-                 NodeTermFnCall*>
+                 NodeTermFnCall*, NodeTermArrayLit*, NodeTermArrayIndex*>
         var;
 };
 
@@ -265,12 +303,18 @@ struct NodeStmtExit {
  * @brief AST node for a variable declaration ("my" statement).
  *
  * Usage: my <name> = <expression>;
+ * Usage: my <name>: type = <expression>;
+ * Usage: my <name>: type[size] = <expression>;  // fixed-size array
+ * Usage: my <name>: type[] = <expression>;      // dynamic array
  */
 struct NodeStmtLet {
     Token ident;                               ///< The variable name token.
     NodeExpr* expr;                            ///< The initializer expression.
     std::optional<TokenType> type_annotation;  ///< Optional type annotation (e.g., number, word).
-                                               ///< or nullpoint if not present
+                                               ///< or nullopt if not present
+    bool is_array = false;                     ///< True if this is an array type (e.g., number[])
+    std::optional<Token> array_size;           ///< For fixed-size arrays: number[5] stores the '5' token
+                                               ///< nullopt for dynamic arrays (number[])
 };
 
 struct NodeStmt;
@@ -365,7 +409,7 @@ struct NodeStmtExpr {
  */
 struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*,
-                 NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*>
+                 NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*, NodeStmtArrayAssign*>
         var;
 };
 
@@ -435,8 +479,9 @@ public:
             return term;
         }
         if (peek().has_value() && peek().value().type == TokenType::ident) {
-            // Could be a variable or a function call — peek ahead to decide
+            // Could be a variable, function call, or array index — peek ahead to decide
             if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
+                // Function call: ident(args...)
                 auto fn_call = m_allocator.emplace<NodeTermFnCall>();
                 fn_call->name = consume();  // consume ident
                 consume();                  // consume '('
@@ -459,6 +504,34 @@ public:
                 auto term = m_allocator.emplace<NodeTerm>(fn_call);
                 return term;
             }
+            // Array index access: ident[expr]
+            // Example: arr[0], arr[i+1], arr[myFunc()]
+            // Lookahead: peek(1) checks if '[' follows the identifier
+            if (peek(1).has_value() && peek(1).value().type == TokenType::open_square) {
+                auto arr_index = m_allocator.emplace<NodeTermArrayIndex>();
+                auto ident_token = consume();  // consume the array name (e.g., 'arr')
+                // Create NodeTermIdent, wrap in NodeTerm, then wrap in NodeExpr
+                auto ident_ident = m_allocator.emplace<NodeTermIdent>(ident_token);
+                auto ident_term = m_allocator.emplace<NodeTerm>(ident_ident);
+                arr_index->ident = m_allocator.emplace<NodeExpr>(ident_term);
+                consume();  // consume '['
+
+                // Parse the index expression (can be any expression: literal, variable, arithmetic)
+                if (auto index_expr = parse_expr()) {
+                    arr_index->index = index_expr.value();
+                } else {
+                    error_expected("index expression");
+                }
+
+                // Expect closing ']'
+                if (!peek().has_value() || peek().value().type != TokenType::close_square) {
+                    error_expected("']'");
+                }
+                consume();  // consume ']'
+                auto term = m_allocator.emplace<NodeTerm>(arr_index);
+                return term;
+            }
+            // Normal variable
             auto expr_ident = m_allocator.emplace<NodeTermIdent>(consume());
             auto term = m_allocator.emplace<NodeTerm>(expr_ident);
             return term;
@@ -485,6 +558,27 @@ public:
         if (auto string_lit = try_consume(TokenType::string_lit)) {
             auto term_string_lit = m_allocator.emplace<NodeTermStringLit>(string_lit.value());
             auto term = m_allocator.emplace<NodeTerm>(term_string_lit);
+            return term;
+        }
+        // array literal: [expr, expr, ...]
+        if (peek().has_value() && peek().value().type == TokenType::open_square) {
+            auto arr_lit = m_allocator.emplace<NodeTermArrayLit>();
+            consume();  // consume '['
+            while (peek().has_value() && peek().value().type != TokenType::close_square) {
+                if (auto expr = parse_expr()) {
+                    arr_lit->elements.push_back(expr.value());
+                } else {
+                    error_expected("expression in array literal");
+                }
+                if (peek().has_value() && peek().value().type == TokenType::comma_) {
+                    consume();  // consume ','
+                }
+            }
+            if (!peek().has_value() || peek().value().type != TokenType::close_square) {
+                error_expected("closing square bracket for array literal");
+            }
+            consume();  // consume ']'
+            auto term = m_allocator.emplace<NodeTerm>(arr_lit);
             return term;
         }
         return {};
@@ -674,6 +768,7 @@ public:
         }
 
         // my <ident> [: type] = <expr>;
+        // Also handles array types: my <ident>: type[] = <expr>; or my <ident>: type[size] = <expr>;
         if (peek().has_value() && peek().value().type == TokenType::let && peek(1).has_value() &&
             peek(1).value().type == TokenType::ident && peek(2).has_value() &&
             (peek(2).value().type == TokenType::eq || peek(2).value().type == TokenType::colon_)) {
@@ -690,23 +785,94 @@ public:
                                            peek().value().type == TokenType::type_decimal_ ||
                                            peek().value().type == TokenType::type_letter)) {
                     stmt_let->type_annotation = consume().type;
+                    
+                    // Check for array type suffix: type[] or type[size]
+                    if (peek().has_value() && peek().value().type == TokenType::open_square) {
+                        consume();  // consume '['
+                        stmt_let->is_array = true;
+                        
+                        // Check if dynamic array (type[]) or fixed-size (type[5])
+                        if (peek().has_value() && peek().value().type == TokenType::close_square) {
+                            consume();  // consume ']' — dynamic array
+                        } else if (peek().has_value() && peek().value().type == TokenType::int_lit) {
+                            stmt_let->array_size = consume();  // consume the size (e.g., '5')
+                            // expect ']'
+                            if (!peek().has_value() || peek().value().type != TokenType::close_square) {
+                                error_expected("']'");
+                            }
+                            consume();  // consume ']'
+                        } else {
+                            error_expected("']' or array size");
+                        }
+                    }
                 } else {
                     error_expected("type annotation (number, word, question, decimal, letter)");
                 }
-            }else{
+            } else {
                 stmt_let->type_annotation = std::nullopt;  // no type annotation
-                // me personally , i dont want to allow a non type declared variable , but i guess i will keep it for now. 
             }
 
-
-            consume(); // consumes the '='
+            consume();  // consumes the '='
             if (const auto expr = parse_expr()) {
                 stmt_let->expr = expr.value();
+                // Strict rule: array literals MUST have explicit type annotation
+                if (std::holds_alternative<NodeTerm*>(expr.value()->var)) {
+                    auto term = std::get<NodeTerm*>(expr.value()->var);
+                    if (std::holds_alternative<NodeTermArrayLit*>(term->var)) {
+                        if (!stmt_let->type_annotation.has_value()) {
+                            std::cerr << "[ERROR] Arrays need a type, precious! Use 'my "
+                                      << stmt_let->ident.value.value() << ": number[] = ...' (line "
+                                      << stmt_let->ident.line << ")" << std::endl;
+                            exit(EXIT_FAILURE);
+                        }
+                    }
+                }
             } else {
                 error_expected("expression");
             }
             try_consume_err(TokenType::semi);
             auto stmt = m_allocator.emplace<NodeStmt>(stmt_let);
+            return stmt;
+        }
+
+        // Array assignment: ident[expr] = expr;
+        // Example: arr[0] = 99; arr[i] = x + 1;
+        // Must come BEFORE normal assignment (x = expr;) because we check for '[' after ident
+        // Lookahead: peek(0) = ident, peek(1) = '['
+        if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value() &&
+            peek(1).value().type == TokenType::open_square) {
+            auto arr_assign = m_allocator.emplace<NodeStmtArrayAssign>();
+            arr_assign->ident = consume();  // consume the array name (e.g., 'arr')
+
+            consume();  // consume '['
+            // Parse the index expression (which element to assign to)
+            if (auto index_expr = parse_expr()) {
+                arr_assign->index = index_expr.value();
+            } else {
+                error_expected("index expression");
+            }
+
+            // Expect closing ']'
+            if (!peek().has_value() || peek().value().type != TokenType::close_square) {
+                error_expected("']'");
+            }
+            consume();  // consume ']'
+
+            // Expect '=' assignment operator
+            if (!peek().has_value() || peek().value().type != TokenType::eq) {
+                error_expected("'='");
+            }
+            consume();  // consume '='
+
+            // Parse the value expression (what to assign)
+            if (auto expr = parse_expr()) {
+                arr_assign->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+
+            try_consume_err(TokenType::semi);
+            auto stmt = m_allocator.emplace<NodeStmt>(arr_assign);
             return stmt;
         }
 
@@ -841,14 +1007,16 @@ public:
                     // optional type annotation on param
                     if (peek().has_value() && peek().value().type == TokenType::colon_) {
                         consume();  // consume ':'
-                        if (peek().has_value() && (peek().value().type == TokenType::type_number_ ||
-                                                   peek().value().type == TokenType::type_word_ ||
-                                                   peek().value().type == TokenType::type_question_ ||
-                                                   peek().value().type == TokenType::type_decimal_ ||
-                                                   peek().value().type == TokenType::type_letter)) {
+                        if (peek().has_value() &&
+                            (peek().value().type == TokenType::type_number_ ||
+                             peek().value().type == TokenType::type_word_ ||
+                             peek().value().type == TokenType::type_question_ ||
+                             peek().value().type == TokenType::type_decimal_ ||
+                             peek().value().type == TokenType::type_letter)) {
                             param->type_annotation = consume().type;
                         } else {
-                            error_expected("type annotation (number, word, question, decimal, letter)");
+                            error_expected(
+                                "type annotation (number, word, question, decimal, letter)");
                         }
                     } else {
                         param->type_annotation = std::nullopt;

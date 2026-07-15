@@ -3,7 +3,8 @@
 
 
 int main() {
-    long x = 42;
-    printf("%ld\n", x);
+    long arr[3] = {10, 20, 30};
+    long i = 1;
+    printf("%ld\n", arr[i]);
 }
 
