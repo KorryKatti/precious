@@ -5,14 +5,14 @@
 // Run with: ./build/precious src/test.precious && ./out
 
 // --- Variables & Type Annotations ---
-we_haves count: number = 42;
-we_haves greeting: word = "hello";
-we_haves inferred_num = 99;
-we_haves inferred_str = "world";
+my count: number = 42;
+my greeting: word = "hello";
+my inferred_num = 99;
+my inferred_str = "world";
 
 // --- Arithmetic ---
-we_haves a = 10;
-we_haves b = 3;
+my a = 10;
+my b = 3;
 say(a + b);         // 13
 say(a - b);         // 7
 say(a * b);         // 30
@@ -29,7 +29,7 @@ say(a >= 10);       // 1
 say(b <= 5);        // 1
 
 // --- Boolean Operators ---
-we_haves x = 5;
+my x = 5;
 if (x > 0 and x < 10) {
     say(1);         // prints 1
 }
@@ -41,13 +41,13 @@ if (!0) {
 }
 
 // --- String Variables with say ---
-we_haves name: word = "gollum";
+my name: word = "gollum";
 say(name);          // gollum
-we_haves msg = "the precious";
+my msg = "the precious";
 say(msg);           // the precious
 
 // --- If / Elif / Else ---
-we_haves score = 85;
+my score = 85;
 if (score >= 90) {
     say(100);
 } elif (score >= 80) {
@@ -59,16 +59,16 @@ if (score >= 90) {
 }
 
 // --- While Loop ---
-we_haves i = 0;
+my i = 0;
 while (i < 5) {
     i = i + 1;
 }
 say(i);             // 5
 
 // --- Scopes ---
-we_haves outer = 10;
+my outer = 10;
 {
-    we_haves inner = 5;
+    my inner = 5;
     say(outer + inner); // 15
 }
 
@@ -94,7 +94,7 @@ greet("precious");  // precious
 fn multiply(a, b) {
     gives(a * b);
 }
-we_haves product = multiply(6, 7);
+my product = multiply(6, 7);
 say(product);       // 42
 
 // --- Functions: mixed (void and returning) ---
@@ -105,11 +105,11 @@ fn square(x) {
     gives(x * x);
 }
 print_double(5);    // 10
-we_haves sq = square(8);
+my sq = square(8);
 say(sq);            // 64
 
 // --- Function call in expression ---
-we_haves result = square(3) + square(4);
+my result = square(3) + square(4);
 say(result);        // 25  (9 + 16)
 
 // --- Functions calling functions ---
@@ -119,11 +119,11 @@ fn double_it(x) {
 fn add_doubles(a, b) {
     gives(double_it(a) + double_it(b));
 }
-we_haves dd = add_doubles(3, 4);
+my dd = add_doubles(3, 4);
 say(dd);            // 14  (6 + 8)
 
 // --- String variables used with say ---
-we_haves title = "master";
+my title = "master";
 say(title);         // master
 
 // --- Final exit code ---

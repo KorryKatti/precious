@@ -4,7 +4,7 @@
  *
  * The tokenizer converts raw source code text into a stream of tokens that
  * the parser can consume. It handles:
- * - Keywords: gives, we_haves, if, elif, else
+ * - Keywords: gives, my, if, elif, else
  * - Identifiers and integer literals
  * - Operators: +, -, *, /, =
  * - Delimiters: (, ), {, }, ;
@@ -33,7 +33,7 @@ enum class TokenType {
     open_paren,     ///< Opening parenthesis: (
     close_paren,    ///< Closing parenthesis: )
     ident,          ///< User-defined identifier
-    let,            ///< Keyword: "we_haves" (variable declaration)
+    let,            ///< Keyword: "my" (variable declaration)
     eq,             ///< Assignment operator: =
     plus,           ///< Addition operator: +
     star,           ///< Multiplication operator: *
@@ -82,7 +82,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::open_paren: return "`(`";
         case TokenType::close_paren: return "`)`";
         case TokenType::ident: return "identifier";
-        case TokenType::let: return "`we_haves`";
+        case TokenType::let: return "`my`";
         case TokenType::eq: return "`=`";
         case TokenType::plus: return "`+`";
         case TokenType::star: return "`*`";
@@ -214,7 +214,7 @@ public:
                     tokens.push_back({.type = TokenType::exit, .line = line_count});
                     buf.clear();
                     continue;
-                } else if (buf == "we_haves") {
+                } else if (buf == "my") {
                     tokens.push_back({.type = TokenType::let, .line = line_count});
                     buf.clear();
                     continue;

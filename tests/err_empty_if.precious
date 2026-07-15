@@ -1,4 +1,4 @@
-we_haves x = 5;
+my x = 5;
 if () {
     gives(10);
 }

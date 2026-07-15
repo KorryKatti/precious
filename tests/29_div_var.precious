@@ -1,2 +1,2 @@
-we_haves x = 10;
+my x = 10;
 gives(x / 2);

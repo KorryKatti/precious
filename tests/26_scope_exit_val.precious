@@ -1,5 +1,5 @@
-we_haves a = 10;
+my a = 10;
 {
-    we_haves b = 20;
+    my b = 20;
     gives(a + b);
 }

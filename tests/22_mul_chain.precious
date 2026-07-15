@@ -1,4 +1,4 @@
-we_haves x = 2;
-we_haves y = 3;
-we_haves z = 4;
+my x = 2;
+my y = 3;
+my z = 4;
 gives(x * y * z);

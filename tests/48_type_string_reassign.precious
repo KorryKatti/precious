@@ -1,3 +1,3 @@
-we_haves s = "a";
+my s = "a";
 s = "b";
 say(s);

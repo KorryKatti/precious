@@ -1,6 +1,6 @@
 // Test 1: and operator
-we_haves x = 5;
-we_haves result = 0;
+my x = 5;
+my result = 0;
 if (x > 0 and x < 10) {
     result = result + 1;
 }
@@ -13,7 +13,7 @@ if (!0) {
     result = result + 4;
 }
 // Test 4: not with true value
-we_haves flag = 1;
+my flag = 1;
 if (!flag) {
     result = result + 8;
 } else {

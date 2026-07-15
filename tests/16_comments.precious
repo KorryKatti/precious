@@ -1,5 +1,5 @@
 // this is a single line comment
-we_haves x = 42; // inline comment
+my x = 42; // inline comment
 /* multi
    line
    comment */

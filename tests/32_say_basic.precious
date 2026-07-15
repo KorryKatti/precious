@@ -1,4 +1,4 @@
-we_haves x = 42;
+my x = 42;
 say(x);
 say(x + 8);
 say(100 * 3);

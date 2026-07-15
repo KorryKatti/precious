@@ -6,7 +6,7 @@ fn max(a, b) {
     }
 }
 
-we_haves x = max(10, 20);
-we_haves y = max(30, 15);
+my x = max(10, 20);
+my y = max(30, 15);
 say(x);
 say(y);

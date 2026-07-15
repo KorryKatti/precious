@@ -1,4 +1,4 @@
-we_haves x = 10;
-we_haves s = "hey";
+my x = 10;
+my s = "hey";
 say(x);
 say(s);

@@ -1,7 +1,7 @@
 fn add_five() {
-    we_haves x = 5;
+    my x = 5;
     gives(x);
 }
 
-we_haves result = add_five();
+my result = add_five();
 say(result);

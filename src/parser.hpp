@@ -12,7 +12,7 @@
  * - Integer literals and identifiers
  * - Binary expressions (+, -, *, /)
  * - Parenthesized expressions
- * - Variable declarations (we_haves)
+ * - Variable declarations (my)
  * - Variable assignment
  * - Exit/return statements (gives)
  * - Scoped blocks ({ ... })
@@ -262,9 +262,9 @@ struct NodeStmtExit {
 
 /**
  * @struct NodeStmtLet
- * @brief AST node for a variable declaration ("we_haves" statement).
+ * @brief AST node for a variable declaration ("my" statement).
  *
- * Usage: we_haves <name> = <expression>;
+ * Usage: my <name> = <expression>;
  */
 struct NodeStmtLet {
     Token ident;                               ///< The variable name token.
@@ -650,7 +650,7 @@ public:
      *
      * Supported statement types:
      * - gives <expr>; (exit/return)
-     * - we_haves <name> = <expr>; (variable declaration)
+     * - my <name> = <expr>; (variable declaration)
      * - <name> = <expr>; (variable assignment)
      * - { ... } (scoped block)
      * - if (<expr>) { ... } [elif ...] [else ...]
@@ -673,7 +673,7 @@ public:
             return stmt;
         }
 
-        // we_haves <ident> [: type] = <expr>;
+        // my <ident> [: type] = <expr>;
         if (peek().has_value() && peek().value().type == TokenType::let && peek(1).has_value() &&
             peek(1).value().type == TokenType::ident && peek(2).has_value() &&
             (peek(2).value().type == TokenType::eq || peek(2).value().type == TokenType::colon_)) {

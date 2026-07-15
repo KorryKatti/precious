@@ -1,5 +1,5 @@
-we_haves x = 1;
+my x = 1;
 if (x) {
-    we_haves inner = 99;
+    my inner = 99;
     gives(inner);
 }

@@ -227,7 +227,7 @@ public:
      * @brief Generates C code for a single statement.
      * @param stmt The AST statement node to emit.
      *
-     * Handles: gives (return), we_haves (let), assignment, scopes, if/elif/else,
+     * Handles: gives (return), my (let), assignment, scopes, if/elif/else,
      * while loops, say (printf), function definitions (no-op here), and
      * expression statements (function calls).
      */

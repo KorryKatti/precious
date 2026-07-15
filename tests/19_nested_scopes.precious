@@ -1,8 +1,8 @@
-we_haves x = 1;
+my x = 1;
 {
-    we_haves y = 2;
+    my y = 2;
     {
-        we_haves z = 3;
+        my z = 3;
         gives(x + y + z);
     }
 }

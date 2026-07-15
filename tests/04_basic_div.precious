@@ -1,4 +1,4 @@
-we_haves a = 20;
-we_haves b = 4;
-we_haves c = a / b;
+my a = 20;
+my b = 4;
+my c = a / b;
 gives(c);

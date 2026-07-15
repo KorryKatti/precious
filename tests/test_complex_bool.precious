@@ -1,9 +1,9 @@
 // Complex program: compute GCD using subtraction-based algorithm
 // Tests: comparisons, and/or/not, nested if/elif/else, scopes, arithmetic, say()
 
-we_haves a = 48;
-we_haves b = 18;
-we_haves temp = 0;
+my a = 48;
+my b = 18;
+my temp = 0;
 
 // swap so a >= b
 if (a < b) {
@@ -16,14 +16,14 @@ say(a);
 say(b);
 
 // GCD by repeated subtraction
-we_haves done = 0;
+my done = 0;
 if (b == 0) {
     done = 1;
 }
 if (!done) {
-    we_haves remainder = 0;
+    my remainder = 0;
     // compute a mod b via subtraction loop (unrolled a few times for stress)
-    we_haves counter = 0;
+    my counter = 0;
     if (a >= b and !(a < b)) {
         counter = 1;
     }
@@ -34,7 +34,7 @@ if (!done) {
         counter = counter + 1;
     }
     // verify counter logic: should be 3 if a > b and b > 0
-    we_haves check = 0;
+    my check = 0;
     if (counter == 3) {
         check = 100;
     }

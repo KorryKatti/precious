@@ -1,5 +1,5 @@
 fn print_five() {
-    we_haves x = 5;
+    my x = 5;
     say(x);
 }
 

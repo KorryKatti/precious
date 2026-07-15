@@ -2,6 +2,6 @@ fn emit() {
     say(42);
 }
 
-we_haves x = 10;
+my x = 10;
 say(x);
 emit();

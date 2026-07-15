@@ -1,2 +1,2 @@
-we_haves x = 42;
+my x = 42;
 say(x);

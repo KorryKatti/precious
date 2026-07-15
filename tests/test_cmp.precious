@@ -1,5 +1,5 @@
-we_haves x = 5;
-we_haves result = 0;
+my x = 5;
+my result = 0;
 if (x == 5) {
     result = result + 1;
 }

@@ -1,2 +1,2 @@
-we_haves msg = "hi";
+my msg = "hi";
 say(msg);

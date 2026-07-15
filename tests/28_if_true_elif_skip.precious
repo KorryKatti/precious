@@ -1,4 +1,4 @@
-we_haves x = 1;
+my x = 1;
 if (x) {
     gives(10);
 } elif (x) {

@@ -1,5 +1,5 @@
 fn greet(name: word) {
     say(name);
 }
-we_haves title = "gollum";
+my title = "gollum";
 greet(title);

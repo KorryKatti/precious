@@ -1,4 +1,4 @@
-we_haves a = 2;
-we_haves b = 3;
-we_haves c = 4;
+my a = 2;
+my b = 3;
+my c = 4;
 gives(a + b * c - a);

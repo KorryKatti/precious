@@ -1,4 +1,4 @@
-we_haves a = 100;
-we_haves b = 50;
-we_haves c = 25;
+my a = 100;
+my b = 50;
+my c = 25;
 gives(a - b - c);

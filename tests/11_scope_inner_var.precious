@@ -1,6 +1,6 @@
-we_haves a = 3;
-we_haves b = 7;
+my a = 3;
+my b = 7;
 {
-    we_haves c = a + b;
+    my c = a + b;
     gives(c);
 }

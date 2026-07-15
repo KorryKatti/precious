@@ -2,5 +2,5 @@ fn get_value() {
     gives(42);
 }
 
-we_haves x = get_value();
+my x = get_value();
 say(x);

@@ -1,5 +1,5 @@
 fn double_it(x: number) {
     gives(x * 2);
 }
-we_haves result = double_it(5);
+my result = double_it(5);
 say(result);
