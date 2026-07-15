@@ -11,7 +11,7 @@
 #include <variant>
 #include <vector>
 
-#include "parser.hpp"
+#include "ast.hpp"
 
 class Generator {
 public:
@@ -97,75 +97,22 @@ public:
      * Supports: +, -, *, /, ==, !=, <, >, <=, >=, and, or.
      */
     void gen_bin_expr(const NodeBinExpr* bin_expr) {
-        struct BinExprVisitor {
-            Generator& gen;
-
-            void operator()(const NodeBinExprAdd* add) const {
-                gen.gen_expr(add->lhs);
-                gen.m_output << " + ";
-                gen.gen_expr(add->rhs);
-            }
-            void operator()(const NodeBinExprSub* sub) const {
-                gen.gen_expr(sub->lhs);
-                gen.m_output << " - ";
-                gen.gen_expr(sub->rhs);
-            }
-            void operator()(const NodeBinExprMulti* multi) const {
-                gen.gen_expr(multi->lhs);
-                gen.m_output << " * ";
-                gen.gen_expr(multi->rhs);
-            }
-            void operator()(const NodeBinExprDiv* div) const {
-                gen.gen_expr(div->lhs);
-                gen.m_output << " / ";
-                gen.gen_expr(div->rhs);
-            }
-            void operator()(const NodeBinExprEq* eq) const {
-                gen.gen_expr(eq->lhs);
-                gen.m_output << " == ";
-                gen.gen_expr(eq->rhs);
-            }
-            void operator()(const NodeBinExprNotEq* noteq) const {
-                gen.gen_expr(noteq->lhs);
-                gen.m_output << " != ";
-                gen.gen_expr(noteq->rhs);
-            }
-            void operator()(const NodeBinExprLt* lt) const {
-                gen.gen_expr(lt->lhs);
-                gen.m_output << " < ";
-                gen.gen_expr(lt->rhs);
-            }
-            void operator()(const NodeBinExprGt* gt) const {
-                gen.gen_expr(gt->lhs);
-                gen.m_output << " > ";
-                gen.gen_expr(gt->rhs);
-            }
-            void operator()(const NodeBinExprLtEq* lteq) const {
-                gen.gen_expr(lteq->lhs);
-                gen.m_output << " <= ";
-                gen.gen_expr(lteq->rhs);
-            }
-            void operator()(const NodeBinExprGtEq* gteq) const {
-                gen.gen_expr(gteq->lhs);
-                gen.m_output << " >= ";
-                gen.gen_expr(gteq->rhs);
-            }
-            void operator()(const NodeBinExprAnd* and_) const {
-                gen.gen_expr(and_->lhs);
-                gen.m_output << " && ";
-                gen.gen_expr(and_->rhs);
-            }
-            void operator()(const NodeBinExprOr* or_) const {
-                gen.gen_expr(or_->lhs);
-                gen.m_output << " || ";
-                gen.gen_expr(or_->rhs);
-            }
-            void operator()(const NodeTermParen* term_paren) const {
-                gen.gen_expr(term_paren->expr);
-            }
-        };
-        BinExprVisitor visitor{.gen = *this};
-        std::visit(visitor, bin_expr->var);
+        gen_expr(bin_expr->lhs);
+        switch (bin_expr->op) {
+            case BinOp::Add:   m_output << " + "; break;
+            case BinOp::Sub:   m_output << " - "; break;
+            case BinOp::Mul:   m_output << " * "; break;
+            case BinOp::Div:   m_output << " / "; break;
+            case BinOp::Eq:    m_output << " == "; break;
+            case BinOp::NotEq: m_output << " != "; break;
+            case BinOp::Lt:    m_output << " < "; break;
+            case BinOp::Gt:    m_output << " > "; break;
+            case BinOp::LtEq:  m_output << " <= "; break;
+            case BinOp::GtEq:  m_output << " >= "; break;
+            case BinOp::And:   m_output << " && "; break;
+            case BinOp::Or:    m_output << " || "; break;
+        }
+        gen_expr(bin_expr->rhs);
     }
 
     /**
@@ -352,24 +299,6 @@ public:
 
         StmtVisitor visitor{.gen = *this};
         std::visit(visitor, stmt->var);
-    }
-
-    /**
-     * @brief Generates C code for a function call expression.
-     * @param fn_call The AST function call node to emit.
-     *
-     * Emits the function name followed by comma-separated arguments in parentheses.
-     * Note: This method is currently unused; gen_term() handles function calls directly.
-     */
-    void gen_term_call(const NodeTermFnCall* fn_call) {
-        m_output << fn_call->name.value.value() << "(";
-        for (size_t i = 0; i < fn_call->args.size(); i++) {
-            if (i > 0) {
-                m_output << ", ";
-            }
-            gen_expr(fn_call->args[i]);
-        }
-        m_output << ")";
     }
 
     /**

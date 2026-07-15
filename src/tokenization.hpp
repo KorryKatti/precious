@@ -14,9 +14,11 @@
 
 #ifndef TOKENIZATION_HPP
 #define TOKENIZATION_HPP
+#include <cassert>
 #include <iostream>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #pragma once
 
@@ -124,6 +126,33 @@ inline std::string to_string(const TokenType type){
 }
 
 /**
+ * @brief Maps keyword strings to their TokenTypes.
+ *
+ * Adding a new keyword? Just add one line here — no other code changes needed.
+ * This replaces what used to be a 70-line if/else chain.
+ */
+inline const std::unordered_map<std::string, TokenType>& keywords() {
+    static const std::unordered_map<std::string, TokenType> kw = {
+        {"gives",   TokenType::exit},
+        {"my",      TokenType::let},
+        {"if",      TokenType::if_},
+        {"elif",    TokenType::elif},
+        {"else",    TokenType::else_},
+        {"and",     TokenType::and_},
+        {"or",      TokenType::or_},
+        {"while",   TokenType::while_},
+        {"say",     TokenType::print_},
+        {"fn",      TokenType::fn_},
+        {"number",  TokenType::type_number_},
+        {"word",    TokenType::type_word_},
+        {"question", TokenType::type_question_},
+        {"decimal", TokenType::type_decimal_},
+        {"letter",  TokenType::type_letter},
+    };
+    return kw;
+}
+
+/**
  * @brief Returns the binary operator precedence for a given token type.
  * @param type The token type to check.
  * @return The precedence level (0 for plus/minus, 1 for star/slash), or std::nullopt for non-operators.
@@ -214,84 +243,17 @@ public:
                     buf.push_back(consume());
                 }
                 // Check for reserved keywords
-                if (buf == "gives") {
-                    tokens.push_back({.type = TokenType::exit, .line = line_count});
-                    buf.clear();
-                    continue;
-                } else if (buf == "my") {
-                    tokens.push_back({.type = TokenType::let, .line = line_count});
-                    buf.clear();
-                    continue;
-                } 
-                else if(buf=="if"){
-                    tokens.push_back({.type = TokenType::if_, .line = line_count});
+                const auto& kw = keywords();
+                auto it = kw.find(buf);
+                if (it != kw.end()) {
+                    tokens.push_back({.type = it->second, .line = line_count});
                     buf.clear();
                     continue;
                 }
-                else if (buf=="elif"){
-                    tokens.push_back({.type=TokenType::elif, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                else if (buf == "else"){
-                    tokens.push_back({.type=TokenType::else_, .line = line_count});
-                    buf.clear();
-                    continue;
-
-                }else if (buf=="and"){
-                    tokens.push_back({.type=TokenType::and_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }else if (buf=="or"){
-                    tokens.push_back({.type=TokenType::or_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }else if (buf=="while"){
-                    tokens.push_back({.type=TokenType::while_, .line = line_count});
-                    buf.clear();
-                    continue;
-                } else if (buf=="say"){
-                    tokens.push_back({.type=TokenType::print_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }                 else if (buf=="fn"){
-                    tokens.push_back({.type=TokenType::fn_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                // todo , add in docs to remind people that number and word and others are keywords and they may not use it
-                else if (buf=="number"){
-                    tokens.push_back({.type=TokenType::type_number_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                else if (buf=="word"){
-                    tokens.push_back({.type=TokenType::type_word_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                else if (buf=="question"){
-                    tokens.push_back({.type=TokenType::type_question_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                else if (buf=="decimal"){
-                    tokens.push_back({.type=TokenType::type_decimal_, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                else if (buf=="letter"){
-                    tokens.push_back({.type=TokenType::type_letter, .line = line_count});
-                    buf.clear();
-                    continue;
-                }
-                
 
                 // Not a keyword — it's a user-defined identifier
-                else {
-                    tokens.push_back({.type=TokenType::ident, .line = line_count, .value=buf});
-                    buf.clear();
-                }
+                tokens.push_back({.type=TokenType::ident, .line = line_count, .value=buf});
+                buf.clear();
             }
             // Integer literals: sequence of digits
             else if (std::isdigit(peek().value())) {

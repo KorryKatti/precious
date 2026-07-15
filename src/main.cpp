@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "./generation.hpp"
+#include "./parser.hpp"
 
 /**
  * @brief Main entry point.

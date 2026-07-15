@@ -2,443 +2,21 @@
 
 /**
  * @file parser.hpp
- * @brief Parser and AST node definitions for the Precious programming language.
+ * @brief Recursive descent parser for the Precious programming language.
  *
- * This file defines:
- * 1. AST (Abstract Syntax Tree) node types representing the language grammar
- * 2. A recursive descent parser that converts tokens into an AST
- *
- * The parser uses operator precedence climbing for expressions and supports:
- * - Integer literals and identifiers
- * - Binary expressions (+, -, *, /)
- * - Parenthesized expressions
- * - Variable declarations (my)
- * - Variable assignment
- * - Exit/return statements (gives)
- * - Scoped blocks ({ ... })
- * - If/elif/else control flow
- *
- * Memory management is handled via an ArenaAllocator, which allocates AST nodes
- * in bulk and frees them all when the parser is destroyed.
+ * Converts a token stream into an AST (see ast.hpp for node definitions).
+ * Uses operator precedence climbing for expressions and an ArenaAllocator
+ * for all AST node allocations.
  */
 
 #include <cassert>
 #include <cstdlib>
 #include <optional>
-#include <variant>
 #include <vector>
 
 #include "./arena.hpp"
-#include "tokenization.hpp"
+#include "ast.hpp"
 
-// ============================================================================
-// AST Node Definitions
-// ============================================================================
-
-/**
- * @struct NodeTermIntLit
- * @brief AST node for an integer literal (e.g., 42).
- */
-struct NodeTermIntLit {
-    Token int_lit;  ///< The integer literal token.
-};
-
-/**
- * @struct NodeTermIdent
- * @brief AST node for an identifier reference (e.g., variable name).
- */
-struct NodeTermIdent {
-    Token ident;  ///< The identifier token.
-};
-
-struct NodeExpr;
-
-/**
- * @struct NodeTermParen
- * @brief AST node for a parenthesized expression (e.g., (expr)).
- */
-struct NodeTermParen {
-    NodeExpr* expr;  ///< The expression inside the parentheses.
-};
-
-/**
- * @struct NodeBinExprAdd
- * @brief AST node for addition: lhs + rhs.
- */
-struct NodeBinExprAdd {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprMulti
- * @brief AST node for multiplication: lhs * rhs.
- */
-struct NodeBinExprMulti {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprSub
- * @brief AST node for subtraction: lhs - rhs.
- */
-struct NodeBinExprSub {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprDiv
- * @brief AST node for division: lhs / rhs.
- */
-struct NodeBinExprDiv {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprEq
- * @brief AST node for equality comparison: lhs == rhs.
- */
-struct NodeBinExprEq {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprNotEq
- * @brief AST node for inequality comparison: lhs != rhs.
- */
-struct NodeBinExprNotEq {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprLt
- * @brief AST node for less-than comparison: lhs < rhs.
- */
-struct NodeBinExprLt {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprGt
- * @brief AST node for greater-than comparison: lhs > rhs.
- */
-struct NodeBinExprGt {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprLtEq
- * @brief AST node for less-than-or-equal comparison: lhs <= rhs.
- */
-struct NodeBinExprLtEq {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprGtEq
- * @brief AST node for greater-than-or-equal comparison: lhs >= rhs.
- */
-struct NodeBinExprGtEq {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprAnd
- * @brief AST node for logical AND: lhs and rhs.
- */
-struct NodeBinExprAnd {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprOr
- * @brief AST node for logical OR: lhs or rhs.
- */
-struct NodeBinExprOr {
-    NodeExpr* lhs;  ///< Left-hand side expression.
-    NodeExpr* rhs;  ///< Right-hand side expression.
-};
-
-/**
- * @struct NodeBinExprNot
- * @brief AST node for logical NOT: !expr.
- */
-struct NodeTermNot {
-    NodeExpr* expr;  ///< Expression to negate.
-};
-
-// oh my god bruh
-/**
- * @struct NodeFnParam
- * @brief AST node for param identifier
- */
-struct NodeFnParam {
-    Token name;
-    std::optional<TokenType> type_annotation;
-};
-
-struct NodeScope;
-
-/**
- * @struct NodeTermStringLit
- * @brief AST node for string literal, contains string value
- */
-struct NodeTermStringLit {
-    Token string_lit;  // string literal token
-};
-
-/**
- * @struct NodeStmtFn
- * @brief AST node for function declaration
- */
-struct NodeStmtFn {
-    Token name;                       // function name (ident token)
-    std::vector<NodeFnParam> params;  // function parameters
-    NodeScope* body;                  // the function body
-};
-
-/**
- *   @struct NodeTermFnCall
- *   @brief AST node for function name and args
- */
-struct NodeTermFnCall {
-    Token name;                   // function name to call
-    std::vector<NodeExpr*> args;  // arguments to pass to the function
-};
-
-/**
- * @struct NodeBinExpr
- * @brief AST node for a binary expression (dispatched to specific operation types).
- */
-struct NodeBinExpr {
-    std::variant<NodeBinExprAdd*, NodeBinExprMulti*, NodeBinExprSub*, NodeBinExprDiv*,
-                 NodeBinExprEq*, NodeBinExprNotEq*, NodeBinExprLt*, NodeBinExprGt*,
-                 NodeBinExprLtEq*, NodeBinExprGtEq*, NodeBinExprAnd*, NodeBinExprOr*>
-        var;
-};
-
-/**
- * @struct NodeTermArrayLit
- * @brief AST node for an array literal expression.
- *
- * Represents: [1, 2, 3] or ["hello", "world"]
- * The elements vector holds the expressions inside the brackets.
- * Used in: my arr: number[3] = [1, 2, 3];
- */
-struct NodeTermArrayLit {
-    std::vector<NodeExpr*> elements;  ///< Expressions for each element in the array
-};
-
-/**
- * @struct NodeTermArrayIndex
- * @brief AST node for array index access expression.
- *
- * Represents: arr[0] or arr[i + 1]
- * The ident is the array name, index is the position expression.
- * Used in: say(arr[0]); or my x = arr[i];
- */
-struct NodeTermArrayIndex {
-    NodeExpr* ident;  ///< The array variable (wrapped as expression)
-    NodeExpr* index;  ///< The index expression (can be literal, variable, or arithmetic)
-};
-
-/**
- * @struct NodeStmtArrayAssign
- * @brief AST node for array element assignment statement.
- *
- * Represents: arr[0] = 99; or arr[i] = x + 1;
- * Separate from NodeStmtAssign because syntax differs: arr[i] = val vs x = val
- */
-struct NodeStmtArrayAssign {
-    Token ident;      ///< The array variable name
-    NodeExpr* index;  ///< Which element to assign to
-    NodeExpr* expr;   ///< The value to assign
-};
-
-/**
- * @struct NodeTerm
- * @brief AST node for a term (the basic unit of an expression).
- *
- * A term can be an integer literal, an identifier, or a parenthesized expression.
- */
-struct NodeTerm {
-    std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*, NodeTermStringLit*,
-                 NodeTermFnCall*, NodeTermArrayLit*, NodeTermArrayIndex*>
-        var;
-};
-
-/**
- * @struct NodeExpr
- * @brief AST node for an expression.
- *
- * An expression is either a single term or a binary expression combining two sub-expressions.
- */
-struct NodeExpr {
-    std::variant<NodeTerm*, NodeBinExpr*> var;
-};
-
-/**
- * @struct NodeStmtExit
- * @brief AST node for a "gives" (exit/return) statement.
- *
- * Usage: gives <expression>;
- * The expression is evaluated and used as the exit code.
- */
-struct NodeStmtExit {
-    NodeExpr* expr;  ///< The expression whose value becomes the exit code.
-};
-
-/**
- * @struct NodeStmtLet
- * @brief AST node for a variable declaration ("my" statement).
- *
- * Usage: my <name> = <expression>;
- * Usage: my <name>: type = <expression>;
- * Usage: my <name>: type[size] = <expression>;  // fixed-size array
- * Usage: my <name>: type[] = <expression>;      // dynamic array
- */
-struct NodeStmtLet {
-    Token ident;                               ///< The variable name token.
-    NodeExpr* expr;                            ///< The initializer expression.
-    std::optional<TokenType> type_annotation;  ///< Optional type annotation (e.g., number, word).
-                                               ///< or nullopt if not present
-    bool is_array = false;                     ///< True if this is an array type (e.g., number[])
-    std::optional<Token> array_size;           ///< For fixed-size arrays: number[5] stores the '5' token
-                                               ///< nullopt for dynamic arrays (number[])
-};
-
-struct NodeStmt;
-
-/**
- * @struct NodeScope
- * @brief AST node for a scoped block of statements ({ ... }).
- */
-struct NodeScope {
-    std::vector<NodeStmt*> stmts;  ///< Statements within this scope.
-};
-
-struct NodeIfPred;
-
-/**
- * @struct NodeIfPredElif
- * @brief AST node for an "elif" branch in an if/elif/else chain.
- */
-struct NodeIfPredElif {
-    NodeExpr* expr;                   ///< The elif condition.
-    NodeScope* scope;                 ///< The scope executed if condition is true.
-    std::optional<NodeIfPred*> pred;  ///< Optional subsequent elif/else branch.
-};
-
-/**
- * @struct NodeIfPredElse
- * @brief AST node for an "else" branch (final fallback in if/elif/else chain).
- */
-struct NodeIfPredElse {
-    NodeScope* scope;  ///< The scope executed when no prior conditions matched.
-};
-
-/**
- * @struct NodeIfPred
- * @brief AST node for an if/elif/else predicate chain.
- */
-struct NodeIfPred {
-    std::variant<NodeIfPredElif*, NodeIfPredElse*> var;
-};
-
-/**
- * @struct NodeStmtIf
- * @brief AST node for an if/elif/else statement.
- *
- * Usage: if (<condition>) { ... } elif (<condition>) { ... } else { ... }
- */
-struct NodeStmtIf {
-    NodeExpr* expr{};                 ///< The if condition.
-    NodeScope* scope{};               ///< The scope executed if condition is true.
-    std::optional<NodeIfPred*> pred;  ///< Optional elif/else branches.
-};
-
-/**
- * @struct NodeStmtAssign
- * @brief AST node for variable assignment.
- *
- * Usage: <name> = <expression>;
- */
-struct NodeStmtAssign {
-    Token ident;     ///< The variable name to assign to.
-    NodeExpr* expr;  ///< The expression to assign.
-};
-
-/**
- * @struct NodeStmtWhile
- * @brief AST node for a while loop statement.
- */
-struct NodeStmtWhile {
-    NodeExpr* expr;    ///< The loop condition expression.
-    NodeScope* scope;  ///< The scope executed while the condition is true.
-};
-
-/**
- * @struct NodeStmtPrint
- * @brief AST node for a print statement.
- */
-struct NodeStmtPrint {
-    NodeExpr* expr;  ///< The expression to print.
-};
-
-/**
- * @struct NodeStmtExpr
- * @brief AST node for an expression used as a statement (e.g., function calls).
- */
-struct NodeStmtExpr {
-    NodeExpr* expr;  ///< The expression to evaluate.
-};
-
-/**
- * @struct NodeStmt
- * @brief AST node for a statement (top-level unit of code).
- */
-struct NodeStmt {
-    std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*, NodeStmtAssign*,
-                 NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*, NodeStmtExpr*, NodeStmtArrayAssign*>
-        var;
-};
-
-/**
- * @struct NodeProg
- * @brief AST node for an entire program (a sequence of statements).
- */
-struct NodeProg {
-    std::vector<NodeStmt*> stmts;  ///< Top-level statements in the program.
-};
-
-// ============================================================================
-// Parser
-// ============================================================================
-
-/**
- * @class Parser
- * @brief Recursive descent parser that converts tokens into an AST.
- *
- * The parser consumes a vector of tokens and builds an AST using operator
- * precedence climbing for expressions. It uses an ArenaAllocator for all
- * AST node allocations, ensuring efficient memory management.
- *
- * Usage:
- * @code
- *   Parser parser(std::move(tokens));
- *   auto prog = parser.parse_prog();
- * @endcode
- */
 class Parser {
 public:
     /**
@@ -481,26 +59,7 @@ public:
         if (peek().has_value() && peek().value().type == TokenType::ident) {
             // Could be a variable, function call, or array index — peek ahead to decide
             if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
-                // Function call: ident(args...)
-                auto fn_call = m_allocator.emplace<NodeTermFnCall>();
-                fn_call->name = consume();  // consume ident
-                consume();                  // consume '('
-
-                while (peek().has_value() && peek().value().type != TokenType::close_paren) {
-                    auto arg_expr = parse_expr();
-                    if (!arg_expr.has_value()) {
-                        error_expected("expression");
-                    }
-                    fn_call->args.push_back(arg_expr.value());
-
-                    if (peek().has_value() && peek().value().type == TokenType::comma_) {
-                        consume();  // consume ','
-                    } else {
-                        break;  // no more arguments
-                    }
-                }
-
-                try_consume_err(TokenType::close_paren);  // consume closing paren
+                auto fn_call = parse_fn_call();
                 auto term = m_allocator.emplace<NodeTerm>(fn_call);
                 return term;
             }
@@ -620,62 +179,26 @@ public:
                 error_expected("expression");
             }
 
-            auto expr = m_allocator.emplace<NodeBinExpr>();
-
-            auto expr_lhs2 = m_allocator.emplace<NodeExpr>();
-
-            if (type == TokenType::plus) {
-                expr_lhs2->var = expr_lhs->var;
-                auto add = m_allocator.emplace<NodeBinExprAdd>(expr_lhs2, expr_rhs.value());
-                expr->var = add;
-            } else if (type == TokenType::star) {
-                expr_lhs2->var = expr_lhs->var;
-                auto multi = m_allocator.emplace<NodeBinExprMulti>(expr_lhs2, expr_rhs.value());
-                expr->var = multi;
-            } else if (type == TokenType::minus) {
-                expr_lhs2->var = expr_lhs->var;
-                auto sub = m_allocator.emplace<NodeBinExprSub>(expr_lhs2, expr_rhs.value());
-                expr->var = sub;
-            } else if (type == TokenType::fslash) {
-                expr_lhs2->var = expr_lhs->var;
-                auto div = m_allocator.emplace<NodeBinExprDiv>(expr_lhs2, expr_rhs.value());
-                expr->var = div;
-            } else if (type == TokenType::eqeq) {
-                expr_lhs2->var = expr_lhs->var;
-                auto eqeq = m_allocator.emplace<NodeBinExprEq>(expr_lhs2, expr_rhs.value());
-                expr->var = eqeq;
-            } else if (type == TokenType::noteq) {
-                expr_lhs2->var = expr_lhs->var;
-                auto noteq = m_allocator.emplace<NodeBinExprNotEq>(expr_lhs2, expr_rhs.value());
-                expr->var = noteq;
-            } else if (type == TokenType::lt) {
-                expr_lhs2->var = expr_lhs->var;
-                auto lt = m_allocator.emplace<NodeBinExprLt>(expr_lhs2, expr_rhs.value());
-                expr->var = lt;
-            } else if (type == TokenType::gt) {
-                expr_lhs2->var = expr_lhs->var;
-                auto gt = m_allocator.emplace<NodeBinExprGt>(expr_lhs2, expr_rhs.value());
-                expr->var = gt;
-            } else if (type == TokenType::lteq) {
-                expr_lhs2->var = expr_lhs->var;
-                auto lteq = m_allocator.emplace<NodeBinExprLtEq>(expr_lhs2, expr_rhs.value());
-                expr->var = lteq;
-            } else if (type == TokenType::gteq) {
-                expr_lhs2->var = expr_lhs->var;
-                auto gteq = m_allocator.emplace<NodeBinExprGtEq>(expr_lhs2, expr_rhs.value());
-                expr->var = gteq;
-            } else if (type == TokenType::and_) {
-                expr_lhs2->var = expr_lhs->var;
-                auto and_ = m_allocator.emplace<NodeBinExprAnd>(expr_lhs2, expr_rhs.value());
-                expr->var = and_;
-            } else if (type == TokenType::or_) {
-                expr_lhs2->var = expr_lhs->var;
-                auto or_ = m_allocator.emplace<NodeBinExprOr>(expr_lhs2, expr_rhs.value());
-                expr->var = or_;
-            } else {
-                assert(false);  // unreachable
+            BinOp op;
+            switch (type) {
+                case TokenType::plus:   op = BinOp::Add; break;
+                case TokenType::minus:  op = BinOp::Sub; break;
+                case TokenType::star:   op = BinOp::Mul; break;
+                case TokenType::fslash: op = BinOp::Div; break;
+                case TokenType::eqeq:   op = BinOp::Eq; break;
+                case TokenType::noteq:  op = BinOp::NotEq; break;
+                case TokenType::lt:     op = BinOp::Lt; break;
+                case TokenType::gt:     op = BinOp::Gt; break;
+                case TokenType::lteq:   op = BinOp::LtEq; break;
+                case TokenType::gteq:   op = BinOp::GtEq; break;
+                case TokenType::and_:   op = BinOp::And; break;
+                case TokenType::or_:    op = BinOp::Or; break;
+                default: assert(false);
             }
-            expr_lhs->var = expr;
+            auto expr_lhs2 = m_allocator.emplace<NodeExpr>();
+            expr_lhs2->var = expr_lhs->var;
+            auto bin = m_allocator.emplace<NodeBinExpr>(op, expr_lhs2, expr_rhs.value());
+            expr_lhs->var = bin;
         }
         return expr_lhs;
     }
@@ -896,24 +419,7 @@ public:
         // <ident>(...); — function call as statement
         if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value() &&
             peek(1).value().type == TokenType::open_paren) {
-            auto fn_call = m_allocator.alloc<NodeTermFnCall>();
-            fn_call->name = consume();  // ident
-            consume();                  // '('
-
-            while (peek().has_value() && peek().value().type != TokenType::close_paren) {
-                auto arg_expr = parse_expr();
-                if (!arg_expr.has_value()) {
-                    error_expected("expression");
-                }
-                fn_call->args.push_back(arg_expr.value());
-                if (peek().has_value() && peek().value().type == TokenType::comma_) {
-                    consume();
-                } else {
-                    break;
-                }
-            }
-
-            try_consume_err(TokenType::close_paren);
+            auto fn_call = parse_fn_call();
             try_consume_err(TokenType::semi);
             auto term = m_allocator.emplace<NodeTerm>(fn_call);
             auto expr = m_allocator.emplace<NodeExpr>(term);
@@ -1101,6 +607,31 @@ private:
             return consume();
         }
         return {};
+    }
+
+    // Parses: ident(args...) — expects ident and '(' already peeked
+    // Used by parse_term() and parse_stmt() to avoid duplication
+    NodeTermFnCall* parse_fn_call() {
+        auto fn_call = m_allocator.emplace<NodeTermFnCall>();
+        fn_call->name = consume();  // consume ident
+        consume();                  // consume '('
+
+        while (peek().has_value() && peek().value().type != TokenType::close_paren) {
+            auto arg_expr = parse_expr();
+            if (!arg_expr.has_value()) {
+                error_expected("expression");
+            }
+            fn_call->args.push_back(arg_expr.value());
+
+            if (peek().has_value() && peek().value().type == TokenType::comma_) {
+                consume();
+            } else {
+                break;
+            }
+        }
+
+        try_consume_err(TokenType::close_paren);
+        return fn_call;
     }
 
     const std::vector<Token> m_tokens;  ///< The input token stream.
