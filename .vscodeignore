@@ -1,0 +1,24 @@
+# Build and artifacts
+build/
+.cache/
+.qtcreator/
+.vscode/
+out
+out.asm
+out.c
+out.o
+
+# Source and tests (not needed for highlighting)
+src/
+tests/
+
+# Config files
+.clang-format
+.cmake-format.yaml
+.gitignore
+index.html
+ROADMAP.md
+
+# Scripts
+*.sh
+CMakeLists.txt

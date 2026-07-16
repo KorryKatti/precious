@@ -28,6 +28,9 @@ _deps/
 *.exe
 *.out
 
+# VS Code extension packages
+*.vsix
+
 # Debug files
 *.dSYM/
 *.su

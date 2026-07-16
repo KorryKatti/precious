@@ -1,0 +1,27 @@
+{
+    "name": "precious-lang",
+    "displayName": "Precious Language Support",
+    "description": "Syntax highlighting and language support for Precious (.precious files)",
+    "version": "0.1.0",
+    "engines": {
+        "vscode": "^1.74.0"
+    },
+    "categories": ["Programming Languages"],
+    "contributes": {
+        "languages": [
+            {
+                "id": "precious",
+                "aliases": ["Precious", "precious"],
+                "extensions": [".precious"],
+                "configuration": "./language-configuration.json"
+            }
+        ],
+        "grammars": [
+            {
+                "language": "precious",
+                "scopeName": "source.precious",
+                "path": "./syntaxes/precious.tmLanguage.json"
+            }
+        ]
+    }
+}
