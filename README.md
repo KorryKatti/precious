@@ -38,10 +38,10 @@ The compiler originally emitted x86-64 NASM assembly directly. That works fine f
 
 ### Variables
 
-Declare variables with `we_haves`. Assignment uses `=`.
+Declare variables with `my`. Assignment uses `=`.
 
 ```
-we_haves x = 42;
+my x = 42;
 x = 10;
 ```
 
@@ -58,10 +58,10 @@ Optionally annotate variables with a type after `:`. Types are inferred if omitt
 | `letter` | `char`    | Single characters |
 
 ```
-we_haves x: number = 5;           // explicit type
-we_haves name: word = "gollum";   // explicit type
-we_haves y = 10;                  // inferred as number
-we_haves msg = "hello";           // inferred as word
+my x: number = 5;           // explicit type
+my name: word = "gollum";   // explicit type
+my y = 10;                  // inferred as number
+my msg = "hello";           // inferred as word
 ```
 
 The compiler picks the right `printf` format (`%ld` vs `%s`) based on the declared type.
@@ -69,14 +69,16 @@ The compiler picks the right `printf` format (`%ld` vs `%s`) based on the declar
 ### Arithmetic
 
 ```
-we_haves result = 2 + 3 * 4 - 1;
+my result = 2 + 3 * 4 - 1;
+my negative = -5;
+my combined = -3 + 7;
 gives(result);
 ```
 
 ### If / Elif / Else
 
 ```
-we_haves x = 5;
+my x = 5;
 if (x == 5) {
     gives(10);
 } elif (x > 3) {
@@ -89,9 +91,9 @@ if (x == 5) {
 ### Scopes
 
 ```
-we_haves x = 5;
+my x = 5;
 {
-    we_haves y = 10;
+    my y = 10;
     gives(x + y);
 }
 ```
@@ -105,7 +107,7 @@ we_haves x = 5;
 `and`, `or`, `!` — logical connectives for combining conditions.
 
 ```
-we_haves x = 5;
+my x = 5;
 if (x > 0 and x < 10) {
     gives(1);
 }
@@ -122,7 +124,7 @@ Precedence: `!` (tightest) > `and` > `or` (loosest).
 ### While Loop
 
 ```
-we_haves i = 0;
+my i = 0;
 while (i < 5) {
     i = i + 1;
 }
@@ -138,13 +140,13 @@ gives(i);
 `say(expr)` prints the value of `expr` to stdout. Works with integers, string literals, and string variables.
 
 ```
-we_haves x = 42;
+my x = 42;
 say(x);            // prints 42
 say(x + 8);        // prints 50
 say("hello");      // prints hello
 say("precious");   // prints precious
 
-we_haves msg: word = "gollum";
+my msg: word = "gollum";
 say(msg);          // prints gollum
 ```
 
@@ -181,18 +183,45 @@ fn add(a, b) {
     gives(a + b);
 }
 
-we_haves result = add(2, 3);
+my result = add(2, 3);
 say(result);    // prints 5
 ```
 
 The compiler automatically detects whether a function uses `gives` and emits the correct return type (`long` for returning functions, `void` otherwise). Functions can call each other regardless of declaration order — the compiler emits forward declarations before `main()` and definitions after it.
 
+### Arrays
+
+Indexed collections of values. Arrays require explicit type annotations.
+
+```
+my numbers: number[3] = [10, 20, 30];
+say(numbers[0]);    // prints 10
+say(numbers[2]);    // prints 30
+
+numbers[1] = 99;
+say(numbers[1]);    // prints 99
+```
+
+String arrays work too:
+
+```
+my words: word[2] = ["hello", "world"];
+say(words[0]);      // prints hello
+```
+
+Use variables as indices:
+
+```
+my i: number = 1;
+say(numbers[i]);    // prints value at index 1
+```
+
 ## Examples
 
 ```
 // math.precious
-we_haves a = 2;
-we_haves b = 3;
+my a = 2;
+my b = 3;
 gives(a + b * 4);
 ```
 
@@ -208,7 +237,7 @@ fn greet(name) {
     say(name);
 }
 
-we_haves msg: word = "precious";
+my msg: word = "precious";
 greet(msg);
 ```
 
