@@ -106,6 +106,10 @@ struct NodeTermArrayIndex {
     NodeExpr* index;
 };
 
+struct NodeTermUnaryMinus {
+    NodeExpr* expr;
+};
+
 // ============================================================================
 // Term — wraps all possible term types in a variant
 // ============================================================================
@@ -113,7 +117,7 @@ struct NodeTermArrayIndex {
 struct NodeTerm {
     std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*,
                  NodeTermStringLit*, NodeTermFnCall*, NodeTermArrayLit*,
-                 NodeTermArrayIndex*>
+                 NodeTermArrayIndex*, NodeTermUnaryMinus*>
         var;
 };
 

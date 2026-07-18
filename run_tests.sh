@@ -168,6 +168,20 @@ run_test_output "$TESTS_DIR/54_array_assignment.precious" "$(printf '2\n99')" 0
 run_test_output "$TESTS_DIR/55_array_string.precious" "$(printf 'hello\nworld')" 0
 run_test_output "$TESTS_DIR/56_array_variable_index.precious" "20" 0
 
+# DSA / LeetCode problems
+echo ""
+echo "--- DSA Tests ---"
+run_test_output "$TESTS_DIR/dsa/01_kadane.precious" "6" 6
+run_test_output "$TESTS_DIR/dsa/02_container_most_water.precious" "49" 49
+run_test_output "$TESTS_DIR/dsa/03_best_time_buy_sell.precious" "5" 5
+run_test_output "$TESTS_DIR/dsa/04_climbing_stairs.precious" "8" 8
+run_test_output "$TESTS_DIR/dsa/05_two_sum.precious" "$(printf '0\n1')" 1
+run_test_output "$TESTS_DIR/dsa/06_merge_sorted.precious" "$(printf '1\n2\n2\n3\n5\n6')" 1
+run_test_output "$TESTS_DIR/dsa/07_trapping_rain_water.precious" "6" 6
+run_test_output "$TESTS_DIR/dsa/08_binary_search.precious" "6" 6
+run_test_output "$TESTS_DIR/dsa/09_three_sum.precious" "3" 3
+run_test_output "$TESTS_DIR/dsa/10_plus_one.precious" "$(printf '1\n2\n4')" 1
+
 echo ""
 echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
 

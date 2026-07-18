@@ -1,0 +1,30 @@
+// LeetCode #11: Container With Most Water
+// Find two lines that together with x-axis form container holding most water
+// Expected: 49 (indices 1 and 8, height min(8,7) * width 7 = 49)
+
+my height: number[9] = [1, 8, 6, 2, 5, 4, 8, 3, 7];
+
+my left = 0;
+my right = 8;
+my max_a = 0;
+while (left < right) {
+    my left_h = height[left];
+    my right_h = height[right];
+    my w = right - left;
+    my area = 0;
+    if (left_h < right_h) {
+        area = left_h * w;
+    } else {
+        area = right_h * w;
+    }
+    if (area > max_a) {
+        max_a = area;
+    }
+    if (left_h < right_h) {
+        left = left + 1;
+    } else {
+        right = right - 1;
+    }
+}
+say(max_a);
+gives(max_a);

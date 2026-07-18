@@ -1,0 +1,26 @@
+// LeetCode #53: Maximum Subarray (Kadane's Algorithm)
+// Find contiguous subarray with largest sum
+// Expected: 6 (subarray [4,-1,2,1])
+
+my neg2 = 0 - 2;
+my neg3 = 0 - 3;
+my neg1 = 0 - 1;
+my neg5 = 0 - 5;
+my nums: number[9] = [neg2, 1, neg3, 4, neg1, 2, 1, neg5, 4];
+
+my max_sum = nums[0];
+my curr_sum = nums[0];
+my i = 1;
+while (i < 9) {
+    if (nums[i] > curr_sum + nums[i]) {
+        curr_sum = nums[i];
+    } else {
+        curr_sum = curr_sum + nums[i];
+    }
+    if (curr_sum > max_sum) {
+        max_sum = curr_sum;
+    }
+    i = i + 1;
+}
+say(max_sum);
+gives(max_sum);

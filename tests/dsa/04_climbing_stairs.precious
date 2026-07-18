@@ -1,0 +1,23 @@
+// LeetCode #70: Climbing Stairs
+// Count distinct ways to climb to top (1 or 2 steps at a time)
+// n=5, Expected: 8
+
+fn climb_stairs(n) {
+    if (n <= 2) {
+        gives(n);
+    }
+    my prev2 = 1;
+    my prev1 = 2;
+    my i = 3;
+    while (i <= n) {
+        my curr = prev1 + prev2;
+        prev2 = prev1;
+        prev1 = curr;
+        i = i + 1;
+    }
+    gives(prev1);
+}
+
+my result = climb_stairs(5);
+say(result);
+gives(result);

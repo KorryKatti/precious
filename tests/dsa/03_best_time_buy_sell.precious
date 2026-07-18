@@ -1,0 +1,22 @@
+// LeetCode #121: Best Time to Buy and Sell Stock
+// Find max profit from one buy and one sell
+// Expected: 5 (buy at 1, sell at 6)
+
+my prices: number[6] = [7, 1, 5, 3, 6, 4];
+
+my min_price = prices[0];
+my max_prof = 0;
+my i = 1;
+while (i < 6) {
+    if (prices[i] < min_price) {
+        min_price = prices[i];
+    } else {
+        my profit = prices[i] - min_price;
+        if (profit > max_prof) {
+            max_prof = profit;
+        }
+    }
+    i = i + 1;
+}
+say(max_prof);
+gives(max_prof);

@@ -70,6 +70,8 @@ The compiler picks the right `printf` format (`%ld` vs `%s`) based on the declar
 
 ```
 my result = 2 + 3 * 4 - 1;
+my negative = -5;
+my combined = -3 + 7;
 gives(result);
 ```
 

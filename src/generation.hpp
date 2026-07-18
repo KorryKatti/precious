@@ -84,6 +84,12 @@ public:
                 gen.gen_expr(term_array_index->index);
                 gen.m_output << "]";
             }
+
+            void operator()(const NodeTermUnaryMinus* term_unary_minus) const {
+                gen.m_output << "-(";
+                gen.gen_expr(term_unary_minus->expr);
+                gen.m_output << ")";
+            }
         };
         TermVisitor visitor{.gen = *this};
         std::visit(visitor, term->var);

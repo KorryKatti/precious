@@ -1,0 +1,29 @@
+// LeetCode #88: Merge Sorted Array
+// Merge nums2 into nums1 in-place
+// nums1 = [1,2,3,0,0,0], m=3, nums2 = [2,5,6], n=3
+// Expected: [1,2,2,3,5,6]
+
+my nums1: number[6] = [1, 2, 3, 0, 0, 0];
+my nums2: number[3] = [2, 5, 6];
+my m = 3;
+my n = 3;
+
+my i = m - 1;
+my j = n - 1;
+my k = m + n - 1;
+while (j >= 0) {
+    if (i >= 0 and nums1[i] > nums2[j]) {
+        nums1[k] = nums1[i];
+        i = i - 1;
+    } else {
+        nums1[k] = nums2[j];
+        j = j - 1;
+    }
+    k = k - 1;
+}
+my idx = 0;
+while (idx < m + n) {
+    say(nums1[idx]);
+    idx = idx + 1;
+}
+gives(1);

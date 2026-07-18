@@ -56,6 +56,18 @@ public:
             auto term = m_allocator.emplace<NodeTerm>(term_int_lit);
             return term;
         }
+        // negative handling
+        if (peek().has_value() && peek().value().type == TokenType::minus) {
+            consume();  // consume the '-'
+            auto expr = parse_expr(5);  // parse the expression after the unary minus
+            if (!expr.has_value()) {
+                error_expected("expression after unary minus");
+            }
+            auto term_unary_minus = m_allocator.emplace<NodeTermUnaryMinus>(expr.value());
+            auto term = m_allocator.emplace<NodeTerm>(term_unary_minus);
+            return term;
+        }
+
         if (peek().has_value() && peek().value().type == TokenType::ident) {
             // Could be a variable, function call, or array index — peek ahead to decide
             if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
