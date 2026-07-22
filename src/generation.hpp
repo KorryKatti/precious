@@ -314,25 +314,13 @@ public:
      * @param fn The AST function node to emit.
      * @param out The output stream to write the function definition to.
      *
-     * Emits a C function with return type void, long-typed parameters,
-     * and the function body. Temporarily redirects m_output to capture
-     * the scope's generated code, then writes it to the out stream.
+     * Emits a C function with resolved return type, typed parameters,
+     * and the function body. Params are registered in gen_prog() for
+     * return-type inference; here they are pushed again for scope tracking
+     * within the body and popped on exit.
      */
     void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
-        // Register params first so return-type inference can see array parameter types.
-        for (const auto& param : fn->params) {
-            std::string pname = param.name.value.value();
-            std::string ptype = param.type_annotation.has_value()
-                ? resolve_type(param.type_annotation.value())
-                : "long";
-            if (param.isArray) {
-                ptype += "*";
-                m_array_params.insert(pname);
-            }
-            m_declared.push_back(pname);
-            m_var_types[pname] = ptype;
-        }
-
+        // Params are already registered in gen_prog() for return-type inference.
         std::string ret_type = fn->return_type.has_value()
             ? resolve_type(fn->return_type.value())
             : "long";
@@ -508,6 +496,7 @@ private:
      *
      * If the expression is a literal, returns the corresponding C type.
      * If it's an identifier, looks up its declared type in m_var_types.
+     * If it's a function call, looks up the return type in m_fn_return_types.
      * Defaults to "long" if the type cannot be determined.
      */
     std::string infer_type(const NodeExpr* expr) const {
@@ -522,6 +511,12 @@ private:
             auto ident = std::get<NodeTermIdent*>(term->var);
             auto it = m_var_types.find(ident->ident.value.value());
             if (it != m_var_types.end())
+                return it->second;
+        }
+        if (std::holds_alternative<NodeTermFnCall*>(term->var)) {
+            auto fn_call = std::get<NodeTermFnCall*>(term->var);
+            auto it = m_fn_return_types.find(fn_call->name.value.value());
+            if (it != m_fn_return_types.end())
                 return it->second;
         }
         if (std::holds_alternative<NodeTermArrayIndex*>(term->var)) {
