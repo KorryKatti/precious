@@ -167,6 +167,13 @@ run_test_output "$TESTS_DIR/53_array_literal.precious" "$(printf '10\n20\n30')" 
 run_test_output "$TESTS_DIR/54_array_assignment.precious" "$(printf '2\n99')" 0
 run_test_output "$TESTS_DIR/55_array_string.precious" "$(printf 'hello\nworld')" 0
 run_test_output "$TESTS_DIR/56_array_variable_index.precious" "20" 0
+run_test_output "$TESTS_DIR/58_fn_array_param_simple.precious" "10" 0
+run_test_output "$TESTS_DIR/59_fn_array_param_sum.precious" "20" 0
+run_test_output "$TESTS_DIR/60_fn_array_param_modify.precious" "2" 0
+
+
+# Modulo
+run_test_output "$TESTS_DIR/57_modulo.precious" "$(printf '1\n0\n3')" 0
 
 # DSA / LeetCode problems
 echo ""

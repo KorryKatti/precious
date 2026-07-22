@@ -1,0 +1,5 @@
+fn first(arr: number[]) {
+    gives(arr[0]);
+}
+my nums: number[3] = [10, 20, 30];
+say(first(nums));

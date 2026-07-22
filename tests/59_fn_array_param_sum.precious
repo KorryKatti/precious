@@ -1,0 +1,11 @@
+fn sum(arr: number[], n) {
+    my total = 0;
+    my i = 0;
+    while (i < n) {
+        total = total + arr[i];
+        i = i + 1;
+    }
+    gives(total);
+}
+my nums: number[4] = [2, 4, 6, 8];
+say(sum(nums, 4));

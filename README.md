@@ -216,6 +216,27 @@ my i: number = 1;
 say(numbers[i]);    // prints value at index 1
 ```
 
+### Array Parameters to Functions
+
+Pass arrays as function arguments using `type[]` syntax:
+
+```
+fn sum(arr: number[], n) {
+    my total = 0;
+    my i = 0;
+    while (i < n) {
+        total = total + arr[i];
+        i = i + 1;
+    }
+    gives(total);
+}
+
+my nums: number[3] = [10, 20, 30];
+say(sum(nums, 3));    // prints 60
+```
+
+The compiler passes arrays as pointers to the function (C array decay).
+
 ## Examples
 
 ```
