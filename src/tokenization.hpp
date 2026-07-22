@@ -71,6 +71,7 @@ enum class TokenType {
     open_square, /// < open square bracket ( [ )
     close_square, /// < close square bracket ( ] )
     modulo,      /// < modulo operator ( % )
+    return_arrow, /// < indicats return type of function ( -> )
 
 };
 
@@ -122,6 +123,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::open_square: return "`[`";
         case TokenType::close_square: return "`]`";
         case TokenType::modulo: return "`%`";
+        case TokenType::return_arrow: return "->";
         default: return "unknown token type";
     }
     assert(false);
@@ -356,7 +358,12 @@ public:
                 tokens.push_back({.type = TokenType::plus, .line = line_count});
                 continue;
             }
-            else if (peek().value()=='*'){
+            else if (peek().has_value() && peek().value()=='-' && peek(1).has_value() && peek(1).value()=='>'){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::return_arrow, .line = line_count});
+                continue;
+            } else if (peek().value()=='*'){
                 consume();
                 tokens.push_back({.type=TokenType::star, .line = line_count});
                 continue;

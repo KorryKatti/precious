@@ -144,6 +144,7 @@ run_test_output "$TESTS_DIR/38_fn_params.precious" "5" 0
 run_test_output "$TESTS_DIR/39_fn_return.precious" "5" 0
 run_test_output "$TESTS_DIR/40_fn_return_mixed.precious" "$(printf '30\n42')" 0
 run_test_output "$TESTS_DIR/41_fn_return_if.precious" "$(printf '20\n30')" 0
+run_test_output "$TESTS_DIR/61_fn_return_type_annotation.precious" "hi" 0
 
 # String literals
 run_test_output "$TESTS_DIR/42_string_literal.precious" "$(printf 'hello world\n42')" 0

@@ -187,7 +187,19 @@ my result = add(2, 3);
 say(result);    // prints 5
 ```
 
-The compiler automatically detects whether a function uses `gives` and emits the correct return type (`long` for returning functions, `void` otherwise). Functions can call each other regardless of declaration order — the compiler emits forward declarations before `main()` and definitions after it.
+You can also explicitly annotate a function return type with `->`:
+
+```
+fn greet() -> word {
+    gives("hi");
+}
+
+say(greet());   // prints hi
+```
+
+Supported return types are the same as variable annotations: `number`, `word`, `question`, `decimal`, and `letter`.
+
+The compiler automatically detects whether a function uses `gives` and emits the correct return type (`long` for returning functions, `void` otherwise) when no explicit annotation is provided. Functions can call each other regardless of declaration order — the compiler emits forward declarations before `main()` and definitions after it.
 
 ### Arrays
 

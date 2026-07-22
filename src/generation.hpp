@@ -333,7 +333,9 @@ public:
             m_var_types[pname] = ptype;
         }
 
-        std::string ret_type = infer_return_type(fn->body);
+        std::string ret_type = fn->return_type.has_value()
+            ? resolve_type(fn->return_type.value())
+            : "long";
         out << ret_type << " " << fn->name.value.value() << "(";
         for (size_t i = 0; i < fn->params.size(); i++) {
             if (i > 0)
@@ -409,7 +411,9 @@ public:
                     m_declared.push_back(pname);
                     m_var_types[pname] = ptype;
                 }
-                std::string ret_type = infer_return_type(fn->body);
+                std::string ret_type = fn->return_type.has_value()
+                    ? resolve_type(fn->return_type.value())
+                    : "long";
                 m_fn_return_types[fn->name.value.value()] = ret_type;
                 for (const auto& param : fn->params) {
                     m_var_types.erase(param.name.value.value());
@@ -476,6 +480,25 @@ private:
             default:
                 return "long";
         }
+    }
+
+    std::string resolve_type(const std::string& type) const {
+        if (type == "number") {
+            return "long";
+        }
+        if (type == "word") {
+            return "const char*";
+        }
+        if (type == "question") {
+            return "long";
+        }
+        if (type == "decimal") {
+            return "double";
+        }
+        if (type == "letter") {
+            return "char";
+        }
+        return "long";
     }
 
     /**

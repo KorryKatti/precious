@@ -16,6 +16,7 @@
 
 #include "./arena.hpp"
 #include "ast.hpp"
+#include "tokenization.hpp"
 
 class Parser {
 public:
@@ -559,6 +560,41 @@ public:
                 }
             }
             consume();  // consume ')'
+            // optional return type
+            if (peek().has_value() && peek().value().type == TokenType::return_arrow) {
+                consume();
+                if (peek().has_value() && (peek().value().type == TokenType::type_number_ ||
+                                           peek().value().type == TokenType::type_word_ ||
+                                           peek().value().type == TokenType::type_question_ ||
+                                           peek().value().type == TokenType::type_decimal_ ||
+                                           peek().value().type == TokenType::type_letter)) {
+                    switch (peek().value().type) {
+                        case TokenType::type_number_:
+                            fn_stmt->return_type = "number";
+                            break;
+                        case TokenType::type_word_:
+                            fn_stmt->return_type = "word";
+                            break;
+                        case TokenType::type_question_:
+                            fn_stmt->return_type = "question";
+                            break;
+                        case TokenType::type_decimal_:
+                            fn_stmt->return_type = "decimal";
+                            break;
+                        case TokenType::type_letter:
+                            fn_stmt->return_type = "letter";
+                            break;
+                        default:
+                            break;
+                    }
+                    consume();
+                } else {
+                    error_expected("return type (number, word, question, decimal, letter)");
+                }
+            } else {
+                fn_stmt->return_type = std::nullopt;
+            }
+
             // expect '{'
             auto body = parse_scope();
             if (!body.has_value()) {

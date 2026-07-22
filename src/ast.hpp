@@ -204,6 +204,7 @@ struct NodeStmtExpr {
 struct NodeStmtFn {
     Token name;
     std::vector<NodeFnParam> params;
+    std::optional<std::string> return_type;
     NodeScope* body;
 };
 

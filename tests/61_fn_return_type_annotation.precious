@@ -1,0 +1,5 @@
+fn greet() -> word {
+    gives("hi");
+}
+
+say(greet());
