@@ -239,6 +239,21 @@ say(words[0]);      // prints hello
 
 my i: number = 1;
 say(numbers[i]);    // prints value at index 1</code></pre>
+
+  <h3>Array Parameters</h3>
+  <p>Pass arrays to functions using <code>type[]</code> syntax:</p>
+<pre><code>fn sum(arr: number[], n) {
+    my total = 0;
+    my i = 0;
+    while (i < n) {
+        total = total + arr[i];
+        i = i + 1;
+    }
+    gives(total);
+}
+
+my nums: number[3] = [10, 20, 30];
+say(sum(nums, 3));    // prints 60</code></pre>
 </section>
 
 <section>
