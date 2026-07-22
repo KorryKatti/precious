@@ -119,6 +119,15 @@ fn double_it(x) {
 fn add_doubles(a, b) {
     gives(double_it(a) + double_it(b));
 }
+
+fn printer(arr: word[],n:number) -> word {
+    gives(arr[0]);
+}
+
+my lol: word[3] = ["yara","yara","phonk"];
+my saying = printer(lol,3);
+say(saying);
+
 my dd = add_doubles(3, 4);
 say(dd);            // 14  (6 + 8)
 
