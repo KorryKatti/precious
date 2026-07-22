@@ -197,6 +197,7 @@ public:
                 case TokenType::minus:  op = BinOp::Sub; break;
                 case TokenType::star:   op = BinOp::Mul; break;
                 case TokenType::fslash: op = BinOp::Div; break;
+                case TokenType::modulo: op = BinOp::Mod; break;
                 case TokenType::eqeq:   op = BinOp::Eq; break;
                 case TokenType::noteq:  op = BinOp::NotEq; break;
                 case TokenType::lt:     op = BinOp::Lt; break;
@@ -539,6 +540,18 @@ public:
                     } else {
                         param->type_annotation = std::nullopt;
                     }
+                    if (peek().has_value() && peek().value().type == TokenType::open_square){
+                        consume(); // consume '['
+                        param->isArray = true;
+                        if (peek().has_value() && peek().value().type == TokenType::close_square){
+                            consume();
+                        } // like c, the size of array needs to be passed separately
+                        else {
+                            error_expected("']' for array parameter");
+                        }
+                        // take name of array parameter and add it to the list of parameters
+                    }
+
                     fn_stmt->params.push_back(*param);
                 }
                 if (peek().has_value() && peek().value().type == TokenType::comma_) {

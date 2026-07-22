@@ -57,7 +57,7 @@ struct NodeScope;
  * This enum just tags what operation a NodeBinExpr represents.
  */
 enum class BinOp {
-    Add, Sub, Mul, Div,       // arithmetic
+    Add, Sub, Mul, Div, Mod,    // arithmetic
     Eq, NotEq,                // equality
     Lt, Gt, LtEq, GtEq,      // comparison
     And, Or,                   // logical
@@ -89,6 +89,7 @@ struct NodeTermStringLit {
 
 struct NodeFnParam {
     Token name;
+    bool isArray = false; // used to iundicate if passed paramater is an array.
     std::optional<TokenType> type_annotation;
 };
 

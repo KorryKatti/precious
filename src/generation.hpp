@@ -8,6 +8,7 @@
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
 
@@ -109,6 +110,7 @@ public:
             case BinOp::Sub:   m_output << " - "; break;
             case BinOp::Mul:   m_output << " * "; break;
             case BinOp::Div:   m_output << " / "; break;
+            case BinOp::Mod:   m_output << " % "; break;
             case BinOp::Eq:    m_output << " == "; break;
             case BinOp::NotEq: m_output << " != "; break;
             case BinOp::Lt:    m_output << " < "; break;
@@ -317,7 +319,21 @@ public:
      * the scope's generated code, then writes it to the out stream.
      */
     void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
-        std::string ret_type = has_return(fn->body) ? "long" : "void";
+        // Register params first so return-type inference can see array parameter types.
+        for (const auto& param : fn->params) {
+            std::string pname = param.name.value.value();
+            std::string ptype = param.type_annotation.has_value()
+                ? resolve_type(param.type_annotation.value())
+                : "long";
+            if (param.isArray) {
+                ptype += "*";
+                m_array_params.insert(pname);
+            }
+            m_declared.push_back(pname);
+            m_var_types[pname] = ptype;
+        }
+
+        std::string ret_type = infer_return_type(fn->body);
         out << ret_type << " " << fn->name.value.value() << "(";
         for (size_t i = 0; i < fn->params.size(); i++) {
             if (i > 0)
@@ -325,7 +341,11 @@ public:
             std::string param_type = fn->params[i].type_annotation.has_value()
                 ? resolve_type(fn->params[i].type_annotation.value())
                 : "long";
-            out << param_type << " " << fn->params[i].name.value.value();
+            if (fn->params[i].isArray) {
+                out << param_type << "* " << fn->params[i].name.value.value();
+            } else {
+                out << param_type << " " << fn->params[i].name.value.value();
+            }
         }
 
         out << ")\n";
@@ -338,6 +358,10 @@ public:
             std::string ptype = param.type_annotation.has_value()
                 ? resolve_type(param.type_annotation.value())
                 : "long";
+            if (param.isArray) {
+                ptype += "*";
+                m_array_params.insert(pname);
+            }
             m_declared.push_back(pname);
             m_var_types[pname] = ptype;
         }
@@ -372,7 +396,28 @@ public:
         for (const NodeStmt* stmt : m_prog.stmts) {
             if (std::holds_alternative<NodeStmtFn*>(stmt->var)) {
                 auto fn = std::get<NodeStmtFn*>(stmt->var);
-                std::string ret_type = has_return(fn->body) ? "long" : "void";
+                // Register params in temp context so return-type inference is accurate.
+                for (const auto& param : fn->params) {
+                    std::string pname = param.name.value.value();
+                    std::string ptype = param.type_annotation.has_value()
+                        ? resolve_type(param.type_annotation.value())
+                        : "long";
+                    if (param.isArray) {
+                        ptype += "*";
+                        m_array_params.insert(pname);
+                    }
+                    m_declared.push_back(pname);
+                    m_var_types[pname] = ptype;
+                }
+                std::string ret_type = infer_return_type(fn->body);
+                m_fn_return_types[fn->name.value.value()] = ret_type;
+                for (const auto& param : fn->params) {
+                    m_var_types.erase(param.name.value.value());
+                    if (param.isArray) {
+                        m_array_params.erase(param.name.value.value());
+                    }
+                    m_declared.pop_back();
+                }
                 decls << ret_type << " " << fn->name.value.value() << "(";
                 for (size_t i = 0; i < fn->params.size(); i++) {
                     if (i > 0)
@@ -380,7 +425,11 @@ public:
                     std::string param_type = fn->params[i].type_annotation.has_value()
                         ? resolve_type(fn->params[i].type_annotation.value())
                         : "long";
-                    decls << param_type << " " << fn->params[i].name.value.value();
+                    if (fn->params[i].isArray) {
+                        decls << param_type << "* " << fn->params[i].name.value.value();
+                    } else {
+                        decls << param_type << " " << fn->params[i].name.value.value();
+                    }
                 }
                 decls << ");\n";
                 gen_fn_def(fn, fns);
@@ -452,7 +501,71 @@ private:
             if (it != m_var_types.end())
                 return it->second;
         }
+        if (std::holds_alternative<NodeTermArrayIndex*>(term->var)) {
+            auto arr_idx = std::get<NodeTermArrayIndex*>(term->var);
+            if (std::holds_alternative<NodeTerm*>(arr_idx->ident->var)) {
+                auto ident_term = std::get<NodeTerm*>(arr_idx->ident->var);
+                if (std::holds_alternative<NodeTermIdent*>(ident_term->var)) {
+                    auto ident = std::get<NodeTermIdent*>(ident_term->var);
+                    auto it = m_var_types.find(ident->ident.value.value());
+                    if (it != m_var_types.end()) {
+                        const std::string& base_type = it->second;
+                        if (m_array_params.find(ident->ident.value.value()) != m_array_params.end() &&
+                            base_type.size() >= 1 && base_type.back() == '*') {
+                            return base_type.substr(0, base_type.size() - 1);
+                        }
+                        return base_type;
+                    }
+                }
+            }
+        }
         return "long";
+    }
+
+    std::string infer_return_type(const NodeScope* body) const {
+        for (const NodeStmt* stmt : body->stmts) {
+            if (std::holds_alternative<NodeStmtExit*>(stmt->var)) {
+                auto exit_stmt = std::get<NodeStmtExit*>(stmt->var);
+                return infer_type(exit_stmt->expr);
+            }
+            if (std::holds_alternative<NodeScope*>(stmt->var)) {
+                auto nested = infer_return_type(std::get<NodeScope*>(stmt->var));
+                if (nested != "void")
+                    return nested;
+            }
+            if (std::holds_alternative<NodeStmtIf*>(stmt->var)) {
+                auto if_stmt = std::get<NodeStmtIf*>(stmt->var);
+                auto then_type = infer_return_type(if_stmt->scope);
+                if (then_type != "void")
+                    return then_type;
+                if (if_stmt->pred.has_value()) {
+                    auto pred_type = infer_return_type_pred(if_stmt->pred.value());
+                    if (pred_type != "void")
+                        return pred_type;
+                }
+            }
+            if (std::holds_alternative<NodeStmtWhile*>(stmt->var)) {
+                auto while_type = infer_return_type(std::get<NodeStmtWhile*>(stmt->var)->scope);
+                if (while_type != "void")
+                    return while_type;
+            }
+        }
+        return "void";
+    }
+
+    std::string infer_return_type_pred(const NodeIfPred* pred) const {
+        if (std::holds_alternative<NodeIfPredElif*>(pred->var)) {
+            auto elif = std::get<NodeIfPredElif*>(pred->var);
+            auto then_type = infer_return_type(elif->scope);
+            if (then_type != "void")
+                return then_type;
+            if (elif->pred.has_value()) {
+                return infer_return_type_pred(elif->pred.value());
+            }
+        } else if (std::holds_alternative<NodeIfPredElse*>(pred->var)) {
+            return infer_return_type(std::get<NodeIfPredElse*>(pred->var)->scope);
+        }
+        return "void";
     }
 
     /**
@@ -472,7 +585,13 @@ private:
             if (it != m_var_types.end() && it->second == "const char*")
                 return true;
         }
-        // Array index: arr[i] where arr is const char*[]
+        if (std::holds_alternative<NodeTermFnCall*>(term->var)) {
+            auto fn_call = std::get<NodeTermFnCall*>(term->var);
+            auto it = m_fn_return_types.find(fn_call->name.value.value());
+            if (it != m_fn_return_types.end() && it->second == "const char*")
+                return true;
+        }
+        // Array index: arr[i] where arr is const char*[] or const char**
         if (std::holds_alternative<NodeTermArrayIndex*>(term->var)) {
             auto arr_idx = std::get<NodeTermArrayIndex*>(term->var);
             if (std::holds_alternative<NodeTerm*>(arr_idx->ident->var)) {
@@ -554,4 +673,8 @@ private:
         m_declared_scopes;  ///< Stack of scope boundaries (indices into m_declared).
     std::unordered_map<std::string, std::string>
         m_var_types;  ///< Map of variable names to their types
+    std::unordered_set<std::string>
+        m_array_params;  ///< Names of function parameters passed as arrays
+    std::unordered_map<std::string, std::string>
+        m_fn_return_types;  ///< Map of function names to their return types
 };

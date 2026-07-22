@@ -70,6 +70,7 @@ enum class TokenType {
     type_letter, /// < char type declaration ( letter )
     open_square, /// < open square bracket ( [ )
     close_square, /// < close square bracket ( ] )
+    modulo,      /// < modulo operator ( % )
 
 };
 
@@ -120,6 +121,7 @@ inline std::string to_string(const TokenType type){
         case TokenType::type_letter: return "letter";
         case TokenType::open_square: return "`[`";
         case TokenType::close_square: return "`]`";
+        case TokenType::modulo: return "`%`";
         default: return "unknown token type";
     }
     assert(false);
@@ -179,6 +181,7 @@ inline std::optional<int> bin_prec(const TokenType type){
         return 3;
         case TokenType::star:
         case TokenType::fslash:
+        case TokenType::modulo:
         return 4;
         default:
         return {};
@@ -364,6 +367,10 @@ public:
             }else if (peek().value()=='/'){
                 consume();
                 tokens.push_back({.type=TokenType::fslash, .line = line_count});
+                continue;
+            }else if (peek().value()=='%'){
+                consume();
+                tokens.push_back({.type=TokenType::modulo, .line = line_count});
                 continue;
             }             else if (peek().value()==','){
                 consume();
