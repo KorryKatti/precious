@@ -72,6 +72,9 @@ enum class TokenType {
     close_square, /// < close square bracket ( ] )
     modulo,      /// < modulo operator ( % )
     return_arrow, /// < indicats return type of function ( -> )
+    // 🍆
+    break_,
+    continue_,
 
 };
 
@@ -124,6 +127,9 @@ inline std::string to_string(const TokenType type){
         case TokenType::close_square: return "`]`";
         case TokenType::modulo: return "`%`";
         case TokenType::return_arrow: return "->";
+        case TokenType::break_: return "break";
+        case TokenType::continue_: return "continue";
+
         default: return "unknown token type";
     }
     assert(false);
@@ -152,6 +158,8 @@ inline const std::unordered_map<std::string, TokenType>& keywords() {
         {"question", TokenType::type_question_},
         {"decimal", TokenType::type_decimal_},
         {"letter",  TokenType::type_letter},
+        {"break",  TokenType::break_},
+        {"continue",  TokenType::continue_},
     };
     return kw;
 }

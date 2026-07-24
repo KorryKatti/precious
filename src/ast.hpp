@@ -214,6 +214,13 @@ struct NodeStmtArrayAssign {
     NodeExpr* expr;
 };
 
+struct NodeStmtBreak {
+    // NodeExpr* expr;
+};
+
+struct NodeStmtContinue {
+    // NodeExpr* expr;
+};
 // ============================================================================
 // Statement — wraps all possible statement types in a variant
 // ============================================================================
@@ -221,7 +228,7 @@ struct NodeStmtArrayAssign {
 struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,
                  NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
-                 NodeStmtExpr*, NodeStmtArrayAssign*>
+                 NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*>
         var;
 };
 

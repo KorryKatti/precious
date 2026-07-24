@@ -156,3 +156,34 @@ say(numbers[idx]);    // 30
 
 // --- Final exit code ---
 gives(0);
+
+my o = 0;
+while (o < 100) {
+    if (o == 5) {
+        break;
+    }
+    o = o + 1;
+}
+say(o);
+// Test continue: skip even numbers, only print odds 1,3,5
+my j = 0;
+while (j < 6) {
+    j = j + 1;
+    if (j % 2 == 0) {
+        continue;
+    }
+    say(j);
+}
+// Test break + continue combined: skip evens, break at 9
+my n = 0;
+while (n < 20) {
+    n = n + 1;
+    if (n % 2 == 0) {
+        continue;
+    }
+    if (n == 9) {
+        break;
+    }
+    say(n);
+}
+gives(0);
