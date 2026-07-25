@@ -303,6 +303,14 @@ public:
                 gen.gen_expr(stmt_arr_assign->expr);
                 gen.m_output << ";\n";
             }
+
+            // continue and break
+            void operator()(const NodeStmtBreak*) const {
+                gen.m_output << "    break;\n";
+            }
+            void operator()(const NodeStmtContinue*) const {
+                gen.m_output << "    continue;\n";
+            }
         };
 
         StmtVisitor visitor{.gen = *this};

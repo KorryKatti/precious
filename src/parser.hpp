@@ -153,6 +153,7 @@ public:
             auto term = m_allocator.emplace<NodeTerm>(arr_lit);
             return term;
         }
+
         return {};
     }
 
@@ -504,6 +505,18 @@ public:
             return stmt;
         }
 
+        if (try_consume(TokenType::break_)) {
+            try_consume_err(TokenType::semi);
+            auto stmt = m_allocator.emplace<NodeStmt>(m_allocator.alloc<NodeStmtBreak>());
+            return stmt;
+        }
+
+        if (try_consume(TokenType::continue_)) {
+            try_consume_err(TokenType::semi);
+            auto stmt = m_allocator.emplace<NodeStmt>(m_allocator.alloc<NodeStmtContinue>());
+            return stmt;
+        }
+
         // function calling
         if (peek().has_value() && peek().value().type == TokenType::fn_) {
             auto fn_stmt = m_allocator.emplace<NodeStmtFn>();
@@ -605,6 +618,7 @@ public:
             return stmt;
         }
 
+        
         return {};
     }
 
