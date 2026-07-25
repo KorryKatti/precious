@@ -185,6 +185,28 @@ gives(i);</code></pre>
 </section>
 
 <section>
+  <h2>Break and Continue</h2>
+  <p><code>break</code> exits a while loop early. <code>continue</code> skips to the next iteration.</p>
+<pre><code>my i = 0;
+while (i < 10) {
+    if (i == 5) {
+        break;          // exit the loop
+    }
+    i = i + 1;
+}
+
+my sum = 0;
+my j = 0;
+while (j < 10) {
+    j = j + 1;
+    if (j % 2 == 0) {
+        continue;       // skip even numbers
+    }
+    sum = sum + j;
+}</code></pre>
+</section>
+
+<section>
   <h2>Scopes</h2>
 <pre><code>my x = 5;
 {
@@ -266,6 +288,7 @@ say(sum(nums, 3));    // prints 60</code></pre>
     <tr><td><code>say</code></td><td>Print to stdout</td></tr>
     <tr><td><code>if</code> / <code>elif</code> / <code>else</code></td><td>Conditionals</td></tr>
     <tr><td><code>while</code></td><td>Loop</td></tr>
+    <tr><td><code>break</code> / <code>continue</code></td><td>Loop control</td></tr>
     <tr><td><code>and</code> / <code>or</code> / <code>!</code></td><td>Boolean logic</td></tr>
     <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
     <tr><td><code>[</code> <code>]</code></td><td>Array literals and index access</td></tr>
