@@ -131,6 +131,30 @@ while (i < 5) {
 gives(i);
 ```
 
+### Break and Continue
+
+Use `break` to exit a while loop early, and `continue` to skip to the next iteration.
+
+```
+my i = 0;
+while (i < 10) {
+    if (i == 5) {
+        break;        // exit the loop
+    }
+    i = i + 1;
+}
+
+my sum = 0;
+my j = 0;
+while (j < 10) {
+    j = j + 1;
+    if (j % 2 == 0) {
+        continue;     // skip even numbers
+    }
+    sum = sum + j;
+}
+```
+
 ### Exit Code
 
 `gives(expr)` sets the process exit code to the value of `expr`. Use `echo $?` to check.
