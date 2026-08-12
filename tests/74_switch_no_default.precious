@@ -1,0 +1,8 @@
+my x = 99;
+my result = 0;
+switch (x) {
+    case 1: result = 100;
+    case 2: result = 200;
+}
+say(result);
+gives(0);

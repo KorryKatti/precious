@@ -311,6 +311,25 @@ public:
             void operator()(const NodeStmtContinue*) const {
                 gen.m_output << "    continue;\n";
             }
+
+            void operator()(const NodeStmtSwitch* stmt_switch) const {
+                gen.m_output << "    switch (";
+                gen.gen_expr(stmt_switch->expr);
+                gen.m_output << ") {\n";
+                for (const NodeCase* node_case : stmt_switch->cases) {
+                    gen.m_output << "        case ";
+                    gen.gen_expr(node_case->value);
+                    gen.m_output << ": ";
+                    gen.gen_scope(node_case->body, true);
+                    gen.m_output << "        break;\n";
+                }
+                if (stmt_switch->default_body.has_value()) {
+                    gen.m_output << "        default: ";
+                    gen.gen_scope(stmt_switch->default_body.value(), true);
+                    gen.m_output << "        break;\n";
+                }
+                gen.m_output << "    }\n";
+            }
         };
 
         StmtVisitor visitor{.gen = *this};
@@ -575,6 +594,19 @@ private:
                 if (while_type != "void")
                     return while_type;
             }
+            if (std::holds_alternative<NodeStmtSwitch*>(stmt->var)) {
+                auto switch_stmt = std::get<NodeStmtSwitch*>(stmt->var);
+                for (const NodeCase* node_case : switch_stmt->cases) {
+                    auto case_type = infer_return_type(node_case->body);
+                    if (case_type != "void")
+                        return case_type;
+                }
+                if (switch_stmt->default_body.has_value()) {
+                    auto default_type = infer_return_type(switch_stmt->default_body.value());
+                    if (default_type != "void")
+                        return default_type;
+                }
+            }
         }
         return "void";
     }
@@ -664,6 +696,18 @@ private:
             }
             if (std::holds_alternative<NodeStmtWhile*>(stmt->var)) {
                 if (has_return(std::get<NodeStmtWhile*>(stmt->var)->scope)) {
+                    return true;
+                }
+            }
+            if (std::holds_alternative<NodeStmtSwitch*>(stmt->var)) {
+                auto switch_stmt = std::get<NodeStmtSwitch*>(stmt->var);
+                for (const NodeCase* node_case : switch_stmt->cases) {
+                    if (has_return(node_case->body)) {
+                        return true;
+                    }
+                }
+                if (switch_stmt->default_body.has_value() &&
+                    has_return(switch_stmt->default_body.value())) {
                     return true;
                 }
             }

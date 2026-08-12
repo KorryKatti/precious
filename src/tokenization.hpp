@@ -75,6 +75,9 @@ enum class TokenType {
     // 🍆
     break_,
     continue_,
+    switch_,    /// < switch operator ( switch )
+    case_,      /// < case operator ( case )
+    default_,   /// < default operator ( default )
 
 };
 
@@ -129,6 +132,9 @@ inline std::string to_string(const TokenType type){
         case TokenType::return_arrow: return "->";
         case TokenType::break_: return "break";
         case TokenType::continue_: return "continue";
+        case TokenType::switch_: return "`switch`";
+        case TokenType::case_: return "`case`";
+        case TokenType::default_: return "`default`";
 
         default: return "unknown token type";
     }
@@ -160,6 +166,9 @@ inline const std::unordered_map<std::string, TokenType>& keywords() {
         {"letter",  TokenType::type_letter},
         {"break",  TokenType::break_},
         {"continue",  TokenType::continue_},
+        {"switch", TokenType::switch_},
+        {"case",   TokenType::case_},
+        {"default",TokenType::default_},
     };
     return kw;
 }

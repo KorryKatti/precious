@@ -155,6 +155,24 @@ while (j < 10) {
 }
 ```
 
+### Switch / Case
+
+Match a value against a list of integer constants. There is no fallthrough — each
+`case` runs its own body, then the switch exits. `default` is optional.
+
+```
+my x = 2;
+switch (x) {
+    case 1: say(10);
+    case 2: say(20);
+    case 3: say(30);
+    default: say(99);
+}
+```
+
+Case values must be integer literals. If no case matches and there is no `default`,
+nothing runs. A `default` may appear at most once.
+
 ### Exit Code
 
 `gives(expr)` sets the process exit code to the value of `expr`. Use `echo $?` to check.

@@ -176,6 +176,14 @@ run_test_output "$TESTS_DIR/60_fn_array_param_modify.precious" "2" 0
 # Modulo
 run_test_output "$TESTS_DIR/57_modulo.precious" "$(printf '1\n0\n3')" 0
 
+# Switch / Case
+run_test_output "$TESTS_DIR/71_switch_matching_case.precious" "20" 0
+run_test_output "$TESTS_DIR/72_switch_to_default.precious" "99" 0
+run_test_output "$TESTS_DIR/73_switch_multiple_cases.precious" "300" 0
+run_test_output "$TESTS_DIR/74_switch_no_default.precious" "0" 0
+run_test_output "$TESTS_DIR/75_switch_var_expr.precious" "60" 0
+run_test_output "$TESTS_DIR/76_switch_nested.precious" "20" 0
+
 # DSA / LeetCode problems
 echo ""
 echo "--- DSA Tests ---"

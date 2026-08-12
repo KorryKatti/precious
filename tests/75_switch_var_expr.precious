@@ -1,0 +1,9 @@
+my a = 2;
+my b = 3;
+my x = a * b;
+switch (x) {
+    case 5: say(50);
+    case 6: say(60);
+    default: say(70);
+}
+gives(0);

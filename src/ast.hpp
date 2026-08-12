@@ -218,6 +218,17 @@ struct NodeStmtBreak {
     // NodeExpr* expr;
 };
 
+struct NodeCase {
+    NodeExpr* value;      ///< The case value (must be compile-time constant int).
+    NodeScope* body;      ///< The scope of statements for this case.
+};
+
+struct NodeStmtSwitch {
+    NodeExpr* expr;                            ///< The value to match on.
+    std::vector<NodeCase*> cases;              ///< The case branches.
+    std::optional<NodeScope*> default_body;    ///< Optional default branch.
+};
+
 struct NodeStmtContinue {
     // NodeExpr* expr;
 };
@@ -228,7 +239,8 @@ struct NodeStmtContinue {
 struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,
                  NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
-                 NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*>
+                 NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*,
+                 NodeStmtSwitch*>
         var;
 };
 

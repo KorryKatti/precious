@@ -488,6 +488,73 @@ public:
             return stmt;
         }
 
+        // switch (expr) { case <int>: <stmts> ... default: <stmts> }
+        if (peek().has_value() && peek().value().type == TokenType::switch_) {
+            consume();  // consume 'switch'
+            try_consume_err(TokenType::open_paren);
+            auto stmt_switch = m_allocator.alloc<NodeStmtSwitch>();
+            if (auto expr = parse_expr()) {
+                stmt_switch->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::close_paren);
+            try_consume_err(TokenType::open_curly);
+
+            bool seen_default = false;
+            while (peek().has_value() && peek().value().type != TokenType::close_curly) {
+                if (try_consume(TokenType::case_)) {
+                    auto value_expr = parse_expr();
+                    if (!value_expr.has_value()) {
+                        error_expected("case value");
+                    }
+                    // Case value must be a compile-time constant integer literal.
+                    if (!std::holds_alternative<NodeTerm*>(value_expr.value()->var) ||
+                        !std::holds_alternative<NodeTermIntLit*>(
+                            std::get<NodeTerm*>(value_expr.value()->var)->var)) {
+                        std::cerr << "[ERROR] Case values must be integer literals, precious! (line "
+                                  << peek(-1).value().line << ")" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    try_consume_err(TokenType::colon_);
+                    auto body = m_allocator.alloc<NodeScope>();
+                    while (peek().has_value() && peek().value().type != TokenType::case_ &&
+                           peek().value().type != TokenType::default_ &&
+                           peek().value().type != TokenType::close_curly) {
+                        if (auto stmt = parse_stmt()) {
+                            body->stmts.push_back(stmt.value());
+                        } else {
+                            break;
+                        }
+                    }
+                    auto node_case = m_allocator.emplace<NodeCase>();
+                    node_case->value = value_expr.value();
+                    node_case->body = body;
+                    stmt_switch->cases.push_back(node_case);
+                } else if (try_consume(TokenType::default_)) {
+                    if (seen_default) {
+                        error_expected("only one 'default' per switch");
+                    }
+                    seen_default = true;
+                    try_consume_err(TokenType::colon_);
+                    auto body = m_allocator.alloc<NodeScope>();
+                    while (peek().has_value() && peek().value().type != TokenType::close_curly) {
+                        if (auto stmt = parse_stmt()) {
+                            body->stmts.push_back(stmt.value());
+                        } else {
+                            break;
+                        }
+                    }
+                    stmt_switch->default_body = body;
+                } else {
+                    error_expected("case or default");
+                }
+            }
+            try_consume_err(TokenType::close_curly);
+            auto stmt = m_allocator.emplace<NodeStmt>(stmt_switch);
+            return stmt;
+        }
+
         // should i pass arguments ? for now i guess not
         if (peek().has_value() && peek().value().type == TokenType::print_ && peek(1).has_value() &&
             peek(1).value().type == TokenType::open_paren) {
