@@ -5,5 +5,5 @@ cmake --build build --clean-first 2>&1
 
 echo ""
 echo "Running test..."
-./out
+./test
 echo "Exit code: $?"

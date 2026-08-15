@@ -25,10 +25,10 @@ i might change the theme if it gets annoying ngl idk it was just funny at that t
 cmake -B build
 cmake --build build
 ./build/precious your_file.precious
-./out
+./your_file
 ```
 
-The compiler outputs a Linux ELF binary named `out` (via gcc).
+The compiler outputs a Linux ELF binary named after the input file (e.g., `your_file` from `your_file.precious`).
 
 ### Why C instead of handwritten assembly?
 
@@ -302,7 +302,7 @@ gives(a + b * 4);
 
 ```bash
 ./build/precious examples/math.precious
-./out
+./math
 echo $?   # prints 14
 ```
 
@@ -318,7 +318,7 @@ greet(msg);
 
 ```bash
 ./build/precious examples/greet.precious
-./out   # prints: precious
+./greet   # prints: precious
 ```
 
 ## Running Tests

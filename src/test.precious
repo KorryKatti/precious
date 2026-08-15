@@ -2,7 +2,7 @@
 // Precious Language — Comprehensive Showcase
 // ============================================================
 // This file exercises every feature currently implemented.
-// Run with: ./build/precious src/test.precious && ./out
+// Run with: ./build/precious src/test.precious && ./test
 
 // --- Variables & Type Annotations ---
 my count: number = 42;

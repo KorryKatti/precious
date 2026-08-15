@@ -1,6 +1,6 @@
 # Build directories
 build/
-out/
+out
 cmake-build-*/
 
 # CMake generated files
@@ -49,7 +49,11 @@ _deps/
 # OS files
 .DS_Store
 Thumbs.db
-out
-ROADMAP.md
-ROADMAP.md
+
+# Generated test binaries (no extension, in project root)
+/[0-9]*
+/test
+/test.c
+
+# Untracked
 ROADMAP.md

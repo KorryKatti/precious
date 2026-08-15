@@ -12,7 +12,7 @@
  * Usage:
  *   precious <input.precious>
  *
- * The compiler produces an executable named "out" in the current directory.
+ * The compiler produces an executable named after the input file (e.g., "foo" from "foo.precious").
  */
 
 #include <fstream>
@@ -36,8 +36,8 @@
  * 3. Tokenizes the source code into a token stream
  * 4. Parses tokens into an AST
  * 5. Generates C source code from the AST
- * 6. Writes C code to out.c
- * 7. Compiles out.c with gcc to produce the final executable
+ * 6. Writes C code to <basename>.c
+ * 7. Compiles <basename>.c with gcc to produce the final executable
  */
 int main(int argc, char* argv[])
 {
@@ -66,13 +66,18 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
+    std::string inputPath(argv[1]);
+    std::string baseName = inputPath.substr(inputPath.rfind('/') + 1);
+    baseName = baseName.substr(0, baseName.rfind('.'));
+
     {
         Generator generator(prog.value());
-        std::fstream file("out.c", std::ios::out);
+        std::fstream file(baseName + ".c", std::ios::out);
         file << generator.gen_prog();
     }
 
-    system("gcc -o out out.c -w");
+    std::string cmd = "gcc -o " + baseName + " " + baseName + ".c -w";
+    system(cmd.c_str());
 
     return EXIT_SUCCESS;
 }

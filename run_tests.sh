@@ -19,7 +19,7 @@ run_test() {
     fi
 
     set +e
-    ./out > /dev/null 2>&1
+    ./$name > /dev/null 2>&1
     local actual=$?
     set -e
 
@@ -47,7 +47,7 @@ run_test_output() {
 
     set +e
     local actual_output
-    actual_output=$(./out 2>&1)
+    actual_output=$(./$name 2>&1)
     local actual_exit=$?
     set -e
 
