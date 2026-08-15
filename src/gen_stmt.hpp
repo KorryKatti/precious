@@ -88,6 +88,10 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
             gen.m_output << "    " << c_type << " " << name << arr_suffix << " = ";
             gen.gen_expr(stmt_let->expr);
             gen.m_output << ";\n";
+            // Track array size for for-each
+            if (stmt_let->is_array && stmt_let->array_size.has_value()) {
+                gen.m_array_sizes[name] = std::stoi(stmt_let->array_size.value().value.value());
+            }
         }
 
         void operator()(const NodeStmtAssign* stmt_assign) const {
@@ -114,6 +118,80 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
             gen.gen_expr(stmt_while->expr);
             gen.m_output << ")";
             gen.gen_scope(stmt_while->scope, true);
+        }
+
+        void operator()(const NodeStmtFor* stmt_for) const {
+            gen.m_output << "    for (";
+            // Init
+            if (stmt_for->init != nullptr) {
+                if (std::holds_alternative<NodeStmtLet*>(stmt_for->init->var)) {
+                    auto let = std::get<NodeStmtLet*>(stmt_for->init->var);
+                    gen.m_output << gen.resolve_type(let->type_annotation.value_or(TokenType::type_number_))
+                                 << " " << let->ident.value.value() << " = ";
+                    gen.gen_expr(let->expr);
+                } else if (std::holds_alternative<NodeStmtAssign*>(stmt_for->init->var)) {
+                    auto assign = std::get<NodeStmtAssign*>(stmt_for->init->var);
+                    gen.m_output << assign->ident.value.value() << " = ";
+                    gen.gen_expr(assign->expr);
+                }
+            }
+            gen.m_output << "; ";
+            // Condition
+            if (stmt_for->condition != nullptr) {
+                gen.gen_expr(stmt_for->condition);
+            }
+            gen.m_output << "; ";
+            // Update
+            if (stmt_for->update != nullptr) {
+                if (std::holds_alternative<NodeStmtAssign*>(stmt_for->update->var)) {
+                    auto assign = std::get<NodeStmtAssign*>(stmt_for->update->var);
+                    gen.m_output << assign->ident.value.value() << " = ";
+                    gen.gen_expr(assign->expr);
+                }
+            }
+            gen.m_output << ")";
+            gen.gen_scope(stmt_for->body, true);
+        }
+
+        void operator()(const NodeStmtForEach* stmt_foreach) const {
+            // Get array name and look up its size
+            std::string arr_name;
+            if (std::holds_alternative<NodeTerm*>(stmt_foreach->array->var)) {
+                auto term = std::get<NodeTerm*>(stmt_foreach->array->var);
+                if (std::holds_alternative<NodeTermIdent*>(term->var)) {
+                    arr_name = std::get<NodeTermIdent*>(term->var)->ident.value.value();
+                }
+            }
+            int arr_size = 0;
+            auto size_it = gen.m_array_sizes.find(arr_name);
+            if (size_it != gen.m_array_sizes.end()) {
+                arr_size = size_it->second;
+            } else {
+                std::cerr << "[ERROR] Cannot determine array size for '" << arr_name
+                          << "' in for-each, precious! Use 'my arr: type[N] = ...' (line "
+                          << stmt_foreach->element.line << ")" << std::endl;
+                exit(EXIT_FAILURE);
+            }
+
+            // Determine element type from array type
+            std::string elem_type = "long";
+            auto type_it = gen.m_var_types.find(arr_name);
+            if (type_it != gen.m_var_types.end()) {
+                elem_type = type_it->second;
+                // Remove array suffix if present (e.g., "long[3]" -> "long")
+                auto bracket_pos = elem_type.find('[');
+                if (bracket_pos != std::string::npos) {
+                    elem_type = elem_type.substr(0, bracket_pos);
+                }
+            }
+
+            gen.m_output << "    for (long _i = 0; _i < " << arr_size << "; _i++) {\n";
+            gen.m_output << "        " << elem_type << " " << stmt_foreach->element.value.value()
+                         << " = " << arr_name << "[_i];\n";
+            for (const NodeStmt* stmt : stmt_foreach->body->stmts) {
+                gen.gen_stmt(stmt);
+            }
+            gen.m_output << "    }\n";
         }
 
         void operator()(const NodeStmtPrint* stmt_print) const {

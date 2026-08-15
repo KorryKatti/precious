@@ -232,6 +232,19 @@ struct NodeStmtSwitch {
 struct NodeStmtContinue {
     // NodeExpr* expr;
 };
+
+struct NodeStmtFor {
+    NodeStmt* init;      ///< Init statement (e.g., my i = 0)
+    NodeExpr* condition; ///< Loop condition
+    NodeStmt* update;    ///< Update statement (e.g., i = i + 1)
+    NodeScope* body;     ///< Loop body
+};
+
+struct NodeStmtForEach {
+    Token element;       ///< Element variable name
+    NodeExpr* array;     ///< Array expression to iterate over
+    NodeScope* body;     ///< Loop body
+};
 // ============================================================================
 // Statement — wraps all possible statement types in a variant
 // ============================================================================
@@ -240,7 +253,7 @@ struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,
                  NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
                  NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*,
-                 NodeStmtSwitch*>
+                 NodeStmtSwitch*, NodeStmtFor*, NodeStmtForEach*>
         var;
 };
 

@@ -236,6 +236,124 @@ std::optional<NodeStmt*> Parser::parse_stmt() {
         return stmt;
     }
 
+    // for (<item> in <array>) { <body> }  OR  for (<init>; <cond>; <update>) { <body> }
+    if (auto for_ = try_consume(TokenType::for_)) {
+        try_consume_err(TokenType::open_paren);
+
+        // Peek ahead to check for "in" keyword (for-each pattern)
+        if (peek().has_value() && peek().value().type == TokenType::ident &&
+            peek(1).has_value() && peek(1).value().type == TokenType::in_) {
+            // for-each: for (item in arr) { ... }
+            auto stmt_foreach = m_allocator.alloc<NodeStmtForEach>();
+            stmt_foreach->element = consume(); // element name
+            consume(); // consume 'in'
+            if (auto arr_expr = parse_expr()) {
+                stmt_foreach->array = arr_expr.value();
+            } else {
+                error_expected("array expression");
+            }
+            try_consume_err(TokenType::close_paren);
+            if (const auto scope = parse_scope()) {
+                stmt_foreach->body = scope.value();
+            } else {
+                error_expected("scope");
+            }
+            auto stmt = m_allocator.emplace<NodeStmt>(stmt_foreach);
+            return stmt;
+        }
+
+        // Regular for loop: for (init; cond; update) { ... }
+        auto stmt_for = m_allocator.alloc<NodeStmtFor>();
+
+        // Parse init statement: either "my x = expr" or "x = expr"
+        if (peek().has_value() && peek().value().type == TokenType::let) {
+            // my <ident> = <expr>;
+            consume();
+            auto stmt_let = m_allocator.alloc<NodeStmtLet>();
+            stmt_let->ident = consume();
+            if (peek().has_value() && peek().value().type == TokenType::colon_) {
+                consume();
+                if (peek().has_value() && (peek().value().type == TokenType::type_number_ ||
+                                           peek().value().type == TokenType::type_word_ ||
+                                           peek().value().type == TokenType::type_question_ ||
+                                           peek().value().type == TokenType::type_decimal_ ||
+                                           peek().value().type == TokenType::type_letter)) {
+                    stmt_let->type_annotation = consume().type;
+                } else {
+                    error_expected("type annotation (number, word, question, decimal, letter)");
+                }
+            }
+            try_consume_err(TokenType::eq);
+            if (const auto expr = parse_expr()) {
+                stmt_let->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::semi);
+            stmt_for->init = m_allocator.emplace<NodeStmt>(stmt_let);
+        } else if (peek().has_value() && peek().value().type == TokenType::ident) {
+            // <ident> = <expr>;
+            auto assign = m_allocator.alloc<NodeStmtAssign>();
+            assign->ident = consume();
+            try_consume_err(TokenType::eq);
+            if (const auto expr = parse_expr()) {
+                assign->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::semi);
+            stmt_for->init = m_allocator.emplace<NodeStmt>(assign);
+        } else if (peek().has_value() && peek().value().type == TokenType::semi) {
+            // Empty init: for (; cond; update)
+            consume();
+            stmt_for->init = nullptr;
+        } else {
+            error_expected("for loop init (variable declaration or assignment)");
+        }
+
+        // Parse condition
+        if (peek().has_value() && peek().value().type != TokenType::semi) {
+            if (const auto expr = parse_expr()) {
+                stmt_for->condition = expr.value();
+            } else {
+                error_expected("expression");
+            }
+        } else {
+            stmt_for->condition = nullptr; // empty condition = infinite loop
+        }
+        try_consume_err(TokenType::semi);
+
+        // Parse update: <ident> = <expr>
+        if (peek().has_value() && peek().value().type != TokenType::close_paren) {
+            if (peek().has_value() && peek().value().type == TokenType::ident) {
+                auto assign = m_allocator.alloc<NodeStmtAssign>();
+                assign->ident = consume();
+                try_consume_err(TokenType::eq);
+                if (const auto expr = parse_expr()) {
+                    assign->expr = expr.value();
+                } else {
+                    error_expected("expression");
+                }
+                stmt_for->update = m_allocator.emplace<NodeStmt>(assign);
+            } else {
+                error_expected("for loop update (assignment)");
+            }
+        } else {
+            stmt_for->update = nullptr; // empty update
+        }
+        try_consume_err(TokenType::close_paren);
+
+        // Parse body
+        if (const auto scope = parse_scope()) {
+            stmt_for->body = scope.value();
+        } else {
+            error_expected("scope");
+        }
+
+        auto stmt = m_allocator.emplace<NodeStmt>(stmt_for);
+        return stmt;
+    }
+
     // switch (expr) { case <int>: <stmts> ... default: <stmts> }
     if (peek().has_value() && peek().value().type == TokenType::switch_) {
         consume();

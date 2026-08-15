@@ -78,6 +78,9 @@ enum class TokenType {
     switch_,    /// < switch operator ( switch )
     case_,      /// < case operator ( case )
     default_,   /// < default operator ( default )
+    for_,       /// < for loop operator ( for )
+    semi_semi,  /// < semicolon separator for for loop ( ; )
+    in_,        /// < in keyword for for-each loop ( in )
 
 };
 
@@ -135,6 +138,9 @@ inline std::string to_string(const TokenType type){
         case TokenType::switch_: return "`switch`";
         case TokenType::case_: return "`case`";
         case TokenType::default_: return "`default`";
+        case TokenType::for_: return "`for`";
+        case TokenType::semi_semi: return "`;`";
+        case TokenType::in_: return "`in`";
 
         default: return "unknown token type";
     }
@@ -169,6 +175,8 @@ inline const std::unordered_map<std::string, TokenType>& keywords() {
         {"switch", TokenType::switch_},
         {"case",   TokenType::case_},
         {"default",TokenType::default_},
+        {"for",    TokenType::for_},
+        {"in",     TokenType::in_},
     };
     return kw;
 }

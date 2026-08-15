@@ -53,6 +53,7 @@ private:
     std::unordered_map<std::string, std::string> m_var_types;
     std::unordered_set<std::string> m_array_params;
     std::unordered_map<std::string, std::string> m_fn_return_types;
+    std::unordered_map<std::string, int> m_array_sizes; ///< Track array sizes for for-each
 };
 
 // Include implementations in dependency order
