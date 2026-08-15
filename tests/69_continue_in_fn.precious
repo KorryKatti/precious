@@ -1,0 +1,16 @@
+fn sum_odds() -> number {
+    my i = 0;
+    my total = 0;
+    while (i < 10) {
+        i = i + 1;
+        if (i % 2 == 0) {
+            continue;
+        }
+        total = total + i;
+    }
+    gives(total);
+}
+
+my result = sum_odds();
+say(result);
+gives(0);

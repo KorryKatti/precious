@@ -1,0 +1,14 @@
+fn find_first() -> number {
+    my i = 0;
+    while (i < 100) {
+        if (i * i > 50) {
+            gives(i);
+        }
+        i = i + 1;
+    }
+    gives(0);
+}
+
+my result = find_first();
+say(result);
+gives(0);
