@@ -1,0 +1,6 @@
+my a = "foo";
+my b = "bar";
+my c = a + b;
+a = c + "baz";
+say(a);
+gives(0);

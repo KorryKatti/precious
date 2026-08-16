@@ -245,6 +245,15 @@ struct NodeStmtForEach {
     NodeExpr* array;     ///< Array expression to iterate over
     NodeScope* body;     ///< Loop body
 };
+
+struct NodeStmtPush {
+    Token ident;         ///< Array variable name
+    NodeExpr* expr;      ///< Expression to push
+};
+
+struct NodeStmtPop {
+    Token ident;         ///< Array variable name
+};
 // ============================================================================
 // Statement — wraps all possible statement types in a variant
 // ============================================================================
@@ -253,7 +262,8 @@ struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,
                  NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
                  NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*,
-                 NodeStmtSwitch*, NodeStmtFor*, NodeStmtForEach*>
+                 NodeStmtSwitch*, NodeStmtFor*, NodeStmtForEach*,
+                 NodeStmtPush*, NodeStmtPop*>
         var;
 };
 

@@ -107,11 +107,11 @@ private:
     /**
      * @brief Returns the type of an expression as a string.
      * @param expr The expression to evaluate.
-     * @return The type string ("long", "const char*", "char", "void", etc.)
+     * @return The type string ("long", "std::string", "char", "void", etc.)
      *
      * Resolves types for:
      *   - Integer literals → "long"
-     *   - String literals → "const char*"
+     *   - String literals → "std::string"
      *   - Identifiers → looked up in m_var_types
      *   - Function calls → looked up in m_fn_signatures return type
      *   - Binary expressions → "long" for arithmetic, "long" for comparison
@@ -138,7 +138,7 @@ private:
     /**
      * @brief Checks if a type is a string type.
      * @param type The type string to check.
-     * @return true if the type is "const char*".
+     * @return true if the type is "std::string".
      */
     bool is_string(const std::string& type) const;
 

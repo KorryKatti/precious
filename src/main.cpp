@@ -6,8 +6,8 @@
  * 1. Read source file
  * 2. Tokenize (lexer)
  * 3. Parse (build AST)
- * 4. Generate C source code
- * 5. Compile with gcc
+ * 4. Generate C++ source code
+ * 5. Compile with g++
  *
  * Usage:
  *   precious <input.precious>
@@ -35,9 +35,9 @@
  * 2. Reads the input .precious file into a string
  * 3. Tokenizes the source code into a token stream
  * 4. Parses tokens into an AST
- * 5. Generates C source code from the AST
- * 6. Writes C code to <basename>.c
- * 7. Compiles <basename>.c with gcc to produce the final executable
+ * 5. Generates C++ source code from the AST
+ * 6. Writes C++ code to <basename>.cpp
+ * 7. Compiles <basename>.cpp with g++ to produce the final executable
  */
 int main(int argc, char* argv[])
 {
@@ -72,11 +72,11 @@ int main(int argc, char* argv[])
 
     {
         Generator generator(prog.value());
-        std::fstream file(baseName + ".c", std::ios::out);
+        std::fstream file(baseName + ".cpp", std::ios::out);
         file << generator.gen_prog();
     }
 
-    std::string cmd = "gcc -o " + baseName + " " + baseName + ".c -w";
+    std::string cmd = "g++ -std=c++17 -o " + baseName + " " + baseName + ".cpp -w";
     system(cmd.c_str());
 
     return EXIT_SUCCESS;

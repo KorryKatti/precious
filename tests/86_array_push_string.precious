@@ -1,0 +1,6 @@
+my words: word[] = ["hello", "world"];
+push words, "foo";
+say(words[2]);
+pop words;
+say(words[1]);
+gives(0);

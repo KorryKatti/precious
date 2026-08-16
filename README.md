@@ -1,6 +1,6 @@
 # Precious
 
-A Gollum-themed programming language that compiles to C.
+A Gollum-themed programming language that compiles to C++.
 <!--
 i might change the theme if it gets annoying ngl idk it was just funny at that time
  -->
@@ -30,9 +30,9 @@ cmake --build build
 
 The compiler outputs a Linux ELF binary named after the input file (e.g., `your_file` from `your_file.precious`).
 
-### Why C instead of handwritten assembly?
+### Why C++ instead of handwritten assembly?
 
-The compiler originally emitted x86-64 NASM assembly directly. That works fine for tiny programs, but as the language grows, handwritten assembly gets painful fast — every new feature means writing dozens of `push`/`pop`/`mov`/`cmp` instructions by hand. Meanwhile gcc with `-O2` does register allocation, instruction combining, and dead code elimination for free. So the compiler now generates C source code and lets gcc handle the hard parts. <!--ofc i didnt write this line-->
+The compiler originally emitted x86-64 NASM assembly directly. That works fine for tiny programs, but as the language grows, handwritten assembly gets painful fast — every new feature means writing dozens of `push`/`pop`/`mov`/`cmp` instructions by hand. Meanwhile g++ with `-O2` does register allocation, instruction combining, and dead code elimination for free. So the compiler now generates C++ source code and lets g++ handle the hard parts. <!--ofc i didnt write this line-->
 
 ## Syntax
 
@@ -49,10 +49,10 @@ x = 10;
 
 Optionally annotate variables with a type after `:`. Types are inferred if omitted.
 
-| Precious | C type    | Description |
-|----------|-----------|-------------|
+| Precious | C++ type    | Description |
+|----------|-------------|-------------|
 | `number` | `long`    | 64-bit integers (default) |
-| `word`   | `const char*` | Null-terminated strings |
+| `word`   | `std::string` | Null-terminated strings |
 | `question` | `long`  | Booleans (0 or 1) |
 | `decimal` | `double` | Floating-point numbers |
 | `letter` | `char`    | Single characters |
@@ -131,9 +131,30 @@ while (i < 5) {
 gives(i);
 ```
 
+### For Loop
+
+C-style for loop with init, condition, and update:
+
+```
+for (my i = 0; i < 10; i = i + 1) {
+    say(i);
+}
+```
+
+### For-Each Loop
+
+Iterate over arrays without manual indexing:
+
+```
+my arr: number[3] = [10, 20, 30];
+for (each item in arr) {
+    say(item);
+}
+```
+
 ### Break and Continue
 
-Use `break` to exit a while loop early, and `continue` to skip to the next iteration.
+Use `break` to exit a while/for loop early, and `continue` to skip to the next iteration.
 
 ```
 my i = 0;
@@ -190,6 +211,37 @@ say("precious");   // prints precious
 
 my msg: word = "gollum";
 say(msg);          // prints gollum
+```
+
+### String Concatenation
+
+Join strings with `+`:
+
+```
+my first = "hello";
+my second = " world";
+my combined = first + second;
+say(combined);     // prints hello world
+```
+
+String variables can be reassigned and concatenated freely:
+
+```
+my a = "foo";
+my b = "bar";
+my c = a + b;
+a = c + "baz";
+say(a);            // prints foobarbaz
+```
+
+### String Indexing
+
+Access individual characters with `[]`:
+
+```
+my msg = "hello";
+say(msg[0]);       // prints h
+say(msg[4]);       // prints o
 ```
 
 ### Functions
@@ -270,6 +322,28 @@ my i: number = 1;
 say(numbers[i]);    // prints value at index 1
 ```
 
+### Array Push / Pop
+
+Add and remove elements dynamically with `push` and `pop`:
+
+```
+my arr: number[] = [1, 2, 3];
+push arr, 4;
+say(arr[3]);        // prints 4
+pop arr;
+say(arr[2]);        // prints 3
+```
+
+Works with string arrays too:
+
+```
+my words: word[] = ["hello", "world"];
+push words, "foo";
+say(words[2]);      // prints foo
+pop words;
+say(words[1]);      // prints world
+```
+
 ### Array Parameters to Functions
 
 Pass arrays as function arguments using `type[]` syntax:
@@ -289,7 +363,7 @@ my nums: number[3] = [10, 20, 30];
 say(sum(nums, 3));    // prints 60
 ```
 
-The compiler passes arrays as pointers to the function (C array decay).
+The compiler passes arrays as `std::vector` references to functions.
 
 ## Examples
 

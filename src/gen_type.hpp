@@ -10,7 +10,7 @@ std::string Generator::resolve_type(TokenType type) const {
         case TokenType::type_number_:
             return "long";
         case TokenType::type_word_:
-            return "const char*";
+            return "std::string";
         case TokenType::type_question_:
             return "long";
         case TokenType::type_decimal_:
@@ -27,7 +27,7 @@ std::string Generator::resolve_type(const std::string& type) const {
         return "long";
     }
     if (type == "word") {
-        return "const char*";
+        return "std::string";
     }
     if (type == "question") {
         return "long";
@@ -42,11 +42,20 @@ std::string Generator::resolve_type(const std::string& type) const {
 }
 
 std::string Generator::infer_type(const NodeExpr* expr) const {
+    // Handle binary expressions — if either operand is string, result is string
+    if (std::holds_alternative<NodeBinExpr*>(expr->var)) {
+        auto bin = std::get<NodeBinExpr*>(expr->var);
+        std::string left = infer_type(bin->lhs);
+        std::string right = infer_type(bin->rhs);
+        if (left == "std::string" || right == "std::string")
+            return "std::string";
+        return "long";
+    }
     if (!std::holds_alternative<NodeTerm*>(expr->var))
         return "long";
     auto term = std::get<NodeTerm*>(expr->var);
     if (std::holds_alternative<NodeTermStringLit*>(term->var))
-        return "const char*";
+        return "std::string";
     if (std::holds_alternative<NodeTermIntLit*>(term->var))
         return "long";
     if (std::holds_alternative<NodeTermIdent*>(term->var)) {
@@ -70,6 +79,18 @@ std::string Generator::infer_type(const NodeExpr* expr) const {
                 auto it = m_var_types.find(ident->ident.value.value());
                 if (it != m_var_types.end()) {
                     const std::string& base_type = it->second;
+                    // std::vector<type>& or std::vector<type> -> extract element type
+                    if (base_type.find("std::vector<") == 0) {
+                        std::string vec_type = base_type;
+                        // Strip trailing & if present (reference param)
+                        if (!vec_type.empty() && vec_type.back() == '&')
+                            vec_type.pop_back();
+                        // Extract element type from std::vector<element_type>
+                        size_t start = 12; // len("std::vector<")
+                        size_t end = vec_type.size() - 1; // len(">")
+                        return vec_type.substr(start, end - start);
+                    }
+                    // Fallback: strip trailing * for old pointer-style params
                     if (m_array_params.find(ident->ident.value.value()) != m_array_params.end() &&
                         base_type.size() >= 1 && base_type.back() == '*') {
                         return base_type.substr(0, base_type.size() - 1);
@@ -150,13 +171,13 @@ bool Generator::is_string_expr(const NodeExpr* expr) const {
     if (std::holds_alternative<NodeTermIdent*>(term->var)) {
         auto ident = std::get<NodeTermIdent*>(term->var);
         auto it = m_var_types.find(ident->ident.value.value());
-        if (it != m_var_types.end() && it->second == "const char*")
+        if (it != m_var_types.end() && it->second == "std::string")
             return true;
     }
     if (std::holds_alternative<NodeTermFnCall*>(term->var)) {
         auto fn_call = std::get<NodeTermFnCall*>(term->var);
         auto it = m_fn_return_types.find(fn_call->name.value.value());
-        if (it != m_fn_return_types.end() && it->second == "const char*")
+        if (it != m_fn_return_types.end() && it->second == "std::string")
             return true;
     }
     if (std::holds_alternative<NodeTermArrayIndex*>(term->var)) {
@@ -166,7 +187,7 @@ bool Generator::is_string_expr(const NodeExpr* expr) const {
             if (std::holds_alternative<NodeTermIdent*>(ident_term->var)) {
                 auto ident = std::get<NodeTermIdent*>(ident_term->var);
                 auto it = m_var_types.find(ident->ident.value.value());
-                if (it != m_var_types.end() && it->second.find("const char*") != std::string::npos)
+                if (it != m_var_types.end() && it->second.find("std::string") != std::string::npos)
                     return true;
             }
         }

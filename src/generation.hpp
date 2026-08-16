@@ -2,7 +2,7 @@
  * @file generation.hpp
  * @brief Code generator for the Precious programming language.
  *
- * Generates C source code from the AST. The output is compiled with gcc.
+ * Generates C++ source code from the AST. The output is compiled with g++.
  *
  * This file defines the Generator class and includes implementation files:
  *   - gen_type.hpp  — type resolution and inference
@@ -53,7 +53,6 @@ private:
     std::unordered_map<std::string, std::string> m_var_types;
     std::unordered_set<std::string> m_array_params;
     std::unordered_map<std::string, std::string> m_fn_return_types;
-    std::unordered_map<std::string, int> m_array_sizes; ///< Track array sizes for for-each
 };
 
 // Include implementations in dependency order

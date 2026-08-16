@@ -449,6 +449,38 @@ std::optional<NodeStmt*> Parser::parse_stmt() {
         return stmt;
     }
 
+    // push <ident>, <expr>;
+    if (peek().has_value() && peek().value().type == TokenType::push_) {
+        consume();
+        auto stmt_push = m_allocator.alloc<NodeStmtPush>();
+        if (!peek().has_value() || peek().value().type != TokenType::ident) {
+            error_expected("array name");
+        }
+        stmt_push->ident = consume();
+        try_consume_err(TokenType::comma_);
+        if (auto expr = parse_expr()) {
+            stmt_push->expr = expr.value();
+        } else {
+            error_expected("expression");
+        }
+        try_consume_err(TokenType::semi);
+        auto stmt = m_allocator.emplace<NodeStmt>(stmt_push);
+        return stmt;
+    }
+
+    // pop <ident>;
+    if (peek().has_value() && peek().value().type == TokenType::pop_) {
+        consume();
+        auto stmt_pop = m_allocator.alloc<NodeStmtPop>();
+        if (!peek().has_value() || peek().value().type != TokenType::ident) {
+            error_expected("array name");
+        }
+        stmt_pop->ident = consume();
+        try_consume_err(TokenType::semi);
+        auto stmt = m_allocator.emplace<NodeStmt>(stmt_pop);
+        return stmt;
+    }
+
     // fn name(params) [-> type] { body }
     if (peek().has_value() && peek().value().type == TokenType::fn_) {
         auto fn_stmt = m_allocator.emplace<NodeStmtFn>();

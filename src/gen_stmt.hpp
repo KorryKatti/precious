@@ -71,27 +71,18 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
             }
             gen.m_declared.push_back(name);
             std::string c_type;
-            std::string arr_suffix;
             if (stmt_let->type_annotation.has_value()) {
                 c_type = gen.resolve_type(stmt_let->type_annotation.value());
                 if (stmt_let->is_array) {
-                    if (stmt_let->array_size.has_value()) {
-                        arr_suffix = "[" + stmt_let->array_size.value().value.value() + "]";
-                    } else {
-                        arr_suffix = "[]";
-                    }
+                    c_type = "std::vector<" + c_type + ">";
                 }
             } else {
                 c_type = gen.infer_type(stmt_let->expr);
             }
             gen.m_var_types[name] = c_type;
-            gen.m_output << "    " << c_type << " " << name << arr_suffix << " = ";
+            gen.m_output << "    " << c_type << " " << name << " = ";
             gen.gen_expr(stmt_let->expr);
             gen.m_output << ";\n";
-            // Track array size for for-each
-            if (stmt_let->is_array && stmt_let->array_size.has_value()) {
-                gen.m_array_sizes[name] = std::stoi(stmt_let->array_size.value().value.value());
-            }
         }
 
         void operator()(const NodeStmtAssign* stmt_assign) const {
@@ -154,7 +145,7 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
         }
 
         void operator()(const NodeStmtForEach* stmt_foreach) const {
-            // Get array name and look up its size
+            // Get array name
             std::string arr_name;
             if (std::holds_alternative<NodeTerm*>(stmt_foreach->array->var)) {
                 auto term = std::get<NodeTerm*>(stmt_foreach->array->var);
@@ -162,30 +153,19 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
                     arr_name = std::get<NodeTermIdent*>(term->var)->ident.value.value();
                 }
             }
-            int arr_size = 0;
-            auto size_it = gen.m_array_sizes.find(arr_name);
-            if (size_it != gen.m_array_sizes.end()) {
-                arr_size = size_it->second;
-            } else {
-                std::cerr << "[ERROR] Cannot determine array size for '" << arr_name
-                          << "' in for-each, precious! Use 'my arr: type[N] = ...' (line "
-                          << stmt_foreach->element.line << ")" << std::endl;
-                exit(EXIT_FAILURE);
-            }
 
             // Determine element type from array type
             std::string elem_type = "long";
             auto type_it = gen.m_var_types.find(arr_name);
             if (type_it != gen.m_var_types.end()) {
                 elem_type = type_it->second;
-                // Remove array suffix if present (e.g., "long[3]" -> "long")
-                auto bracket_pos = elem_type.find('[');
-                if (bracket_pos != std::string::npos) {
-                    elem_type = elem_type.substr(0, bracket_pos);
+                // Strip std::vector<> wrapper to get element type
+                if (elem_type.find("std::vector<") == 0) {
+                    elem_type = elem_type.substr(12, elem_type.size() - 13);
                 }
             }
 
-            gen.m_output << "    for (long _i = 0; _i < " << arr_size << "; _i++) {\n";
+            gen.m_output << "    for (long _i = 0; _i < " << arr_name << ".size(); _i++) {\n";
             gen.m_output << "        " << elem_type << " " << stmt_foreach->element.value.value()
                          << " = " << arr_name << "[_i];\n";
             for (const NodeStmt* stmt : stmt_foreach->body->stmts) {
@@ -195,13 +175,9 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
         }
 
         void operator()(const NodeStmtPrint* stmt_print) const {
-            if (gen.is_string_expr(stmt_print->expr)) {
-                gen.m_output << "    printf(\"%s\\n\", ";
-            } else {
-                gen.m_output << "    printf(\"%ld\\n\", ";
-            }
+            gen.m_output << "    std::cout << (";
             gen.gen_expr(stmt_print->expr);
-            gen.m_output << ");\n";
+            gen.m_output << ") << \"\\n\";\n";
         }
 
         void operator()(const NodeStmtFn*) const {
@@ -246,6 +222,16 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
                 gen.m_output << "        break;\n";
             }
             gen.m_output << "    }\n";
+        }
+
+        void operator()(const NodeStmtPush* stmt_push) const {
+            gen.m_output << "    " << stmt_push->ident.value.value() << ".push_back(";
+            gen.gen_expr(stmt_push->expr);
+            gen.m_output << ");\n";
+        }
+
+        void operator()(const NodeStmtPop* stmt_pop) const {
+            gen.m_output << "    " << stmt_pop->ident.value.value() << ".pop_back();\n";
         }
     };
 

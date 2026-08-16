@@ -6,9 +6,14 @@
 // Included at the bottom of generation.hpp after the Generator class definition.
 
 void Generator::gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
-    std::string ret_type = fn->return_type.has_value()
-        ? resolve_type(fn->return_type.value())
-        : "long";
+    std::string ret_type;
+    if (fn->return_type.has_value()) {
+        ret_type = resolve_type(fn->return_type.value());
+    } else if (has_return(fn->body)) {
+        ret_type = "long";
+    } else {
+        ret_type = "void";
+    }
     out << ret_type << " " << fn->name.value.value() << "(";
     for (size_t i = 0; i < fn->params.size(); i++) {
         if (i > 0)
@@ -17,7 +22,7 @@ void Generator::gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
             ? resolve_type(fn->params[i].type_annotation.value())
             : "long";
         if (fn->params[i].isArray) {
-            out << param_type << "* " << fn->params[i].name.value.value();
+            out << "std::vector<" << param_type << ">& " << fn->params[i].name.value.value();
         } else {
             out << param_type << " " << fn->params[i].name.value.value();
         }
@@ -33,7 +38,7 @@ void Generator::gen_fn_def(const NodeStmtFn* fn, std::stringstream& out) {
             ? resolve_type(param.type_annotation.value())
             : "long";
         if (param.isArray) {
-            ptype += "*";
+            ptype = "std::vector<" + ptype + ">&";
             m_array_params.insert(pname);
         }
         m_declared.push_back(pname);
@@ -64,15 +69,20 @@ std::string Generator::gen_prog() {
                     ? resolve_type(param.type_annotation.value())
                     : "long";
                 if (param.isArray) {
-                    ptype += "*";
+                    ptype = "std::vector<" + ptype + ">&";
                     m_array_params.insert(pname);
                 }
                 m_declared.push_back(pname);
                 m_var_types[pname] = ptype;
             }
-            std::string ret_type = fn->return_type.has_value()
-                ? resolve_type(fn->return_type.value())
-                : "long";
+            std::string ret_type;
+            if (fn->return_type.has_value()) {
+                ret_type = resolve_type(fn->return_type.value());
+            } else if (has_return(fn->body)) {
+                ret_type = "long";
+            } else {
+                ret_type = "void";
+            }
             m_fn_return_types[fn->name.value.value()] = ret_type;
             for (const auto& param : fn->params) {
                 m_var_types.erase(param.name.value.value());
@@ -89,7 +99,7 @@ std::string Generator::gen_prog() {
                     ? resolve_type(fn->params[i].type_annotation.value())
                     : "long";
                 if (fn->params[i].isArray) {
-                    decls << param_type << "* " << fn->params[i].name.value.value();
+                    decls << "std::vector<" << param_type << ">& " << fn->params[i].name.value.value();
                 } else {
                     decls << param_type << " " << fn->params[i].name.value.value();
                 }
@@ -106,8 +116,7 @@ std::string Generator::gen_prog() {
     }
 
     std::stringstream out;
-    out << "#include <stdio.h>\n";
-    out << "#include <stdlib.h>\n\n";
+    out << "#include <bits/stdc++.h>\n\n";
     out << decls.str() << "\n";
     out << "int main() {\n";
     out << m_output.str();

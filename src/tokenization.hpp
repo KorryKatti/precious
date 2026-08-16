@@ -81,7 +81,8 @@ enum class TokenType {
     for_,       /// < for loop operator ( for )
     semi_semi,  /// < semicolon separator for for loop ( ; )
     in_,        /// < in keyword for for-each loop ( in )
-
+    push_,      /// < push keyword for array push ( push )
+    pop_,       /// < pop keyword for array pop ( pop )
 };
 
 /**
@@ -141,6 +142,8 @@ inline std::string to_string(const TokenType type){
         case TokenType::for_: return "`for`";
         case TokenType::semi_semi: return "`;`";
         case TokenType::in_: return "`in`";
+        case TokenType::push_: return "`push`";
+        case TokenType::pop_: return "`pop`";
 
         default: return "unknown token type";
     }
@@ -177,6 +180,8 @@ inline const std::unordered_map<std::string, TokenType>& keywords() {
         {"default",TokenType::default_},
         {"for",    TokenType::for_},
         {"in",     TokenType::in_},
+        {"push",   TokenType::push_},
+        {"pop",    TokenType::pop_},
     };
     return kw;
 }

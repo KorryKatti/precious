@@ -107,7 +107,7 @@
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</pre>
   <div class="hero-text">
     <h1>Precious</h1>
-    <p class="sub">A Gollum-themed programming language that compiles to C.</p>
+    <p class="sub">A Gollum-themed programming language that compiles to C++.</p>
     <p style="margin-top:1.2rem"><a href="https://github.com/korrykatti/precious" target="_blank">github.com/korrykatti/precious</a></p>
   </div>
 </div>
@@ -121,7 +121,7 @@
     <code>./build/precious your_file.precious</code><br>
     <code>./out</code>
   </div>
-  <p>Outputs a Linux ELF binary named after the input file via gcc. The compiler generates C source code and lets gcc handle register allocation, optimization, and code generation.</p>
+  <p>Outputs a Linux ELF binary named after the input file via g++. The compiler generates C++ source code and lets g++ handle register allocation, optimization, and code generation.</p>
 </section>
 
 <section id="syntax">
@@ -135,9 +135,9 @@ x = 10;</code></pre>
   <h2>Type Annotations</h2>
   <p>Optional <code>: type</code> after the variable name. Inferred if omitted.</p>
   <table>
-    <tr><th>Precious</th><th>C type</th><th>Description</th></tr>
+    <tr><th>Precious</th><th>C++ type</th><th>Description</th></tr>
     <tr><td><code>number</code></td><td><code>long</code></td><td>64-bit integers</td></tr>
-    <tr><td><code>word</code></td><td><code>const char*</code></td><td>Strings</td></tr>
+    <tr><td><code>word</code></td><td><code>std::string</code></td><td>Strings</td></tr>
     <tr><td><code>question</code></td><td><code>long</code></td><td>Booleans</td></tr>
     <tr><td><code>decimal</code></td><td><code>double</code></td><td>Floating-point</td></tr>
     <tr><td><code>letter</code></td><td><code>char</code></td><td>Single characters</td></tr>
@@ -242,6 +242,41 @@ say(numbers[i]);    // prints value at index 1</code></pre>
 </section>
 
 <section>
+  <h2>Array Push / Pop</h2>
+  <p>Add and remove elements dynamically with <code>push</code> and <code>pop</code>.</p>
+<pre><code>my arr: number[] = [1, 2, 3];
+push arr, 4;
+say(arr[3]);        // prints 4
+pop arr;
+say(arr[2]);        // prints 3
+
+my words: word[] = ["hello", "world"];
+push words, "foo";
+say(words[2]);      // prints foo</code></pre>
+</section>
+
+<section>
+  <h2>String Concatenation</h2>
+  <p>Join strings with <code>+</code>.</p>
+<pre><code>my first = "hello";
+my second = " world";
+my combined = first + second;
+say(combined);      // prints hello world
+
+my a = "foo";
+a = a + "bar" + "baz";
+say(a);             // prints foobarbaz</code></pre>
+</section>
+
+<section>
+  <h2>String Indexing</h2>
+  <p>Access individual characters with <code>[]</code>.</p>
+<pre><code>my msg = "hello";
+say(msg[0]);        // prints h
+say(msg[4]);        // prints o</code></pre>
+</section>
+
+<section>
   <h2>Keywords</h2>
   <table>
     <tr><th>Keyword</th><th>What it does</th></tr>
@@ -251,6 +286,11 @@ say(numbers[i]);    // prints value at index 1</code></pre>
     <tr><td><code>say</code></td><td>Print to stdout</td></tr>
     <tr><td><code>if</code> / <code>elif</code> / <code>else</code></td><td>Conditionals</td></tr>
     <tr><td><code>while</code></td><td>Loop</td></tr>
+    <tr><td><code>for</code></td><td>C-style for loop / for-each</td></tr>
+    <tr><td><code>in</code></td><td>For-each iteration</td></tr>
+    <tr><td><code>break</code> / <code>continue</code></td><td>Loop control</td></tr>
+    <tr><td><code>switch</code> / <code>case</code> / <code>default</code></td><td>Pattern matching</td></tr>
+    <tr><td><code>push</code> / <code>pop</code></td><td>Array push/pop</td></tr>
     <tr><td><code>and</code> / <code>or</code> / <code>!</code></td><td>Boolean logic</td></tr>
     <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
     <tr><td><code>[</code> <code>]</code></td><td>Array literals and index access</td></tr>

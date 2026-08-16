@@ -1,0 +1,4 @@
+my msg = "hello";
+say(msg[0]);
+say(msg[4]);
+gives(0);

@@ -184,6 +184,27 @@ run_test_output "$TESTS_DIR/74_switch_no_default.precious" "0" 0
 run_test_output "$TESTS_DIR/75_switch_var_expr.precious" "60" 0
 run_test_output "$TESTS_DIR/76_switch_nested.precious" "20" 0
 
+# For loop
+run_test "$TESTS_DIR/80_for_loop.precious" 10
+
+# For-each loop
+run_test "$TESTS_DIR/81_for_each.precious" 100
+
+# String concat
+run_test_output "$TESTS_DIR/82_string_concat.precious" "hello world" 0
+
+# String indexing
+run_test_output "$TESTS_DIR/83_string_index.precious" "$(printf 'h\no')" 0
+
+# Array push/pop
+run_test_output "$TESTS_DIR/84_array_push_pop.precious" "$(printf '4\n3')" 0
+
+# String concat reassignment
+run_test_output "$TESTS_DIR/85_string_concat_reassign.precious" "foobarbaz" 0
+
+# Array push with strings
+run_test_output "$TESTS_DIR/86_array_push_string.precious" "$(printf 'foo\nworld')" 0
+
 # DSA / LeetCode problems
 echo ""
 echo "--- DSA Tests ---"
