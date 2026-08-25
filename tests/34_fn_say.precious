@@ -2,4 +2,7 @@ fn print_hello() {
     say(99);
 }
 
-print_hello();
+fn the_precious() {
+
+    print_hello();
+}

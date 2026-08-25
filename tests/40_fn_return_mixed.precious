@@ -1,11 +1,14 @@
 fn add(a, b) {
     gives(a + b);
 }
-
 fn greet() {
     say(42);
 }
 
-my x = add(10, 20);
-say(x);
-greet();
+fn the_precious() {
+
+
+    my x = add(10, 20);
+    say(x);
+    greet();
+}

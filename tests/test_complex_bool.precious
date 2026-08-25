@@ -1,50 +1,52 @@
-// Complex program: compute GCD using subtraction-based algorithm
-// Tests: comparisons, and/or/not, nested if/elif/else, scopes, arithmetic, say()
+fn the_precious() {
+    // Complex program: compute GCD using subtraction-based algorithm
+    // Tests: comparisons, and/or/not, nested if/elif/else, scopes, arithmetic, say()
 
-my a = 48;
-my b = 18;
-my temp = 0;
+    my a = 48;
+    my b = 18;
+    my temp = 0;
 
-// swap so a >= b
-if (a < b) {
-    temp = a;
-    a = b;
-    b = temp;
+    // swap so a >= b
+    if (a < b) {
+        temp = a;
+        a = b;
+        b = temp;
+    }
+
+    say(a);
+    say(b);
+
+    // GCD by repeated subtraction
+    my done = 0;
+    if (b == 0) {
+        done = 1;
+    }
+    if (!done) {
+        my remainder = 0;
+        // compute a mod b via subtraction loop (unrolled a few times for stress)
+        my counter = 0;
+        if (a >= b and !(a < b)) {
+            counter = 1;
+        }
+        if (a > b and b > 0) {
+            counter = counter + 1;
+        }
+        if (a != b and b != 0) {
+            counter = counter + 1;
+        }
+        // verify counter logic: should be 3 if a > b and b > 0
+        my check = 0;
+        if (counter == 3) {
+            check = 100;
+        }
+        if (counter != 3 or a == b) {
+            check = check + 1;
+        }
+        say(counter);
+        say(check);
+        gives(check);
+    }
+
+    // should not reach here
+    gives(99);
 }
-
-say(a);
-say(b);
-
-// GCD by repeated subtraction
-my done = 0;
-if (b == 0) {
-    done = 1;
-}
-if (!done) {
-    my remainder = 0;
-    // compute a mod b via subtraction loop (unrolled a few times for stress)
-    my counter = 0;
-    if (a >= b and !(a < b)) {
-        counter = 1;
-    }
-    if (a > b and b > 0) {
-        counter = counter + 1;
-    }
-    if (a != b and b != 0) {
-        counter = counter + 1;
-    }
-    // verify counter logic: should be 3 if a > b and b > 0
-    my check = 0;
-    if (counter == 3) {
-        check = 100;
-    }
-    if (counter != 3 or a == b) {
-        check = check + 1;
-    }
-    say(counter);
-    say(check);
-    gives(check);
-}
-
-// should not reach here
-gives(99);

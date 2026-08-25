@@ -1,4 +1,6 @@
-my x = 2;
-my y = 3;
-my z = 4;
-gives(x * y * z);
+fn the_precious() {
+    my x = 2;
+    my y = 3;
+    my z = 4;
+    gives(x * y * z);
+}

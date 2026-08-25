@@ -1,0 +1,5 @@
+fn the_precious() {
+    say(1);
+}
+
+the_precious();

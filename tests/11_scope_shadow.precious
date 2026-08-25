@@ -1,3 +1,5 @@
-my x = 5;
-my x = 10;
-gives(x);
+fn the_precious() {
+    my x = 5;
+    my x = 10;
+    gives(x);
+}

@@ -1,7 +1,9 @@
-my x = 3;
-if (x) {
-    my a = 10;
-    if (a) {
-        gives(77);
+fn the_precious() {
+    my x = 3;
+    if (x) {
+        my a = 10;
+        if (a) {
+            gives(77);
+        }
     }
 }

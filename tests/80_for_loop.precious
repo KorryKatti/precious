@@ -1,6 +1,8 @@
-// Test basic for loop: sum 0..4 = 10
-my sum = 0;
-for (my i = 0; i < 5; i = i + 1) {
-    sum = sum + i;
+fn the_precious() {
+    // Test basic for loop: sum 0..4 = 10
+    my sum = 0;
+    for (my i = 0; i < 5; i = i + 1) {
+        sum = sum + i;
+    }
+    gives(sum);
 }
-gives(sum);

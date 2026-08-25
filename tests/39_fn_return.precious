@@ -2,5 +2,8 @@ fn add(a, b) {
     gives(a + b);
 }
 
-my result = add(2, 3);
-say(result);
+fn the_precious() {
+
+    my result = add(2, 3);
+    say(result);
+}

@@ -1,2 +1,4 @@
-my x = 10;
-gives(x / 2);
+fn the_precious() {
+    my x = 10;
+    gives(x / 2);
+}

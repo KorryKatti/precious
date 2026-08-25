@@ -1,1 +1,3 @@
-gives(42);
+fn the_precious() {
+    gives(42);
+}

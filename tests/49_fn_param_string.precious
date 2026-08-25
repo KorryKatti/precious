@@ -1,4 +1,7 @@
 fn greet(name: word) {
     say(name);
 }
-greet("precious");
+
+fn the_precious() {
+    greet("precious");
+}

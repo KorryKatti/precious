@@ -1,5 +1,8 @@
 fn greet(name: word) {
     say(name);
 }
-my title = "gollum";
-greet(title);
+
+fn the_precious() {
+    my title = "gollum";
+    greet(title);
+}

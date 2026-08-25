@@ -1,6 +1,9 @@
 fn set_value(arr: number[], idx, value) {
     arr[idx] = value;
 }
-my nums: number[3] = [1, 1, 1];
-set_value(nums, 1, 2);
-say(nums[1]);
+
+fn the_precious() {
+    my nums: number[3] = [1, 1, 1];
+    set_value(nums, 1, 2);
+    say(nums[1]);
+}

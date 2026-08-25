@@ -1,2 +1,4 @@
-my x = 5
-gives(x);
+fn the_precious() {
+    my x = 5
+    gives(x);
+}

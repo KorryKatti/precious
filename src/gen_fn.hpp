@@ -109,17 +109,20 @@ std::string Generator::gen_prog() {
         }
     }
 
-    for (const NodeStmt* stmt : m_prog.stmts) {
-        if (!std::holds_alternative<NodeStmtFn*>(stmt->var)) {
-            gen_stmt(stmt);
-        }
-    }
-
+    // The entry function is a normal fn (generated above); main() just calls it.
     std::stringstream out;
     out << "#include <bits/stdc++.h>\n\n";
     out << decls.str() << "\n";
+    const std::string entry_ret = m_prog.entry_fn != nullptr
+        ? m_fn_return_types.at(m_prog.entry_fn->name.value.value())
+        : "void";
     out << "int main() {\n";
-    out << m_output.str();
+    if (entry_ret == "void") {
+        out << "    " << m_prog.entry_fn->name.value.value() << "();\n";
+        out << "    return 0;\n";
+    } else {
+        out << "    return " << m_prog.entry_fn->name.value.value() << "();\n";
+    }
     out << "}\n\n";
     out << fns.str();
     return out.str();

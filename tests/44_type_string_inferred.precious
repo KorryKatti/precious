@@ -1,2 +1,4 @@
-my msg = "hi";
-say(msg);
+fn the_precious() {
+    my msg = "hi";
+    say(msg);
+}

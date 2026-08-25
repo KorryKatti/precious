@@ -124,6 +124,55 @@
   <p>Outputs a Linux ELF binary named after the input file via g++. The compiler generates C++ source code and lets g++ handle register allocation, optimization, and code generation.</p>
 </section>
 
+<section id="entry">
+  <h2>Entry Point</h2>
+  <p>Every program defines <code>fn the_precious()</code> — Precious' equivalent of C's <code>main</code>. The compiler emits a real <code>int main()</code> that calls it; a <code>gives(n)</code> inside it becomes the process exit code. Only <code>fn</code> definitions may live at top level.</p>
+<pre><code>// fib.precious
+fn fib(n) {
+    if (n &lt; 2) {
+        gives(n);
+    }
+    gives(fib(n - 1) + fib(n - 2));
+}
+
+fn the_precious() {
+    my i = 0;
+    while (i &lt; 10) {
+        say(fib(i));
+        i = i + 1;
+    }
+    gives(0);
+}</code></pre>
+  <p>The compiler turns that into this C++, then g++ makes the binary:</p>
+<pre><code>#include &lt;bits/stdc++.h&gt;
+
+long fib(long n);
+long the_precious();
+
+int main() {
+    return the_precious();
+}
+
+long fib(long n)
+{
+    if (n &lt; 2) {
+        return n;
+    }
+    return fib(n - 1) + fib(n - 2);
+}
+
+long the_precious()
+{
+    long i = 0;
+    while (i &lt; 10) {
+        std::cout &lt;&lt; (fib(i)) &lt;&lt; "\n";
+        i = i + 1;
+    }
+    return 0;
+}</code></pre>
+  <p>Missing, duplicate, or misplaced entry points get gollum errors: <em>"Where is the precious?!"</em>, <em>"There can be only one precious!"</em>, <em>"The precious takes no arguments!"</em>. Statement examples below are snippets — they live inside a function body.</p>
+</section>
+
 <section id="syntax">
   <h2>Variables</h2>
   <p>Declare with <code>my</code>. Assign with <code>=</code>.</p>
@@ -205,23 +254,27 @@ say(msg);         // prints gollum</code></pre>
 
 <section id="functions">
   <h2>Functions</h2>
-  <p>Define with <code>fn</code>. Return with <code>gives</code>. Parameters support type annotations.</p>
+  <p>Define with <code>fn</code>. Return with <code>gives</code>. Parameters support type annotations. Call order doesn't matter — the compiler emits forward declarations.</p>
 <pre><code>fn add(a, b) {
-    say(a + b);
+    gives(a + b);
 }
-add(2, 3);          // prints 5
-
-fn greet(name: word) {
-    say(name);
-}
-greet("precious");  // prints precious
 
 fn multiply(a, b) {
     gives(a * b);
 }
-my result = multiply(6, 7);
-say(result);        // prints 42</code></pre>
-  <p>Return type is auto-detected. Functions can call each other regardless of declaration order.</p>
+
+fn greet(name: word) {
+    say(name);
+}
+
+fn the_precious() {
+    say(add(2, 3));         // prints 5
+    greet("precious");      // prints precious
+
+    my result = multiply(6, 7);
+    say(result);            // prints 42
+}</code></pre>
+  <p>Return type is auto-detected from <code>gives</code>, or annotate it: <code>fn greet() -&gt; word { ... }</code>.</p>
 </section>
 
 <section id="arrays">

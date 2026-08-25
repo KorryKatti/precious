@@ -1,10 +1,13 @@
 fn first() {
     say(10);
 }
-
 fn second() {
     say(20);
 }
 
-first();
-second();
+fn the_precious() {
+
+
+    first();
+    second();
+}

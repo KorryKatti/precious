@@ -1,8 +1,10 @@
-my x = 0;
-if (x) {
-    gives(10);
-} elif (x) {
-    gives(20);
-} elif (1) {
-    gives(30);
+fn the_precious() {
+    my x = 0;
+    if (x) {
+        gives(10);
+    } elif (x) {
+        gives(20);
+    } elif (1) {
+        gives(30);
+    }
 }

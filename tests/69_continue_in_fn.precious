@@ -11,6 +11,9 @@ fn sum_odds() -> number {
     gives(total);
 }
 
-my result = sum_odds();
-say(result);
-gives(0);
+fn the_precious() {
+
+    my result = sum_odds();
+    say(result);
+    gives(0);
+}

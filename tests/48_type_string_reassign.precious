@@ -1,3 +1,5 @@
-my s = "a";
-s = "b";
-say(s);
+fn the_precious() {
+    my s = "a";
+    s = "b";
+    say(s);
+}

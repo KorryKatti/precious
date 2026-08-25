@@ -3,5 +3,8 @@ fn add_five() {
     gives(x);
 }
 
-my result = add_five();
-say(result);
+fn the_precious() {
+
+    my result = add_five();
+    say(result);
+}

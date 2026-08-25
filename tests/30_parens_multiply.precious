@@ -1,1 +1,3 @@
-gives((3 + 4) * (2 + 5));
+fn the_precious() {
+    gives((3 + 4) * (2 + 5));
+}

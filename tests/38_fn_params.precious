@@ -2,4 +2,7 @@ fn add(a, b) {
     say(a + b);
 }
 
-add(2, 3);
+fn the_precious() {
+
+    add(2, 3);
+}

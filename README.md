@@ -36,6 +36,34 @@ The compiler originally emitted x86-64 NASM assembly directly. That works fine f
 
 ## Syntax
 
+### Entry Point
+
+Every program defines its entry point as `fn the_precious()` — Precious' equivalent of C's `main`. The compiler generates `int main()`, which calls it and uses `gives` values as the process exit code.
+
+```
+fn the_precious() {
+    my x = 42;
+    gives(x);      // exit code
+}
+```
+
+Only `fn` definitions may live at top level. Misplaced code produces an error:
+- No entry point: `[ERROR] Where is the precious?! Every program needs an entry point: 'fn the_precious() { ... }'`
+- Two entry points: `[ERROR] There can be only one precious!`
+- Parameters on it: `[ERROR] The precious takes no arguments!`
+- Return annotation on it: `[ERROR] The precious needs no return type!`
+- Statements outside any fn: `[ERROR] Only 'fn' definitions may live at top level!`
+
+```
+fn greet(name) {
+    say(name);
+}
+
+fn the_precious() {
+    greet("precious");
+}
+```
+
 ### Variables
 
 Declare variables with `my`. Assignment uses `=`.
@@ -369,9 +397,11 @@ The compiler passes arrays as `std::vector` references to functions.
 
 ```
 // math.precious
-my a = 2;
-my b = 3;
-gives(a + b * 4);
+fn the_precious() {
+    my a = 2;
+    my b = 3;
+    gives(a + b * 4);
+}
 ```
 
 ```bash
@@ -386,8 +416,10 @@ fn greet(name) {
     say(name);
 }
 
-my msg: word = "precious";
-greet(msg);
+fn the_precious() {
+    my msg: word = "precious";
+    greet(msg);
+}
 ```
 
 ```bash

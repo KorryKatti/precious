@@ -2,4 +2,7 @@ fn greet() -> word {
     gives("hi");
 }
 
-say(greet());
+fn the_precious() {
+
+    say(greet());
+}

@@ -1,8 +1,10 @@
-my x = 0;
-if (x) {
-    my a = 1;
-} else {
-    my b = 2;
+fn the_precious() {
+    my x = 0;
+    if (x) {
+        my a = 1;
+    } else {
+        my b = 2;
+    }
+    my y = 5;
+    gives(y);
 }
-my y = 5;
-gives(y);

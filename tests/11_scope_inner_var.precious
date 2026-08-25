@@ -1,6 +1,8 @@
-my a = 3;
-my b = 7;
-{
-    my c = a + b;
-    gives(c);
+fn the_precious() {
+    my a = 3;
+    my b = 7;
+    {
+        my c = a + b;
+        gives(c);
+    }
 }

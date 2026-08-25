@@ -1,2 +1,4 @@
-my x: number = 42;
-say(x);
+fn the_precious() {
+    my x: number = 42;
+    say(x);
+}

@@ -1,2 +1,4 @@
-say("hello world");
-say(42);
+fn the_precious() {
+    say("hello world");
+    say(42);
+}

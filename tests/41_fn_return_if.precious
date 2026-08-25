@@ -6,7 +6,10 @@ fn max(a, b) {
     }
 }
 
-my x = max(10, 20);
-my y = max(30, 15);
-say(x);
-say(y);
+fn the_precious() {
+
+    my x = max(10, 20);
+    my y = max(30, 15);
+    say(x);
+    say(y);
+}

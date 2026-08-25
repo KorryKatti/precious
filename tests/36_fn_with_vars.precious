@@ -3,4 +3,7 @@ fn print_five() {
     say(x);
 }
 
-print_five();
+fn the_precious() {
+
+    print_five();
+}

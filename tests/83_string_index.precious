@@ -1,4 +1,6 @@
-my msg = "hello";
-say(msg[0]);
-say(msg[4]);
-gives(0);
+fn the_precious() {
+    my msg = "hello";
+    say(msg[0]);
+    say(msg[4]);
+    gives(0);
+}

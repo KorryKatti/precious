@@ -1,8 +1,10 @@
-my x = 2;
-switch (x) {
-    case 1: say(10);
-    case 2: say(20);
-    case 3: say(30);
-    default: say(99);
+fn the_precious() {
+    my x = 2;
+    switch (x) {
+        case 1: say(10);
+        case 2: say(20);
+        case 3: say(30);
+        default: say(99);
+    }
+    gives(0);
 }
-gives(0);

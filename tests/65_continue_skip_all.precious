@@ -1,8 +1,10 @@
-my i = 0;
-my result = 0;
-while (i < 10) {
-    i = i + 1;
-    continue;
-    result = result + 1;
+fn the_precious() {
+    my i = 0;
+    my result = 0;
+    while (i < 10) {
+        i = i + 1;
+        continue;
+        result = result + 1;
+    }
+    gives(result);
 }
-gives(result);

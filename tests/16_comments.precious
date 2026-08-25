@@ -1,6 +1,8 @@
-// this is a single line comment
-my x = 42; // inline comment
-/* multi
-   line
-   comment */
-gives(x);
+fn the_precious() {
+    // this is a single line comment
+    my x = 42; // inline comment
+    /* multi
+       line
+       comment */
+    gives(x);
+}

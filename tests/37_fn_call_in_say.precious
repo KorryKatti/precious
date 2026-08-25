@@ -2,6 +2,9 @@ fn emit() {
     say(42);
 }
 
-my x = 10;
-say(x);
-emit();
+fn the_precious() {
+
+    my x = 10;
+    say(x);
+    emit();
+}

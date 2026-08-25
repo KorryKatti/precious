@@ -1,5 +1,7 @@
-my x = 1;
-if (x) {
-    my inner = 99;
-    gives(inner);
+fn the_precious() {
+    my x = 1;
+    if (x) {
+        my inner = 99;
+        gives(inner);
+    }
 }

@@ -7,5 +7,8 @@ fn sum(arr: number[], n) {
     }
     gives(total);
 }
-my nums: number[4] = [2, 4, 6, 8];
-say(sum(nums, 4));
+
+fn the_precious() {
+    my nums: number[4] = [2, 4, 6, 8];
+    say(sum(nums, 4));
+}

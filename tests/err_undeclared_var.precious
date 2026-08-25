@@ -1,2 +1,4 @@
-y = 10;
-gives(y);
+fn the_precious() {
+    y = 10;
+    gives(y);
+}

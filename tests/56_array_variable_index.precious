@@ -1,3 +1,5 @@
-my arr: number[3] = [10, 20, 30];
-my i: number = 1;
-say(arr[i]);
+fn the_precious() {
+    my arr: number[3] = [10, 20, 30];
+    my i: number = 1;
+    say(arr[i]);
+}

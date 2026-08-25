@@ -46,14 +46,48 @@ public:
     std::optional<NodeStmt*> parse_stmt();
 
     // Program parsing
+    //
+    // Strict top level: only `fn` definitions are allowed, and exactly one of
+    // them must be `fn the_precious() { ... }` — the program entry point
+    // (Precious' equivalent of C's `main`). Imported files later on will just
+    // be fn libraries without an entry.
     std::optional<NodeProg> parse_prog() {
         NodeProg prog;
         while (peek().has_value()) {
             if (auto stmt = parse_stmt()) {
+                if (!std::holds_alternative<NodeStmtFn*>(stmt.value()->var)) {
+                    std::cerr << "[ERROR] Only 'fn' definitions may live at top level! Move this inside 'fn the_precious()' (line "
+                              << peek(-1).value().line << ")" << std::endl;
+                    exit(EXIT_FAILURE);
+                }
+                auto fn = std::get<NodeStmtFn*>(stmt.value()->var);
+                if (fn->name.value.value() == "the_precious") {
+                    if (prog.entry_fn != nullptr) {
+                        std::cerr << "[ERROR] There can be only one precious! Duplicate 'fn the_precious' (line "
+                                  << fn->name.line << ")" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    if (!fn->params.empty()) {
+                        std::cerr << "[ERROR] The precious takes no arguments! Remove the parameters from 'fn the_precious' (line "
+                                  << fn->name.line << ")" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    if (fn->return_type.has_value()) {
+                        std::cerr << "[ERROR] The precious needs no return type! Remove '-> "
+                                  << fn->return_type.value() << "' from 'fn the_precious' (line "
+                                  << fn->name.line << ")" << std::endl;
+                        exit(EXIT_FAILURE);
+                    }
+                    prog.entry_fn = fn;
+                }
                 prog.stmts.push_back(stmt.value());
             } else {
                 error_expected("statement");
             }
+        }
+        if (prog.entry_fn == nullptr) {
+            std::cerr << "[ERROR] Where is the precious?! Every program needs an entry point: 'fn the_precious() { ... }'" << std::endl;
+            exit(EXIT_FAILURE);
         }
         return prog;
     }

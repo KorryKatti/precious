@@ -1,5 +1,7 @@
-my first = "hello";
-my second = " world";
-my combined = first + second;
-say(combined);
-gives(0);
+fn the_precious() {
+    my first = "hello";
+    my second = " world";
+    my combined = first + second;
+    say(combined);
+    gives(0);
+}

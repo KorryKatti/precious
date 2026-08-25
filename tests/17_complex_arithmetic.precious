@@ -1,4 +1,6 @@
-my a = 2;
-my b = 3;
-my c = 4;
-gives(a + b * c - a);
+fn the_precious() {
+    my a = 2;
+    my b = 3;
+    my c = 4;
+    gives(a + b * c - a);
+}

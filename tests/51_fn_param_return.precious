@@ -1,5 +1,8 @@
 fn double_it(x: number) {
     gives(x * 2);
 }
-my result = double_it(5);
-say(result);
+
+fn the_precious() {
+    my result = double_it(5);
+    say(result);
+}

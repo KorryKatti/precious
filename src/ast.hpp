@@ -7,16 +7,20 @@
  * This file defines every node type the parser can produce. The hierarchy:
  *
  *   NodeProg
- *     └─ NodeStmt* ──┬─ NodeStmtExit       (gives expr;)
- *                     ├─ NodeStmtLet         (my x = expr;)
- *                     ├─ NodeStmtAssign      (x = expr;)
- *                     ├─ NodeStmtWhile       (while (expr) { ... })
- *                     ├─ NodeStmtIf          (if / elif / else)
- *                     ├─ NodeScope           ({ ... })
- *                     ├─ NodeStmtPrint       (say(expr))
- *                     ├─ NodeStmtFn          (fn name(params) { ... })
- *                     ├─ NodeStmtExpr        (function call as statement)
- *                     └─ NodeStmtArrayAssign (arr[i] = expr;)
+ *     ├─ stmts ─────── NodeStmt* (top level: only NodeStmtFn allowed; one of
+ *     │                          them must be the entry fn "the_precious")
+ *     └─ entry_fn ──── NodeStmtFn (fn the_precious() { ... } program entry),
+ *                      also present in stmts. Its body statements are
+ *                      NodeStmt*:
+ *                      ├─ NodeStmtExit       (gives expr;)
+ *                      ├─ NodeStmtLet        (my x = expr;)
+ *                      ├─ NodeStmtAssign     (x = expr;)
+ *                      ├─ NodeStmtWhile      (while (expr) { ... })
+ *                      ├─ NodeStmtIf         (if / elif / else)
+ *                      ├─ NodeScope          ({ ... })
+ *                      ├─ NodeStmtPrint      (say(expr))
+ *                      ├─ NodeStmtExpr       (function call as statement)
+ *                      └─ NodeStmtArrayAssign(arr[i] = expr;)
  *
  *   NodeExpr
  *     └─ variant<NodeTerm*, NodeBinExpr*>
@@ -268,9 +272,11 @@ struct NodeStmt {
 };
 
 // ============================================================================
-// Program — a sequence of top-level statements
+// Program — top-level function definitions plus the entry function
 // ============================================================================
 
 struct NodeProg {
-    std::vector<NodeStmt*> stmts;
+    std::vector<NodeStmt*> stmts;   ///< Top level: only NodeStmtFn allowed.
+    NodeStmtFn* entry_fn = nullptr; ///< `fn the_precious()` — the program entry.
+                                    ///< Also present in stmts. Null while parsing.
 };

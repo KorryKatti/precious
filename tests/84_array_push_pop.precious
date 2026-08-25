@@ -1,6 +1,8 @@
-my arr: number[] = [1, 2, 3];
-push arr, 4;
-say(arr[3]);
-pop arr;
-say(arr[2]);
-gives(0);
+fn the_precious() {
+    my arr: number[] = [1, 2, 3];
+    push arr, 4;
+    say(arr[3]);
+    pop arr;
+    say(arr[2]);
+    gives(0);
+}

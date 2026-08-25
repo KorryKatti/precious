@@ -1,3 +1,5 @@
-my words: word[2] = ["hello", "world"];
-say(words[0]);
-say(words[1]);
+fn the_precious() {
+    my words: word[2] = ["hello", "world"];
+    say(words[0]);
+    say(words[1]);
+}

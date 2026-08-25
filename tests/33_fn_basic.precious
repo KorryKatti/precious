@@ -2,4 +2,7 @@ fn greet() {
     say(7);
 }
 
-greet();
+fn the_precious() {
+
+    greet();
+}

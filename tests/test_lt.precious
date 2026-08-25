@@ -1,5 +1,7 @@
-my x = 5;
-if (x < 10) {
-    gives(1);
+fn the_precious() {
+    my x = 5;
+    if (x < 10) {
+        gives(1);
+    }
+    gives(0);
 }
-gives(0);

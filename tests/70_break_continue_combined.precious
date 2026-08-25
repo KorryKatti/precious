@@ -1,13 +1,15 @@
-my i = 0;
-my count = 0;
-while (i < 20) {
-    i = i + 1;
-    if (i % 3 == 0) {
-        continue;
+fn the_precious() {
+    my i = 0;
+    my count = 0;
+    while (i < 20) {
+        i = i + 1;
+        if (i % 3 == 0) {
+            continue;
+        }
+        if (i == 15) {
+            break;
+        }
+        count = count + 1;
     }
-    if (i == 15) {
-        break;
-    }
-    count = count + 1;
+    gives(count);
 }
-gives(count);

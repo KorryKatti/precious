@@ -1,6 +1,8 @@
-my x = 0;
-if (x) {
-    gives(10);
-} else {
-    gives(20);
+fn the_precious() {
+    my x = 0;
+    if (x) {
+        gives(10);
+    } else {
+        gives(20);
+    }
 }

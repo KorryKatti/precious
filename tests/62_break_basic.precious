@@ -1,10 +1,12 @@
-my i = 0;
-my result = 0;
-while (i < 10) {
-    if (i == 5) {
-        break;
+fn the_precious() {
+    my i = 0;
+    my result = 0;
+    while (i < 10) {
+        if (i == 5) {
+            break;
+        }
+        result = result + i;
+        i = i + 1;
     }
-    result = result + i;
-    i = i + 1;
+    gives(result);
 }
-gives(result);

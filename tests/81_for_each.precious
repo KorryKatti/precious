@@ -1,7 +1,9 @@
-// Test for-each loop: sum array elements
-my arr: number[4] = [10, 20, 30, 40];
-my sum = 0;
-for (item in arr) {
-    sum = sum + item;
+fn the_precious() {
+    // Test for-each loop: sum array elements
+    my arr: number[4] = [10, 20, 30, 40];
+    my sum = 0;
+    for (item in arr) {
+        sum = sum + item;
+    }
+    gives(sum);
 }
-gives(sum);

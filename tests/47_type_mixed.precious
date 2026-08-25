@@ -1,4 +1,6 @@
-my x = 10;
-my s = "hey";
-say(x);
-say(s);
+fn the_precious() {
+    my x = 10;
+    my s = "hey";
+    say(x);
+    say(s);
+}

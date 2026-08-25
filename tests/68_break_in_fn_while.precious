@@ -9,6 +9,9 @@ fn find_first() -> number {
     gives(0);
 }
 
-my result = find_first();
-say(result);
-gives(0);
+fn the_precious() {
+
+    my result = find_first();
+    say(result);
+    gives(0);
+}
