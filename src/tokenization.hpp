@@ -83,6 +83,11 @@ enum class TokenType {
     in_,        /// < in keyword for for-each loop ( in )
     push_,      /// < push keyword for array push ( push )
     pop_,       /// < pop keyword for array pop ( pop )
+    pluseq,     /// < compound addition assignment ( += )
+    minuseq,    /// < compound subtraction assignment ( -= )
+    stareq,     /// < compound multiplication assignment ( *= )
+    fslasheq,   /// < compound division assignment ( /= )
+    moduloeq,   /// < compound modulo assignment ( %= )
 };
 
 /**
@@ -144,6 +149,11 @@ inline std::string to_string(const TokenType type){
         case TokenType::in_: return "`in`";
         case TokenType::push_: return "`push`";
         case TokenType::pop_: return "`pop`";
+        case TokenType::pluseq: return "`+=`";
+        case TokenType::minuseq: return "`-=`";
+        case TokenType::stareq: return "`*=`";
+        case TokenType::fslasheq: return "`/=`";
+        case TokenType::moduloeq: return "`%=`";
 
         default: return "unknown token type";
     }
@@ -383,7 +393,14 @@ public:
                 consume();
                 tokens.push_back({.type = TokenType::eq, .line = line_count});
                 continue;
-            }else if(peek().value()=='+'){
+            }
+            else if (peek().value()=='+' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::pluseq, .line = line_count});
+                continue;
+            } // +=
+            else if(peek().value()=='+'){
                 consume();
                 tokens.push_back({.type = TokenType::plus, .line = line_count});
                 continue;
@@ -393,7 +410,32 @@ public:
                 consume();
                 tokens.push_back({.type=TokenType::return_arrow, .line = line_count});
                 continue;
-            } else if (peek().value()=='*'){
+            }
+            else if (peek().value()=='-' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::minuseq, .line = line_count});
+                continue;
+            } // -=
+            else if (peek().value()=='*' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::stareq, .line = line_count});
+                continue;
+            } // *=
+            else if (peek().value()=='/' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::fslasheq, .line = line_count});
+                continue;
+            } // /=
+            else if (peek().value()=='%' && peek(1).has_value() && peek(1).value()=='='){
+                consume();
+                consume();
+                tokens.push_back({.type=TokenType::moduloeq, .line = line_count});
+                continue;
+            } // %=
+            else if (peek().value()=='*'){
                 consume();
                 tokens.push_back({.type=TokenType::star, .line = line_count});
                 continue;

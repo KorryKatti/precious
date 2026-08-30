@@ -258,13 +258,19 @@ struct NodeStmtPush {
 struct NodeStmtPop {
     Token ident;         ///< Array variable name
 };
+
+struct NodeStmtCompoundAssign {
+    Token ident;         ///< Variable to modify
+    TokenType op;        ///< pluseq, minuseq, stareq, fslasheq, moduloeq
+    NodeExpr* expr;
+};
 // ============================================================================
 // Statement — wraps all possible statement types in a variant
 // ============================================================================
 
 struct NodeStmt {
     std::variant<NodeStmtExit*, NodeStmtLet*, NodeScope*, NodeStmtIf*,
-                 NodeStmtAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
+                 NodeStmtAssign*, NodeStmtCompoundAssign*, NodeStmtWhile*, NodeStmtPrint*, NodeStmtFn*,
                  NodeStmtExpr*, NodeStmtArrayAssign*, NodeStmtBreak*, NodeStmtContinue*,
                  NodeStmtSwitch*, NodeStmtFor*, NodeStmtForEach*,
                  NodeStmtPush*, NodeStmtPop*>

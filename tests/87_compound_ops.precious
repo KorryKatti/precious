@@ -1,0 +1,10 @@
+fn the_precious() {
+    my a = 10;
+    a += 5;         // 15
+    a -= 3;         // 12
+    a *= 2;         // 24
+    a /= 4;         // 6
+    a %= 4;         // 2
+    say(a);         // prints 2
+    gives(a);
+}

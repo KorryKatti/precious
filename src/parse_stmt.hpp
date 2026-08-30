@@ -162,6 +162,35 @@ std::optional<NodeStmt*> Parser::parse_stmt() {
         return stmt;
     }
 
+    // <ident> (+=|-=|*=|/=|%=) <expr>; — compound assignment
+    if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value()) {
+        bool is_compound = false;
+        switch (peek(1).value().type) {
+            case TokenType::pluseq:
+            case TokenType::minuseq:
+            case TokenType::stareq:
+            case TokenType::fslasheq:
+            case TokenType::moduloeq:
+                is_compound = true;
+                break;
+            default:
+                break;
+        }
+        if (is_compound) {
+            auto compound = m_allocator.alloc<NodeStmtCompoundAssign>();
+            compound->ident = consume();
+            compound->op = consume().type;
+            if (auto expr = parse_expr()) {
+                compound->expr = expr.value();
+            } else {
+                error_expected("expression");
+            }
+            try_consume_err(TokenType::semi);
+            auto stmt = m_allocator.emplace<NodeStmt>(compound);
+            return stmt;
+        }
+    }
+
     // <ident> = <expr>;
     if (peek().has_value() && peek().value().type == TokenType::ident && peek(1).has_value() &&
         peek(1).value().type == TokenType::eq) {
@@ -323,9 +352,25 @@ std::optional<NodeStmt*> Parser::parse_stmt() {
         }
         try_consume_err(TokenType::semi);
 
-        // Parse update: <ident> = <expr>
+        // Parse update: <ident> (=|+=|-=|*=|/=|%=) <expr>
         if (peek().has_value() && peek().value().type != TokenType::close_paren) {
-            if (peek().has_value() && peek().value().type == TokenType::ident) {
+            if (peek().has_value() && peek().value().type == TokenType::ident &&
+                peek(1).has_value() &&
+                (peek(1).value().type == TokenType::pluseq ||
+                 peek(1).value().type == TokenType::minuseq ||
+                 peek(1).value().type == TokenType::stareq ||
+                 peek(1).value().type == TokenType::fslasheq ||
+                 peek(1).value().type == TokenType::moduloeq)) {
+                auto compound = m_allocator.alloc<NodeStmtCompoundAssign>();
+                compound->ident = consume();
+                compound->op = consume().type;
+                if (const auto expr = parse_expr()) {
+                    compound->expr = expr.value();
+                } else {
+                    error_expected("expression");
+                }
+                stmt_for->update = m_allocator.emplace<NodeStmt>(compound);
+            } else if (peek().has_value() && peek().value().type == TokenType::ident) {
                 auto assign = m_allocator.alloc<NodeStmtAssign>();
                 assign->ident = consume();
                 try_consume_err(TokenType::eq);

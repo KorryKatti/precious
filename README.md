@@ -180,6 +180,20 @@ for (each item in arr) {
 }
 ```
 
+### Compound Assignment
+
+Shorthand for modifying variables in place:
+
+```
+i += 1;
+count -= 3;
+total *= 2;
+result /= 5;
+remainder %= 4;
+```
+
+Also works on strings (`msg += " world";` concatenates) and inside `for` updates: `for (my i = 0; i < 10; i += 1) { ... }`.
+
 ### Break and Continue
 
 Use `break` to exit a while/for loop early, and `continue` to skip to the next iteration.

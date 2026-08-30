@@ -205,6 +205,11 @@ run_test_output "$TESTS_DIR/85_string_concat_reassign.precious" "foobarbaz" 0
 # Array push with strings
 run_test_output "$TESTS_DIR/86_array_push_string.precious" "$(printf 'foo\nworld')" 0
 
+# Compound assignment (+=, -=, *=, /=, %=)
+run_test_output "$TESTS_DIR/87_compound_ops.precious" "2" 2
+run_test "$TESTS_DIR/88_compound_loop.precious" 55
+run_test_output "$TESTS_DIR/89_compound_string.precious" "hello precious" 6
+
 # DSA / LeetCode problems
 echo ""
 echo "--- DSA Tests ---"

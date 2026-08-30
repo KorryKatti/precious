@@ -1,0 +1,13 @@
+fn the_precious() {
+    my msg = "hello";
+    msg += " ";
+    msg += "precious";
+    say(msg);       // hello precious
+
+    my arr: number[] = [1, 2, 3];
+    my total = 0;
+    for (item in arr) {
+        total += item;
+    }
+    gives(total);   // 6
+}

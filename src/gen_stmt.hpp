@@ -91,6 +91,20 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
             gen.m_output << ";\n";
         }
 
+        void operator()(const NodeStmtCompoundAssign* stmt_ca) const {
+            const char* op_str = "+";
+            switch (stmt_ca->op) {
+                case TokenType::minuseq:  op_str = "-"; break;
+                case TokenType::stareq:   op_str = "*"; break;
+                case TokenType::fslasheq: op_str = "/"; break;
+                case TokenType::moduloeq: op_str = "%"; break;
+                default: break;
+            }
+            gen.m_output << "    " << stmt_ca->ident.value.value() << " " << op_str << "= ";
+            gen.gen_expr(stmt_ca->expr);
+            gen.m_output << ";\n";
+        }
+
         void operator()(const NodeScope* scope) const { gen.gen_scope(scope); }
 
         void operator()(const NodeStmtIf* stmt_if) const {
@@ -138,6 +152,18 @@ void Generator::gen_stmt(const NodeStmt* stmt) {
                     auto assign = std::get<NodeStmtAssign*>(stmt_for->update->var);
                     gen.m_output << assign->ident.value.value() << " = ";
                     gen.gen_expr(assign->expr);
+                } else if (std::holds_alternative<NodeStmtCompoundAssign*>(stmt_for->update->var)) {
+                    auto compound = std::get<NodeStmtCompoundAssign*>(stmt_for->update->var);
+                    const char* op_str = "+";
+                    switch (compound->op) {
+                        case TokenType::minuseq:  op_str = "-"; break;
+                        case TokenType::stareq:   op_str = "*"; break;
+                        case TokenType::fslasheq: op_str = "/"; break;
+                        case TokenType::moduloeq: op_str = "%"; break;
+                        default: break;
+                    }
+                    gen.m_output << compound->ident.value.value() << " " << op_str << "= ";
+                    gen.gen_expr(compound->expr);
                 }
             }
             gen.m_output << ")";
