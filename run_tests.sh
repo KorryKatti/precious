@@ -68,6 +68,60 @@ run_test_output() {
     fi
 }
 
+run_test_stdin() {
+    local file="$1"
+    local stdin_data="$2"
+    local expected_output="$3"
+    local expected_exit="$4"
+    local name=$(basename "$file" .precious)
+    TOTAL=$((TOTAL + 1))
+
+    if ! $COMPILER "$file" > /dev/null 2>&1; then
+        echo "FAIL [$name] - compilation error"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    set +e
+    local actual_output
+    actual_output=$(printf '%s' "$stdin_data" | ./$name 2>&1)
+    local actual_exit=$?
+    set -e
+
+    if [ "$actual_exit" -ne "$expected_exit" ]; then
+        echo "FAIL [$name] - exit code: expected $expected_exit, got $actual_exit"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    if [ "$actual_output" = "$expected_output" ]; then
+        echo "PASS [$name] - output matches, exit: $actual_exit"
+        PASS=$((PASS + 1))
+    else
+        echo "FAIL [$name] - output mismatch"
+        echo "  expected: $expected_output"
+        echo "  got:      $actual_output"
+        FAIL=$((FAIL + 1))
+    fi
+}
+
+run_expect_rejected() {
+    local file="$1"
+    local name=$(basename "$file" .precious)
+    TOTAL=$((TOTAL + 1))
+
+    # The compiler must exit non-zero: either the parser rejected the program,
+    # or g++ rejected what the compiler generated.
+    if $COMPILER "$file" > /dev/null 2>&1; then
+        echo "FAIL [$name] - was accepted, but it should have been rejected"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    echo "PASS [$name] - correctly rejected"
+    PASS=$((PASS + 1))
+}
+
 echo "=== Precious Language Test Suite ==="
 echo ""
 
@@ -209,6 +263,29 @@ run_test_output "$TESTS_DIR/86_array_push_string.precious" "$(printf 'foo\nworld
 run_test_output "$TESTS_DIR/87_compound_ops.precious" "2" 2
 run_test "$TESTS_DIR/88_compound_loop.precious" 55
 run_test_output "$TESTS_DIR/89_compound_string.precious" "hello precious" 6
+
+# Increment / decrement (++, --)
+run_test_output "$TESTS_DIR/90_incdec_post.precious" "$(printf '5\n6\n6\n5')" 0
+run_test_output "$TESTS_DIR/91_incdec_pre.precious" "$(printf '6\n5')" 0
+run_test_output "$TESTS_DIR/92_incdec_statement.precious" "0" 0
+run_test_output "$TESTS_DIR/93_incdec_for_loop.precious" "10" 0
+run_test_output "$TESTS_DIR/94_incdec_loops.precious" "$(printf '3\n2\n1\nliftoff\n203\n-3\n4')" 0
+
+# Input from stdin (ask)
+run_test_stdin "$TESTS_DIR/95_ask_string.precious" "$(printf 'precious\nhello\n')" "hello, precious!" 0
+run_test_stdin "$TESTS_DIR/96_ask_number.precious" "$(printf '17\n25\n')" "$(printf 'first? second? 17\n25\n42')" 0
+run_test_stdin "$TESTS_DIR/97_ask_mixed.precious" "$(printf 'gollum\n6\n7\n99\n')" "$(printf 'gollum\n42\n99')" 0
+run_test_stdin "$TESTS_DIR/98_ask_expression.precious" "$(printf '21\nword\n')" "$(printf 'value? 42\ninline? word')" 21
+
+# Programs the compiler must refuse
+echo ""
+echo "--- Error Tests ---"
+for err_test in "$TESTS_DIR"/err_*.precious; do
+    run_expect_rejected "$err_test"
+done
+# Not named err_* but is an error test: `my x` twice in one block. Redeclaring
+# in the same block is rejected; only a nested block may reuse the name.
+run_expect_rejected "$TESTS_DIR/11_scope_shadow.precious"
 
 # DSA / LeetCode problems
 echo ""

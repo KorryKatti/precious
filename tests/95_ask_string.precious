@@ -1,0 +1,7 @@
+fn the_precious() {
+    // ask() with no prompt reads a whole line as a word.
+    my name = ask();
+    my greeting = ask();
+    say(greeting + ", " + name + "!");
+    gives(0);
+}

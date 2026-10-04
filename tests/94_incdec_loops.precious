@@ -1,0 +1,19 @@
+fn countdown(from) {
+    my i = from;
+    while (i > 0) {
+        say(i);
+        --i;
+    }
+    say("liftoff");
+}
+
+fn the_precious() {
+    // Increment/decrement inside while and for-each loops, and on expressions.
+    countdown(3);
+
+    my n: number = 2;
+    say(n++ * 100 + n);   // 2*100 + 3 = 203
+    say(-n++);            // -3
+    say(n);               // 4
+    gives(0);
+}

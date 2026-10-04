@@ -194,6 +194,34 @@ remainder %= 4;
 
 Also works on strings (`msg += " world";` concatenates) and inside `for` updates: `for (my i = 0; i < 10; i += 1) { ... }`.
 
+### Increment / Decrement
+
+`++` and `--` come in prefix and postfix forms, with the usual C semantics: postfix
+yields the value from *before* the step, prefix yields the value from *after* it.
+
+```
+my i = 5;
+my a = i++;    // a = 5, i = 6
+my b = ++i;    // b = 7, i = 7
+my c = i--;    // c = 7, i = 6
+my d = --i;    // d = 5
+```
+
+All four forms also work as standalone statements, and `i++` / `i--` are accepted in
+a `for` update clause:
+
+```
+i++;        // step by one
+--i;
+
+my sum = 0;
+for (my j = 0; j < 10; j++) {
+    sum += j;
+}
+```
+
+`++` and `--` only apply to a named variable — `say(i++)` prints the old value.
+
 ### Break and Continue
 
 Use `break` to exit a while/for loop early, and `continue` to skip to the next iteration.
@@ -407,6 +435,46 @@ say(sum(nums, 3));    // prints 60
 
 The compiler passes arrays as `std::vector` references to functions.
 
+### Input from Stdin
+
+`ask` is a built-in that reads a value from standard input. It is an expression, so
+it can be used anywhere a value can.
+
+```
+my name: word = ask("What is your precious name? ");
+say("Hello, " + name);
+```
+
+The prompt is optional — `ask()` reads without printing anything first. It does not
+need to be a literal, so a variable works too:
+
+```
+my prompt: word = "Enter a number: ";
+my x: number = ask(prompt);
+```
+
+What gets read depends on where the value is going:
+
+| Destination | Reads | Example |
+|-------------|-------|---------|
+| `word` (or no annotation) | a whole line | `my s = ask();` |
+| `number` | a single integer | `my n: number = ask();` |
+| `decimal` | a single float | `my d: decimal = ask();` |
+| `letter` | a single character | `my c: letter = ask();` |
+
+So a line read and a value read can be freely interleaved — reading a number does
+not leave its newline behind for the next `ask` to trip over:
+
+```
+my name = ask("name? ");      // reads a whole line
+my n: number = ask("count? ");  // reads just the number
+```
+
+If a number is expected but the input is not one, the value is `0` and reading
+continues normally.
+
+Defining your own `fn ask(...)` shadows the built-in.
+
 ## Examples
 
 ```
@@ -446,4 +514,6 @@ fn the_precious() {
 ```bash
 bash run_tests.sh
 ```
+
+107 tests: language features, DSA problems, and programs the compiler must reject.
 

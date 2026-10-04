@@ -1,0 +1,13 @@
+fn the_precious() {
+    // Post-increment/decrement yield the value from before the step.
+    my i = 5;
+    my before_up = i++;
+    my after_up = i;
+    my before_down = i--;
+    my after_down = i;
+    say(before_up);   // 5
+    say(after_up);    // 6
+    say(before_down); // 6
+    say(after_down);  // 5
+    gives(0);
+}

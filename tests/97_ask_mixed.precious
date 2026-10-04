@@ -1,0 +1,17 @@
+fn read_two() {
+    my a: number = ask();
+    my b: number = ask();
+    gives(a * b);
+}
+
+fn the_precious() {
+    // Numbers and lines can be interleaved: reading a value must not leave the
+    // newline behind for the next getline to pick up as an empty line.
+    my name = ask();
+    say(name);
+    my product = read_two();
+    say(product);
+    my again: number = ask();
+    say(again);
+    gives(0);
+}

@@ -55,5 +55,11 @@ Thumbs.db
 /test
 /test.c
 
+# Generated C++ the compiler writes when it builds a .precious file, and that
+# run_tests.sh then leaves behind in the project root.
+/*.cpp
+# ...except test.cpp, which is checked in and used as a build smoke test.
+!/test.cpp
+
 # Untracked
 ROADMAP.md

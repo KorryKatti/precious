@@ -1,0 +1,9 @@
+fn the_precious() {
+    // A number annotation makes ask() read a single value instead of a line.
+    my a: number = ask("first? ");
+    my b: number = ask("second? ");
+    say(a);
+    say(b);
+    say(a + b);
+    gives(0);
+}

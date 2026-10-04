@@ -1,0 +1,9 @@
+fn the_precious() {
+    // ask() works as an expression, inside a function, and with a prompt that
+    // is itself a variable.
+    my prompt: word = "value? ";
+    my v: number = ask(prompt);
+    say(v * 2);
+    say(ask("inline? "));
+    gives(v);
+}

@@ -1,0 +1,9 @@
+fn the_precious() {
+    // for-loop update clause with i++
+    my sum = 0;
+    for (my i = 0; i < 5; i++) {
+        sum += i;
+    }
+    say(sum);   // 0+1+2+3+4 = 10
+    gives(0);
+}
