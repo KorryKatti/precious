@@ -1,0 +1,79 @@
+// Every type used the way it should be. The type checker must let this one
+// through -- it is here to catch the checker itself being too strict.
+
+fn total(prices: number[], n) -> number {
+    my sum = 0;
+    for (my i = 0; i < n; i++) {
+        sum += prices[i];
+    }
+    gives(sum);
+}
+
+fn twice(n: number) -> number {
+    gives(n * 2);
+}
+
+fn thrice(n: number) -> number {
+    gives(twice(n) + twice(n) - n);
+}
+
+fn the_precious() {
+    // A question is a 0 or a 1, so it can be used as a number too.
+    my flag: question = 1;
+    my count: number = flag;
+    say(count);
+
+    // A whole number fits into a decimal.
+    my whole: decimal = 2;
+    say(whole + 1);
+
+    // One character of a word is a letter.
+    my msg = "precious";
+    my first: letter = msg[0];
+    say(first);
+
+    // Words join, and can be compared.
+    my hello = "hello";
+    my there = " there";
+    say(hello + there);
+    if (hello + there == "hello there") {
+        say(1);
+    }
+
+    // Arrays of words, walked one value at a time.
+    my names: word[2] = ["frodo", "sam"];
+    say(names[0]);
+    push names, "merry";
+    pop names;
+    for (name in names) {
+        say(name);
+    }
+
+    // An array of numbers, summed by a function.
+    my prices: number[3] = [10, 20, 30];
+    say(total(prices, 3));
+
+    // A function calling a function that calls it back.
+    say(thrice(twice(2)));
+
+    // A new variable may reuse an outer name, as long as the outer one survives.
+    my x = 1;
+    {
+        my x = 2;
+        say(x);
+    }
+    say(x);
+
+    // ask reads whatever the destination asks for.
+    my who = ask("who? ");
+    my how_many: number = ask("how many? ");
+    say(who);
+    say(how_many);
+
+    // A for loop's own variable does not outlive the loop.
+    for (my i = 0; i < 2; i++) {
+        say(i);
+    }
+
+    gives(0);
+}

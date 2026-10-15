@@ -1,0 +1,9 @@
+// add takes two arguments, but only one is given.
+fn add(a: number, b: number) -> number {
+    gives(a + b);
+}
+
+fn the_precious() {
+    my x: number = add(1);
+    say(x);
+}

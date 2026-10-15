@@ -1,0 +1,6 @@
+// Only arrays can be pushed onto.
+fn the_precious() {
+    my n = 5;
+    push n, 6;
+    say(n);
+}

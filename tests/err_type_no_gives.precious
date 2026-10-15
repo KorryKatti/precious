@@ -1,0 +1,8 @@
+// This function promises a word, but never gives anything.
+fn hello() -> word {
+    say("hello");
+}
+
+fn the_precious() {
+    say(hello());
+}

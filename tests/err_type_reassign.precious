@@ -1,0 +1,6 @@
+// x is a number, so it cannot become a word later on.
+fn the_precious() {
+    my x = 5;
+    x = "gollum";
+    say(x);
+}

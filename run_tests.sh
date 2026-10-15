@@ -277,6 +277,9 @@ run_test_stdin "$TESTS_DIR/96_ask_number.precious" "$(printf '17\n25\n')" "$(pri
 run_test_stdin "$TESTS_DIR/97_ask_mixed.precious" "$(printf 'gollum\n6\n7\n99\n')" "$(printf 'gollum\n42\n99')" 0
 run_test_stdin "$TESTS_DIR/98_ask_expression.precious" "$(printf '21\nword\n')" "$(printf 'value? 42\ninline? word')" 21
 
+# Type checker: types used the way they should be must still compile
+run_test_stdin "$TESTS_DIR/type_ok_mixed.precious" "$(printf 'frodo\n9\n')" "$(printf '1\n3\np\nhello there\n1\nfrodo\nfrodo\nsam\n60\n12\n2\n1\nwho? how many? frodo\n9\n0\n1')" 0
+
 # Programs the compiler must refuse
 echo ""
 echo "--- Error Tests ---"

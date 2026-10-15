@@ -1,0 +1,11 @@
+// This function promises a word, but hands back a number.
+fn describe(n: number) -> word {
+    if (n > 0) {
+        gives(1);
+    }
+    gives(0);
+}
+
+fn the_precious() {
+    say(describe(3));
+}

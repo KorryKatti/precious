@@ -1,0 +1,5 @@
+// Numbers have no single value to pick out of them.
+fn the_precious() {
+    my n = 5;
+    say(n[0]);
+}

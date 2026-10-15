@@ -2,21 +2,20 @@
 
 /**
  * @file typechecker.hpp
- * @brief Semantic type checker for the Precious programming language.
+ * @brief Checks the AST for type mistakes, before any C++ is generated.
  *
- * Sits between parsing and code generation. Walks the AST, builds a type
- * map for all variables and functions, and validates that operations are
- * type-safe.
+ * Runs between the parser and the code generator (see main.cpp). It answers one
+ * question about every expression -- "what type is this?" -- and then asks
+ * whether that type is allowed in the place it is being used.
  *
- * Two-pass approach:
- *   1. Collect all function signatures (name → param types + return type)
- *   2. Walk statements and validate types
+ * A type is one of the five Precious type names: "number", "decimal", "letter",
+ * "word", "question". An array adds "[]" on the end, so an array of words is
+ * "word[]". An empty string means "we cannot tell", and that is always allowed:
+ * the checker stays quiet when it has nothing to say.
  *
- * Usage:
- *   TypeChecker checker(prog);
- *   if (!checker.check()) {
- *       // errors were printed, exit before codegen
- *   }
+ * Where the work lives:
+ *   - check_expr.hpp  -- what type does an expression produce?
+ *   - check_stmt.hpp  -- one check_xxx() per statement kind, and the signatures
  */
 
 #include <iostream>
@@ -25,181 +24,126 @@
 #include <vector>
 
 #include "ast.hpp"
-#include "tokenization.hpp"
 
 class TypeChecker {
 public:
-    /**
-     * @brief Constructs a type checker for the given AST program.
-     * @param prog The parsed program to check.
-     */
     explicit TypeChecker(const NodeProg& prog) : m_prog(prog) {}
 
-    /**
-     * @brief Runs the full type checking pipeline.
-     * @return true if the program is type-safe, false if errors were found.
-     *
-     * Steps:
-     *   1. Collect function signatures
-     *   2. Check all statements
-     */
-    bool check() {
-        collect_fn_signatures();
-        return check_prog();
-    }
+    // Checks the whole program. Every mistake is printed as it is found, and this
+    // returns false if there was at least one.
+    bool check();
 
 private:
-    // ── Pass 1: Collect function signatures ──────────────────────────
+    // ---- Types, as text ----
 
-    /**
-     * @brief First pass — builds m_fn_signatures from all function definitions.
-     *
-     * Walks m_prog.stmts, finds every NodeStmtFn, and records:
-     *   - parameter types (explicit annotation or default "long")
-     *   - return type (explicit annotation, inferred from gives, or "void")
-     *
-     * This must run before check_prog() so that function calls can be
-     * validated even when the call appears before the definition.
-     */
+    // type_word_ -> "word". Returns "" for a token that is not a type.
+    static std::string type_name(const TokenType type);
+
+    // number, decimal, letter and question all hold numbers, so arithmetic and
+    // conditions accept all four. An empty type counts as a number too, because
+    // not knowing is never an error.
+    static bool is_number(const std::string& type);
+
+    // True for "word[]" and every other array type.
+    static bool is_array(const std::string& type);
+
+    // "word[]" -> "word". A type that is not an array comes back unchanged.
+    static std::string element_type(const std::string& type);
+
+    // May a value of type `given` be put where a `wanted` is expected?
+    static bool fits(const std::string& wanted, const std::string& given);
+
+    // The type of one function parameter. One written without a `: type` is a
+    // number, which is what the code generator makes of it as well.
+    static std::string param_type(const NodeFnParam& param);
+
+    // The symbol for an arithmetic operator, for error messages.
+    static std::string bin_op_name(const BinOp op);
+
+    // ---- What type does this expression produce? ----
+
+    std::string expr_type(const NodeExpr* expr);
+    std::string term_type(const NodeTerm* term);
+    std::string bin_type(const NodeBinExpr* bin_expr);
+    std::string array_lit_type(const NodeTermArrayLit* array_lit);
+    std::string call_type(const NodeTermFnCall* fn_call);
+
+    // if (...) / while (...) / for (...) want something that is true or false.
+    void check_condition(const NodeExpr* expr);
+
+    // Which source line an expression starts on, for error messages. It only has
+    // to be close: it digs through the wrappers until it finds a real token.
+    int expr_line(const NodeExpr* expr);
+
+    // ---- One function per statement kind, plus the dispatcher ----
+
+    void check_stmt(const NodeStmt* stmt);
+    void check_block(const NodeScope* scope);
+    void check_fn(const NodeStmtFn* fn);
+    void check_gives(const NodeStmtExit* stmt);
+    void check_my(const NodeStmtLet* stmt);
+    void check_assign(const NodeStmtAssign* stmt);
+    void check_compound_assign(const NodeStmtCompoundAssign* stmt);
+    void check_array_assign(const NodeStmtArrayAssign* stmt);
+    void check_if(const NodeStmtIf* stmt);
+    void check_if_pred(const NodeIfPred* pred);
+    void check_while(const NodeStmtWhile* stmt);
+    void check_for(const NodeStmtFor* stmt);
+    void check_for_each(const NodeStmtForEach* stmt);
+    void check_switch(const NodeStmtSwitch* stmt);
+    void check_push(const NodeStmtPush* stmt);
+    void check_pop(const NodeStmtPop* stmt);
+    void check_say(const NodeStmtPrint* stmt);
+
+    // ---- What every function looks like ----
+
+    struct FnSignature {
+        std::vector<std::string> params;  ///< the type of each parameter
+        std::string returns;              ///< "" when the fn wrote no `-> type`
+    };
+
+    // Fills m_fns before anything is checked, so a function can be called from
+    // a line above the one where it is defined.
     void collect_fn_signatures();
 
-    // ── Pass 2: Validate statements ──────────────────────────────────
+    // ---- Which blocks are we inside? ----
+    //
+    // m_scopes is a stack. The entry at the back is the block we are in right
+    // now; the entries before it are the blocks around it.
 
-    /**
-     * @brief Checks all top-level statements in the program.
-     * @return true if all statements are type-safe.
-     */
-    bool check_prog();
-
-    /**
-     * @brief Checks a single statement for type correctness.
-     * @param stmt The statement node to validate.
-     * @return true if the statement is valid.
-     *
-     * Dispatches based on statement variant:
-     *   - NodeStmtLet: validate declared type matches expression type
-     *   - NodeStmtAssign: validate RHS matches LHS declared type
-     *   - NodeStmtIf/While/Switch: validate condition is a number
-     *   - NodeStmtPrint: validate expression is printable
-     *   - NodeStmtExit: validate return type matches function signature
-     *   - NodeStmtFn: check the function body
-     *   - NodeStmtArrayAssign: validate index is number, value matches element type
-     *   - NodeScope: enter new scope, check stmts, exit scope
-     */
-    bool check_stmt(const NodeStmt* stmt);
-
-    /**
-     * @brief Checks a scoped block, managing scope entry/exit.
-     * @param scope The scope node to validate.
-     * @return true if all statements in the scope are valid.
-     */
-    bool check_scope(const NodeScope* scope);
-
-    /**
-     * @brief Checks an if/elif/else chain.
-     * @param pred The predicate chain to validate.
-     * @return true if all branches are valid.
-     */
-    bool check_if_pred(const NodeIfPred* pred);
-
-    // ── Expression type queries ──────────────────────────────────────
-
-    /**
-     * @brief Returns the type of an expression as a string.
-     * @param expr The expression to evaluate.
-     * @return The type string ("long", "std::string", "char", "void", etc.)
-     *
-     * Resolves types for:
-     *   - Integer literals → "long"
-     *   - String literals → "std::string"
-     *   - Identifiers → looked up in m_var_types
-     *   - Function calls → looked up in m_fn_signatures return type
-     *   - Binary expressions → "long" for arithmetic, "long" for comparison
-     *   - Array indexing → element type of the array
-     *   - Unary minus → same as operand
-     *   - Logical NOT → "long"
-     */
-    std::string expr_type(const NodeExpr* expr) const;
-
-    /**
-     * @brief Returns the type of a term as a string.
-     * @param term The term to evaluate.
-     * @return The type string.
-     */
-    std::string term_type(const NodeTerm* term) const;
-
-    /**
-     * @brief Checks if a type is a numeric type.
-     * @param type The type string to check.
-     * @return true if the type is "long" or "double".
-     */
-    bool is_numeric(const std::string& type) const;
-
-    /**
-     * @brief Checks if a type is a string type.
-     * @param type The type string to check.
-     * @return true if the type is "std::string".
-     */
-    bool is_string(const std::string& type) const;
-
-    /**
-     * @brief Checks if a type is an array type.
-     * @param type The type string to check.
-     * @return true if the type ends with "*".
-     */
-    bool is_array(const std::string& type) const;
-
-    // ── Scope management ─────────────────────────────────────────────
-
-    /**
-     * @brief Enters a new scope, pushing current size onto the scope stack.
-     */
     void enter_scope();
-
-    /**
-     * @brief Exits the current scope, removing all variables declared in it.
-     */
     void exit_scope();
+    void declare_var(const std::string& name, const std::string& type);
+    std::string lookup_var(const std::string& name);
 
-    /**
-     * @brief Declares a variable in the current scope.
-     * @param name The variable name.
-     * @param type The variable type string.
-     * @return true if declaration succeeded, false if already declared in this scope.
-     */
-    bool declare_var(const std::string& name, const std::string& type);
+    // ---- Saying what is wrong ----
 
-    /**
-     * @brief Looks up a variable's type, searching from innermost scope outward.
-     * @param name The variable name to look up.
-     * @return The type string if found, or empty string if not found.
-     */
-    std::string lookup_var(const std::string& name) const;
+    void error(const int line, const std::string& msg);
 
-    // ── Error reporting ──────────────────────────────────────────────
+    // The one rule behind `my x: T = e`, `x = e`, `arr[i] = e` and `push arr, e`:
+    // does this value belong in that place? Pass an empty name for a place that
+    // has no name of its own.
+    void check_put(const std::string& wanted, const std::string& given, const int line,
+                   const std::string& name);
 
-    /**
-     * @brief Reports a type error and marks the checker as failed.
-     * @param line The line number where the error occurred.
-     * @param msg The error message description.
-     */
-    void error(int line, const std::string& msg);
+    // ---- What we know ----
 
-    // ── Member data ──────────────────────────────────────────────────
+    const NodeProg& m_prog;  ///< The program being checked.
+    int m_error_count = 0;   ///< How many mistakes we have printed so far.
 
-    const NodeProg& m_prog;                                        ///< The AST to check.
-    bool m_has_errors = false;                                     ///< Set to true on first error.
+    /// One entry per open block: variable name -> type, for that block only.
+    std::vector<std::unordered_map<std::string, std::string>> m_scopes;
 
-    /// Variable type map: name → type string. Scopes tracked via m_scope_stack.
-    std::unordered_map<std::string, std::string> m_var_types;
+    /// Function name -> what it takes and what it returns.
+    std::unordered_map<std::string, FnSignature> m_fns;
 
-    /// Function signature map: name → { param_types, return_type }.
-    struct FnSignature {
-        std::vector<std::string> param_types;
-        std::string return_type;
-    };
-    std::unordered_map<std::string, FnSignature> m_fn_signatures;
-
-    /// Stack of scope boundaries — each entry is the m_var_types size at scope entry.
-    std::vector<size_t> m_scope_stack;
+    /// The function being checked right now.
+    std::string m_fn_name;
+    std::string m_fn_return;  ///< what it promises to give, "" if it promises nothing
+    bool m_fn_gives = false;  ///< whether a `gives` has been seen in it
 };
+
+// The implementations, included after the class so the member functions above can
+// see the class definition.
+#include "check_expr.hpp"
+#include "check_stmt.hpp"

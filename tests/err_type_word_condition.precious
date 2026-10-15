@@ -1,0 +1,9 @@
+// A word is neither true nor false, so it cannot be a condition.
+fn the_precious() {
+    my msg = "gollum";
+    if (msg) {
+        say(1);
+    } else {
+        say(0);
+    }
+}

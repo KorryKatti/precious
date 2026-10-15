@@ -1,0 +1,5 @@
+// A whole array cannot be said, only one of its values.
+fn the_precious() {
+    my arr: number[2] = [1, 2];
+    say(arr);
+}

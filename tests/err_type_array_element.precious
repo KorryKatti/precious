@@ -1,0 +1,5 @@
+// Every value in a number array has to be a number.
+fn the_precious() {
+    my arr: number[3] = [1, 2, "three"];
+    say(arr[2]);
+}

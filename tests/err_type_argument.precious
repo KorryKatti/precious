@@ -1,0 +1,9 @@
+// take_count takes a number, so it cannot be handed a word.
+fn take_count(n: number) -> number {
+    gives(n);
+}
+
+fn the_precious() {
+    my x: number = take_count("three");
+    say(x);
+}

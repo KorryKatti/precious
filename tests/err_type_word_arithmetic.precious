@@ -1,0 +1,7 @@
+// Words join with +, but they cannot be subtracted.
+fn the_precious() {
+    my a = "one";
+    my b = "two";
+    my c = a - b;
+    say(c);
+}

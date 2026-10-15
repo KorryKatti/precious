@@ -94,6 +94,40 @@ my msg = "hello";           // inferred as word
 
 The compiler picks the right `printf` format (`%ld` vs `%s`) based on the declared type.
 
+### Type Checking
+
+Between parsing and code generation, the compiler walks the program and refuses to
+build it if a value is used in a place its type does not belong. Every mistake is
+printed with its line number, and no C++ is generated at all:
+
+```
+fn the_precious() {
+    my x: number = "hello";
+}
+```
+
+```
+[ERROR] Cannot put a word into 'x', which holds a number, precious! (line 2)
+[ERROR] 1 type mistake(s), precious!
+```
+
+It checks that:
+
+- a value fits the type it is declared with — including every value in an array literal
+- a reassignment fits the variable it replaces
+- a `gives` matches the function's `-> type`, and that a function promising a type
+  gives one
+- each argument fits the parameter it is passed to, and that the right number of
+  arguments was given
+- `-`, `*`, `/` and `%` are only used on numbers, and `+` joins words
+- conditions are numbers (`0` is false, anything else is true) rather than words
+- only arrays are indexed, assigned into, `push`ed onto or `pop`ped, and only a
+  single value — never a whole array — is handed to `say`
+
+When it cannot work out a type, it stays quiet rather than guessing: `ask` is
+accepted anywhere, and a function with no `-> type` makes no promise to check
+against. Undeclared variables are still left to g++ to complain about.
+
 ### Arithmetic
 
 ```
@@ -515,5 +549,5 @@ fn the_precious() {
 bash run_tests.sh
 ```
 
-107 tests: language features, DSA problems, and programs the compiler must reject.
+122 tests: language features, DSA problems, and programs the compiler must reject.
 

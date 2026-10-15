@@ -1,0 +1,5 @@
+// A word cannot go into a number.
+fn the_precious() {
+    my x: number = "hello";
+    say(x);
+}

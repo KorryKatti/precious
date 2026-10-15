@@ -2,13 +2,14 @@
  * @file main.cpp
  * @brief Entry point for the Precious compiler.
  *
- * This file does the whole job in five steps, and nothing else:
+ * This file does the whole job in six steps, and nothing else:
  *
  *   1. read the .precious file into a string
  *   2. tokenize it          (tokenization.hpp)  text   -> list of tokens
  *   3. parse it             (parser.hpp)        tokens -> AST
- *   4. generate C++ from it (generation.hpp)   AST    -> C++ source
- *   5. hand that C++ to g++, which makes the executable
+ *   4. check its types      (typechecker.hpp)   AST    -> complaints, if any
+ *   5. generate C++ from it (generation.hpp)   AST    -> C++ source
+ *   6. hand that C++ to g++, which makes the executable
  *
  * Usage:
  *   precious my_program.precious
@@ -27,6 +28,7 @@
 
 #include "generation.hpp"
 #include "parser.hpp"
+#include "typechecker.hpp"
 
 /// Reads a whole file into a string. Returns an empty string if it cannot be
 /// opened -- the tokenizer will then report that it found nothing, which is a
@@ -79,12 +81,23 @@ int main(const int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // --- Step 4: AST -> C++ source ---
+    // --- Step 4: AST -> are the types right? ---
+    //
+    // The checker never changes the program, it only reports. If it finds
+    // anything wrong, stop here: there is no point handing g++ a program that
+    // was never going to compile.
+    TypeChecker checker(program.value());
+    if (!checker.check()) {
+        std::cerr << "[ERROR] It is not safe to cast these types, precious!" << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    // --- Step 5: AST -> C++ source ---
     const std::string base_name = base_name_of(input_path);
     Generator generator(program.value());
     write_file(base_name + ".cpp", generator.gen_prog());
 
-    // --- Step 5: C++ source -> executable ---
+    // --- Step 6: C++ source -> executable ---
     //
     // -w silences warnings from the generated code. The generated C++ is not
     // something the programmer wrote, so warning about it would be noise.
