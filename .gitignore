@@ -52,6 +52,8 @@ Thumbs.db
 
 # Generated test binaries (no extension, in project root)
 /[0-9]*
+/err_*
+/type_ok_*
 /test
 /test.c
 
