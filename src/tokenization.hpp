@@ -8,11 +8,14 @@
  * What it recognises:
  * - Keywords and identifiers   my, fn, while, hello_world, ...
  * - Integer literals           42
+ * - Gollum numerals            three  (an integer literal in words)
  * - String literals            "hello"
+ * - Character literals         'a', '\n'
  * - Operators                  + - * / % == != < > <= >= = += -= *= /= %= ++ --
  *                              and -> ->
  * - Delimiters                 ( ) { } [ ] ; , :
- * - Comments                   // to end of line,  /* ... *\/
+ * - Comments                   // to end of line, /* ... *\/,
+ *                              ;; to end of line, ;;; ... ;;;  (mutters)
  *
  * ADDING A KEYWORD? Add one line to keywords(). Nothing else needs to change.
  */
@@ -27,6 +30,32 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+
+/**
+ * @brief English number words that stand for a number: zero to ninety.
+ *
+ * These are written like any other number: `my x = three + four;` is 7, and
+ * `my y = twenty + one;` is 21. A number spelled with more than one word
+ * ("three hundred") is two words, and so is not a number -- say it with `+`.
+ *
+ * The cost of this is that these words are now reserved: they cannot be used as
+ * variable or function names.
+ */
+inline const std::unordered_map<std::string, std::string>& number_words() {
+    static const std::unordered_map<std::string, std::string> table = {
+        {"zero", "0"},       {"one", "1"},       {"two", "2"},
+        {"three", "3"},      {"four", "4"},     {"five", "5"},
+        {"six", "6"},        {"seven", "7"},    {"eight", "8"},
+        {"nine", "9"},       {"ten", "10"},     {"eleven", "11"},
+        {"twelve", "12"},    {"thirteen", "13"}, {"fourteen", "14"},
+        {"fifteen", "15"},   {"sixteen", "16"}, {"seventeen", "17"},
+        {"eighteen", "18"},  {"nineteen", "19"}, {"twenty", "20"},
+        {"thirty", "30"},    {"forty", "40"},   {"fifty", "50"},
+        {"sixty", "60"},     {"seventy", "70"}, {"eighty", "80"},
+        {"ninety", "90"},
+    };
+    return table;
+}
 
 /**
  * @enum TokenType
@@ -65,8 +94,9 @@ enum class TokenType {
     while_,          ///< `while`
     print_,          ///< `say`
     fn_,             ///< `fn`
-    comma_,          ///< ,
-    string_lit,      ///< "hello"
+    comma_,         ///< ,
+    string_lit,     ///< "hello"
+    char_lit,       ///< 'a'
     colon_,          ///< :   (used in `my x: number = 5`)
     type_number_,    ///< `number`
     type_word_,      ///< `word`
@@ -76,6 +106,7 @@ enum class TokenType {
     open_square,     ///< [
     close_square,    ///< ]
     modulo,          ///< %
+    starstar,        ///< **
     return_arrow,    ///< ->
     break_,          ///< `break`
     continue_,       ///< `continue`
@@ -132,6 +163,7 @@ inline std::string to_string(const TokenType type) {
     if (type == TokenType::fn_) return "`fn`";
     if (type == TokenType::comma_) return "`,`";
     if (type == TokenType::string_lit) return "string literal";
+    if (type == TokenType::char_lit) return "character literal";
     if (type == TokenType::colon_) return "`:`";
     if (type == TokenType::type_number_) return "number";
     if (type == TokenType::type_word_) return "word";
@@ -141,6 +173,7 @@ inline std::string to_string(const TokenType type) {
     if (type == TokenType::open_square) return "`[`";
     if (type == TokenType::close_square) return "`]`";
     if (type == TokenType::modulo) return "`%`";
+    if (type == TokenType::starstar) return "`**`";
     if (type == TokenType::return_arrow) return "`->`";
     if (type == TokenType::break_) return "`break`";
     if (type == TokenType::continue_) return "`continue`";
@@ -205,6 +238,7 @@ inline std::optional<int> bin_prec(const TokenType type) {
     if (type == TokenType::star || type == TokenType::fslash || type == TokenType::modulo) {
         return 4;
     }
+    if (type == TokenType::starstar) return 5; // tightest, and groups right to left
     return std::nullopt; // not a binary operator
 }
 
@@ -258,6 +292,11 @@ private:
     bool try_read_two_char_operator(std::vector<Token>& tokens, int line);
     bool try_read_single_char_token(std::vector<Token>& tokens, int line);
     bool try_read_string_literal(std::string& buf, std::vector<Token>& tokens, int line);
+    bool try_read_char_literal(std::string& buf, std::vector<Token>& tokens, int line);
+
+    // The character an escape stands for, given the character after the
+    // backslash. Defined next to try_read_char_literal(), which is its only user.
+    static char char_escape(char escaped);
 
     // Appends one token. `value` is left out for operators and punctuation,
     // which have no text of their own.
@@ -287,6 +326,7 @@ std::vector<Token> Tokenizer::tokenize() {
         if (try_read_two_char_operator(tokens, line)) continue;
         if (try_read_single_char_token(tokens, line)) continue;
         if (try_read_string_literal(buf, tokens, line)) continue;
+        if (try_read_char_literal(buf, tokens, line)) continue;
 
         // A newline is not a token, but it moves the line counter along so
         // error messages can point at the right line.
@@ -327,9 +367,21 @@ bool Tokenizer::try_read_word(std::string& buf, std::vector<Token>& tokens, cons
     const auto& table = keywords();
     auto found = table.find(buf);
     if (found != table.end()) {
-        add_token(tokens, found->second, line); // a reserved word
+        // A keyword still remembers its own text. Almost nothing needs that, but
+        // a type keyword is also a built-in conversion -- `decimal("3.14")` --
+        // and a call has to know the name it was written with.
+        add_token(tokens, found->second, line, buf);
         return true;
     }
+
+    // A Gollum numeral: `three` is 3.
+    const auto& words = number_words();
+    auto numeral = words.find(buf);
+    if (numeral != words.end()) {
+        add_token(tokens, TokenType::int_lit, line, numeral->second);
+        return true;
+    }
+
     add_token(tokens, TokenType::ident, line, buf);
     return true;
 }
@@ -349,17 +401,47 @@ bool Tokenizer::try_read_number(std::string& buf, std::vector<Token>& tokens, co
     return true;
 }
 
-// Two kinds of comment, both of which produce no tokens at all:
-//   // everything up to the end of the line
-//   /* everything up to the next */
+// Four kinds of comment, all of which produce no tokens at all:
+//   //  everything up to the end of the line
+//   /*  everything up to the next */
+//   ;;  everything up to the end of the line   (a Gollum mutter)
+//   ;;; everything up to the next ;;;         (a block mutter)
 // Comments deliberately do not count lines, so line numbers in error messages
 // can be off inside a multi-line comment.
 bool Tokenizer::try_skip_comment() {
-    if (!peek().has_value() || peek().value() != '/') {
+    if (!peek().has_value()) {
         return false;
     }
     const std::optional<char> next = peek(1);
     if (!next.has_value()) {
+        return false;
+    }
+
+    // A mutter. `;;` runs to the end of the line, `;;;` runs to the next `;;;`.
+    if (peek().value() == ';' && next.value() == ';') {
+        consume(); // ;
+        consume(); // ;
+        if (!peek().has_value() || peek().value() != ';') {
+            while (peek().has_value() && peek().value() != '\n') {
+                consume();
+            }
+            return true;
+        }
+        consume(); // the third ; -- now we hunt for the closing ;;;
+        while (peek().has_value()) {
+            if (peek().value() == ';' && peek(1).has_value() && peek(1).value() == ';' &&
+                peek(2).has_value() && peek(2).value() == ';') {
+                break;
+            }
+            consume();
+        }
+        for (int i = 0; i < 3 && peek().has_value(); i++) {
+            consume();
+        }
+        return true;
+    }
+
+    if (peek().value() != '/') {
         return false;
     }
 
@@ -422,6 +504,8 @@ bool Tokenizer::try_read_two_char_operator(std::vector<Token>& tokens, const int
         type = TokenType::minuseq;
     } else if (a == '*' && b == '=') {
         type = TokenType::stareq;
+    } else if (a == '*' && b == '*') {
+        type = TokenType::starstar;
     } else if (a == '/' && b == '=') {
         type = TokenType::fslasheq;
     } else if (a == '%' && b == '=') {
@@ -512,6 +596,51 @@ bool Tokenizer::try_read_string_literal(std::string& buf, std::vector<Token>& to
 
     add_token(tokens, TokenType::string_lit, line, buf);
     return true;
+}
+
+// A character is an apostrophe, one character, and another apostrophe. Inside
+// it, a backslash may stand for one of the escapes listed in char_escape() --
+// so `'\n'` is the newline character, not two of them.
+bool Tokenizer::try_read_char_literal(std::string& buf, std::vector<Token>& tokens,
+                                      const int line) {
+    if (!peek().has_value() || peek().value() != '\'') {
+        return false;
+    }
+    consume(); // opening apostrophe
+
+    buf.clear();
+    if (peek().has_value() && peek().value() == '\\' && peek(1).has_value()) {
+        consume();                            // the backslash itself
+        buf.push_back(char_escape(consume())); // whatever it stands for
+    } else if (peek().has_value() && peek().value() != '\'') {
+        buf.push_back(consume());
+    } else {
+        std::cerr << "[ERROR] Empty character literal at line " << line << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    if (!peek().has_value() || peek().value() != '\'') {
+        std::cerr << "[ERROR] Unterminated character literal at line " << line << std::endl;
+        exit(EXIT_FAILURE);
+    }
+    consume(); // closing apostrophe
+
+    add_token(tokens, TokenType::char_lit, line, buf);
+    return true;
+}
+
+// What the character after a backslash stands for. Anything unrecognised stands
+// for itself, so `'\q'` is the letter q.
+char Tokenizer::char_escape(const char escaped) {
+    if (escaped == 'n') return '\n';
+    if (escaped == 't') return '\t';
+    if (escaped == 'r') return '\r';
+    if (escaped == '0') return '\0';
+    if (escaped == 'a') return '\a';
+    if (escaped == 'b') return '\b';
+    if (escaped == 'f') return '\f';
+    if (escaped == 'v') return '\v';
+    return escaped; // \\ and \' land here, as do typos
 }
 
 void Tokenizer::add_token(std::vector<Token>& tokens, const TokenType type, const int line,

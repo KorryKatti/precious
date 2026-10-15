@@ -64,6 +64,7 @@ struct NodeScope;
  */
 enum class BinOp {
     Add, Sub, Mul, Div, Mod,    // arithmetic
+    Pow,                        // **  -- tighter than every other operator
     Eq, NotEq,                // equality
     Lt, Gt, LtEq, GtEq,      // comparison
     And, Or,                   // logical
@@ -91,6 +92,10 @@ struct NodeTermNot { ///< ! expr
 
 struct NodeTermStringLit { ///< "hello"
     Token string_lit;
+};
+
+struct NodeTermCharLit { ///< 'a'  -- the token's value is the one character itself
+    Token char_lit;
 };
 
 /// One parameter of a function: `name`, `name: type`, or `name: type[]`.
@@ -143,9 +148,9 @@ struct NodeTermPostDec { ///< x--
 
 struct NodeTerm {
     std::variant<NodeTermIntLit*, NodeTermIdent*, NodeTermParen*, NodeTermNot*,
-                 NodeTermStringLit*, NodeTermFnCall*, NodeTermArrayLit*,
-                 NodeTermArrayIndex*, NodeTermUnaryMinus*, NodeTermPreInc*,
-                 NodeTermPostInc*, NodeTermPreDec*, NodeTermPostDec*>
+                 NodeTermStringLit*, NodeTermCharLit*, NodeTermFnCall*, NodeTermArrayLit*,
+                 NodeTermArrayIndex*, NodeTermUnaryMinus*, NodeTermPreInc*, NodeTermPostInc*,
+                 NodeTermPreDec*, NodeTermPostDec*>
         var;
 };
 

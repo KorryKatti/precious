@@ -1,0 +1,12 @@
+;; A Gollum mutter runs to the end of the line
+;;;
+;; A block mutter runs to the next one, and can
+;; take as many lines as it likes
+;;;
+
+fn the_precious() {
+    my x = 40; ;; an inline mutter, precious
+    // an ordinary comment still works too
+    /* and so does a block one */
+    gives(x + 2);
+}

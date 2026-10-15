@@ -1,0 +1,17 @@
+;; ** is the power operator. It binds tighter than * and groups right to left.
+
+fn square(x) {
+    gives(x ** 2);
+}
+
+fn the_precious() {
+    say(2 ** 10);      // 1024
+    say(3 ** 3);       // 27
+    say(2 ** 3 ** 2);  // 512: 2 ** (3 ** 2)
+    say(2 ** 3 * 4);   // 32:  ** binds tighter than *
+    say(2 * 3 ** 3);   // 54
+    say(square(7));    // 49
+    say(10 ** 0);      // 1
+
+    gives(2 ** 3);
+}

@@ -89,6 +89,28 @@ std::string Generator::infer_type(const NodeExpr* expr) const {
     if (std::holds_alternative<NodeTermIntLit*>(term->var)) {
         return "long";
     }
+    if (std::holds_alternative<NodeTermCharLit*>(term->var)) {
+        return "char";
+    }
+
+    // [1, 2, 3] is a std::vector, provided every value in it agrees on a type.
+    if (std::holds_alternative<NodeTermArrayLit*>(term->var)) {
+        const NodeTermArrayLit* array_lit = std::get<NodeTermArrayLit*>(term->var);
+        std::string element;
+        for (const NodeExpr* value : array_lit->elements) {
+            const std::string type = infer_type(value);
+            if (element.empty()) {
+                element = type;
+            }
+            if (type != element) {
+                return "long"; // mixed, so we cannot tell
+            }
+        }
+        if (element.empty()) {
+            return "long"; // nothing in it to learn from
+        }
+        return "std::vector<" + element + ">";
+    }
 
     // ++x, x++, --x and x-- all produce whatever x is.
     if (std::holds_alternative<NodeTermPreInc*>(term->var)) {
@@ -119,6 +141,15 @@ std::string Generator::infer_type(const NodeExpr* expr) const {
             std::get<NodeTermFnCall*>(term->var)->name.value.value();
         if (is_builtin_ask(name)) {
             return "std::string"; // ask() defaults to reading a line
+        }
+        if (is_builtin(name)) {
+            if (name == "str") {
+                return "std::string";
+            }
+            if (name == "decimal") {
+                return "double";
+            }
+            return "long"; // len and num
         }
         auto it = m_fn_return_types.find(name);
         if (it != m_fn_return_types.end()) {
@@ -170,6 +201,39 @@ bool Generator::is_ask_call(const NodeExpr* expr) const {
         return false;
     }
     return is_builtin_ask(std::get<NodeTermFnCall*>(term->var)->name.value.value());
+}
+
+// ---------------------------------------------------------------------------
+// The other built-ins: len, str, num and decimal
+// ---------------------------------------------------------------------------
+
+// True if `name` is one of them. A program that defines its own function with
+// that name gets the ordinary rules instead, exactly as with `ask`.
+bool Generator::is_builtin(const std::string& name) const {
+    if (name != "len" && name != "str" && name != "num" && name != "decimal") {
+        return false;
+    }
+    return m_fn_return_types.find(name) == m_fn_return_types.end();
+}
+
+// A character written out so that g++ reads it back as the same character.
+std::string Generator::escape_for_cpp(const char letter) {
+    switch (letter) {
+    case '\n':
+        return "\\n";
+    case '\t':
+        return "\\t";
+    case '\r':
+        return "\\r";
+    case '\0':
+        return "\\0";
+    case '\\':
+        return "\\\\";
+    case '\'':
+        return "\\'";
+    default:
+        return std::string(1, letter);
+    }
 }
 
 // ---------------------------------------------------------------------------

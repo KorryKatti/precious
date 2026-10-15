@@ -14,11 +14,12 @@
  * Usage:
  *   precious my_program.precious
  *
- * The executable is named after the input file, so my_program.precious becomes
- * ./my_program. Note that the generated C++ and the executable are both written
- * into the current directory, not next to the source file.
+ * The executable is named after the input file and is written into ./out/, so
+ * my_program.precious becomes ./out/my_program. The generated C++ sits beside it
+ * as ./out/my_program.cpp. Nothing is written into the current directory.
  */
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <optional>
@@ -29,6 +30,10 @@
 #include "generation.hpp"
 #include "parser.hpp"
 #include "typechecker.hpp"
+
+/// Everything the compiler produces lands here, so the project directory stays
+/// free of generated files.
+static const char* const OUTPUT_DIR = "out";
 
 /// Reads a whole file into a string. Returns an empty string if it cannot be
 /// opened -- the tokenizer will then report that it found nothing, which is a
@@ -93,16 +98,24 @@ int main(const int argc, char* argv[]) {
     }
 
     // --- Step 5: AST -> C++ source ---
+    //
+    // The C++ and the executable both go into ./out/, which is created if it is
+    // not there yet. That keeps the project directory free of generated files.
     const std::string base_name = base_name_of(input_path);
+    const std::string cpp_path = std::string(OUTPUT_DIR) + "/" + base_name + ".cpp";
+    const std::string exe_path = std::string(OUTPUT_DIR) + "/" + base_name;
+    std::error_code ignored;
+    std::filesystem::create_directories(OUTPUT_DIR, ignored);
+
     Generator generator(program.value());
-    write_file(base_name + ".cpp", generator.gen_prog());
+    write_file(cpp_path, generator.gen_prog());
 
     // --- Step 6: C++ source -> executable ---
     //
     // -w silences warnings from the generated code. The generated C++ is not
     // something the programmer wrote, so warning about it would be noise.
-    const std::string compile_command = "g++ -std=c++17 -o " + base_name + " " +
-                                        base_name + ".cpp -w";
+    const std::string compile_command =
+        "g++ -std=c++17 -o " + exe_path + " " + cpp_path + " -w";
     if (run(compile_command) != 0) {
         // g++ has already printed its own error, so just say which file it was.
         std::cerr << "[ERROR] The gollum-speak broke: g++ could not build " << base_name

@@ -100,6 +100,9 @@ std::string TypeChecker::bin_op_name(const BinOp op) {
     if (op == BinOp::Mod) {
         return "%";
     }
+    if (op == BinOp::Pow) {
+        return "**";
+    }
     return "?";
 }
 
@@ -122,6 +125,9 @@ int TypeChecker::expr_line(const NodeExpr* expr) {
     }
     if (std::holds_alternative<NodeTermStringLit*>(term->var)) {
         return std::get<NodeTermStringLit*>(term->var)->string_lit.line;
+    }
+    if (std::holds_alternative<NodeTermCharLit*>(term->var)) {
+        return std::get<NodeTermCharLit*>(term->var)->char_lit.line;
     }
     if (std::holds_alternative<NodeTermFnCall*>(term->var)) {
         return std::get<NodeTermFnCall*>(term->var)->name.line;
@@ -235,7 +241,7 @@ std::string TypeChecker::array_lit_type(const NodeTermArrayLit* array_lit) {
     return common + "[]";
 }
 
-// name(arg, arg) -- also how `ask(...)` arrives here.
+// name(arg, arg) -- also how `ask(...)` and the small built-ins arrive here.
 std::string TypeChecker::call_type(const NodeTermFnCall* fn_call) {
     const std::string name = fn_call->name.value.value();
 
@@ -244,6 +250,15 @@ std::string TypeChecker::call_type(const NodeTermFnCall* fn_call) {
     // its own `fn ask(...)` gets the ordinary rules instead.
     if (name == "ask" && m_fns.find("ask") == m_fns.end()) {
         return "";
+    }
+
+    // len, str, num and decimal: the same idea, with a known answer instead of a
+    // borrowed one. A program that defines its own function of that name gets
+    // the ordinary rules.
+    if (m_fns.find(name) == m_fns.end()) {
+        if (name == "len" || name == "str" || name == "num" || name == "decimal") {
+            return builtin_call_type(name, fn_call);
+        }
     }
 
     const auto found = m_fns.find(name);
@@ -281,6 +296,9 @@ std::string TypeChecker::term_type(const NodeTerm* term) {
     }
     if (std::holds_alternative<NodeTermStringLit*>(term->var)) {
         return "word";
+    }
+    if (std::holds_alternative<NodeTermCharLit*>(term->var)) {
+        return "letter";
     }
     // A variable: whatever type it was declared with, or "" if we cannot find it.
     if (std::holds_alternative<NodeTermIdent*>(term->var)) {
@@ -368,6 +386,45 @@ std::string TypeChecker::term_type(const NodeTerm* term) {
     std::cerr << "[BUG] term_type: unhandled expression kind. Add it in check_expr.hpp."
               << std::endl;
     exit(EXIT_FAILURE);
+}
+
+// ============================================================================
+// 5. The small built-ins: len, str, num, decimal
+// ============================================================================
+
+// What one of them gives back, and whether what it was handed makes sense.
+// `ask` is not here: it has no type of its own, because the call site decides.
+std::string TypeChecker::builtin_call_type(const std::string& name,
+                                           const NodeTermFnCall* fn_call) {
+    if (fn_call->args.size() != 1) {
+        error(fn_call->name.line,
+              "'" + name + "' takes exactly one value, precious! " +
+                  (fn_call->args.empty() ? "It was given none." : "Too many were given."));
+        return "";
+    }
+
+    const std::string given = expr_type(fn_call->args[0]);
+
+    if (name == "str") {
+        return "word"; // anything at all can be written out as text
+    }
+
+    if (name == "len") {
+        if (!given.empty() && given != "word" && !is_array(given)) {
+            error(expr_line(fn_call->args[0]),
+                  "Cannot ask a " + given + " how long it is, precious!");
+        }
+        return "number";
+    }
+
+    // num and decimal read text into a number. An array is the only thing that
+    // can never be one, and the rest is left to g++ -- strtol quietly gives 0.
+    if (is_array(given)) {
+        error(expr_line(fn_call->args[0]),
+              "Cannot read a number out of a " + given + ", precious!");
+    }
+
+    return name == "decimal" ? "decimal" : "number";
 }
 
 // An expression is either one term, or two terms joined by an operator.

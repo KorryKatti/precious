@@ -44,6 +44,11 @@ std::optional<NodeTerm*> Parser::parse_term() {
         return new NodeTerm{new NodeTermStringLit{string_lit.value()}};
     }
 
+    // 'a'
+    if (auto char_lit = try_consume(TokenType::char_lit)) {
+        return new NodeTerm{new NodeTermCharLit{char_lit.value()}};
+    }
+
     // ++x  or  --x   (prefix form -- the operator comes first)
     if (peek().has_value() && (peek().value().type == TokenType::plusplus ||
                                peek().value().type == TokenType::minusminus)) {
@@ -118,12 +123,16 @@ std::optional<NodeTerm*> Parser::parse_term() {
         return new NodeTerm{array_lit};
     }
 
-    if (peek().has_value() && peek().value().type == TokenType::ident) {
-        // name( ... )   -- a function call
+    if (peek().has_value() && (peek().value().type == TokenType::ident || peek_is_type())) {
+        // name( ... )   -- a function call. A type keyword counts as a name here,
+        // because `decimal("3.14")` is a built-in conversion, not an annotation.
         if (peek(1).has_value() && peek(1).value().type == TokenType::open_paren) {
             return new NodeTerm{parse_fn_call()};
         }
 
+        if (peek().value().type != TokenType::ident) {
+            return {}; // a bare type keyword is not a value
+        }
         // name[ ... ]   -- array indexing, and string indexing
         if (peek(1).has_value() && peek(1).value().type == TokenType::open_square) {
             auto array_index = new NodeTermArrayIndex{};
@@ -204,7 +213,10 @@ std::optional<NodeExpr*> Parser::parse_expr(const int min_prec) {
         }
 
         const TokenType op_token = consume().type;
-        const int rhs_min_prec = prec.value() + 1;
+        // Every operator groups left to right (`a - b - c` is `(a - b) - c`),
+        // except `**`, which groups right to left: 2 ** 3 ** 2 is 2 ** (3 ** 2).
+        const int rhs_min_prec =
+            op_token == TokenType::starstar ? prec.value() : prec.value() + 1;
 
         auto rhs = parse_expr(rhs_min_prec);
         if (!rhs.has_value()) {
@@ -223,6 +235,8 @@ std::optional<NodeExpr*> Parser::parse_expr(const int min_prec) {
             op = BinOp::Div;
         } else if (op_token == TokenType::modulo) {
             op = BinOp::Mod;
+        } else if (op_token == TokenType::starstar) {
+            op = BinOp::Pow;
         } else if (op_token == TokenType::eqeq) {
             op = BinOp::Eq;
         } else if (op_token == TokenType::noteq) {

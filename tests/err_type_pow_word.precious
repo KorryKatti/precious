@@ -1,0 +1,6 @@
+fn the_precious() {
+    ;; ** is arithmetic, so it needs numbers on both sides
+    my msg: word = "precious";
+    my x = msg ** 2;
+    gives(x);
+}

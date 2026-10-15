@@ -98,6 +98,16 @@ void Generator::gen_gives(const NodeStmtExit* stmt) {
 void Generator::gen_my(const NodeStmtLet* stmt) {
     const std::string& name = stmt->ident.value.value();
 
+    // The ring is already declared, for every program, forever. Letting `my
+    // the_ring = ...` through would quietly make a local one that hides it, so
+    // it is refused here instead.
+    if (name == "the_ring") {
+        std::cerr << "[ERROR] The one ring needs no declaring! 'the_ring' is always there, "
+                     "precious! (line "
+                  << stmt->ident.line << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
     // Redeclaring in the same block is an error. Walk only the variables
     // declared since the innermost block started.
     const size_t block_start = m_declared_scopes.empty() ? 0 : m_declared_scopes.back();

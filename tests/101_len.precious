@@ -1,0 +1,20 @@
+;; len() asks a word or an array how long it is.
+
+fn the_precious() {
+    my msg: word = "hello";
+    my numbers: number[3] = [10, 20, 30];
+    my words: word[2] = ["a", "bb"];
+
+    say(len(msg));        // 5
+    say(len(numbers));    // 3
+    say(len(words));      // 2
+    say(len("gollum"));   // 6, a literal works too
+
+    my i = 0;
+    while (i < len(msg)) {
+        say(msg[i]);
+        i = i + 1;
+    }
+
+    gives(len(msg));
+}

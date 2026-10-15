@@ -1,0 +1,23 @@
+;; str(), num() and decimal() turn one kind of value into another.
+
+fn the_precious() {
+    my msg: word = "precious";
+
+    say(str(42));            // 42
+    say(str(-7));            // -7
+    say(str(decimal("2.5"))); // 2.5, a decimal keeps its own spelling
+    say(str(msg));           // precious, a word is already text
+
+    say(num("123") + 1);     // 124
+    say(num("not a number")); // 0, never a crash
+    say(num(decimal("3.75"))); // 3, a decimal is a whole number too
+
+    my pi: decimal = decimal("3.14");
+    say(pi);                 // 3.14
+    say(pi * 2);             // 6.28
+
+    my back: word = str(num("2024"));
+    say(back);               // 2024
+
+    gives(num("41") + 1);
+}

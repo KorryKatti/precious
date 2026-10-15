@@ -61,6 +61,7 @@ public:
     // ---- Functions and the whole program ----
     void gen_fn_def(const NodeStmtFn* fn, std::stringstream& out);
     void gen_ask(const NodeTermFnCall* fn_call);
+    void gen_builtin_call(const NodeTermFnCall* fn_call);
     std::string gen_prog();
 
 private:
@@ -97,6 +98,19 @@ private:
     // True if `name` should be treated as the `ask` built-in. A program that
     // defines its own `fn ask(...)` wins.
     bool is_builtin_ask(const std::string& name) const;
+
+    // True if `name` is one of the small conversions and queries: len, str, num,
+    // decimal. A program that defines its own `fn len(...)` wins, same as `ask`.
+    bool is_builtin(const std::string& name) const;
+
+    // Writes an expression out as a std::string value. A string literal is
+    // written as a C++ literal, which is a `const char[]` with no .size() and no
+    // .c_str(), so anything that needs a real string wraps it in std::string().
+    void gen_as_string(const NodeExpr* expr);
+
+    // A character written so that g++ reads it as that same character: '\n'
+    // stays a backslash and an n, while a newline becomes a backslash and an n.
+    static std::string escape_for_cpp(char letter);
 
     // "+" for +=, "*" for *=, and so on. Used to print compound assignments.
     std::string compound_op_symbol(TokenType op) const;

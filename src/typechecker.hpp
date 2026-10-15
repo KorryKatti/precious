@@ -67,6 +67,7 @@ private:
     std::string bin_type(const NodeBinExpr* bin_expr);
     std::string array_lit_type(const NodeTermArrayLit* array_lit);
     std::string call_type(const NodeTermFnCall* fn_call);
+    std::string builtin_call_type(const std::string& name, const NodeTermFnCall* fn_call);
 
     // if (...) / while (...) / for (...) want something that is true or false.
     void check_condition(const NodeExpr* expr);

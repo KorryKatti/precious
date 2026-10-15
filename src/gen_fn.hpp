@@ -137,12 +137,84 @@ void Generator::gen_with_ask_type(const std::string& ask_type, const NodeExpr* e
     m_ask_type = saved;
 }
 
+// The small built-ins: len(x), str(x), num(x), decimal(x).
+//
+// Like `ask`, they are not keywords. They are ordinary calls that the generator
+// answers for, and a program that defines its own `fn len(...)` gets the
+// ordinary function instead (see is_builtin()).
+void Generator::gen_builtin_call(const NodeTermFnCall* fn_call) {
+    const std::string name = fn_call->name.value.value();
+
+    if (fn_call->args.size() != 1) {
+        std::cerr << "[ERROR] '" << name << "' takes exactly one value, precious! (line "
+                  << fn_call->name.line << ")" << std::endl;
+        exit(EXIT_FAILURE);
+    }
+
+    const NodeExpr* arg = fn_call->args[0];
+    const std::string given = infer_type(arg);
+
+    if (name == "len") {
+        // An array is a std::vector and a word is a std::string, and both answer
+        // to .size() -- but a word that is a literal needs to be a string first.
+        if (given.rfind("std::vector", 0) == 0) {
+            m_output << "((";
+            gen_expr(arg);
+            m_output << ").size())";
+            return;
+        }
+        gen_as_string(arg);
+        m_output << ".size()";
+        return;
+    }
+
+    if (name == "str") {
+        // A word is already a word, so nothing to do.
+        if (given == "std::string") {
+            gen_expr(arg);
+            return;
+        }
+        // A stream prints a number the way it is written -- 2.5, not 2.500000.
+        m_output << "([&]() -> std::string { std::ostringstream _o; _o << (";
+        gen_expr(arg);
+        m_output << "); return _o.str(); }())";
+        return;
+    }
+
+    if (name == "num") {
+        if (given == "std::string") {
+            // strtol rather than stol: text that is not a number comes back as 0
+            // instead of throwing and taking the program down with it.
+            m_output << "std::strtol(";
+            gen_as_string(arg);
+            m_output << ".c_str(), nullptr, 10)";
+            return;
+        }
+        m_output << "((long)";
+        gen_expr(arg);
+        m_output << ")";
+        return;
+    }
+
+    // decimal(x)
+    if (given == "std::string") {
+        m_output << "std::strtod(";
+        gen_as_string(arg);
+        m_output << ".c_str(), nullptr)";
+        return;
+    }
+    m_output << "((double)";
+    gen_expr(arg);
+    m_output << ")";
+}
+
 // Builds the entire C++ file:
 //
 //     #include <bits/stdc++.h>
 //     <a forward declaration for every fn>   -- so fns can call each other
 //                                           -- regardless of the order they
 //                                              were written in
+//     long the_ring = 0;                     -- the one hidden piece of state
 //     int main() { ... }                     -- calls the entry function
 //     <every fn definition>
 std::string Generator::gen_prog() {
@@ -182,6 +254,10 @@ std::string Generator::gen_prog() {
     std::stringstream out;
     out << "#include <bits/stdc++.h>\n\n";
     out << forward_decls.str() << "\n";
+    // The ring: one number that outlives every block and every function. Precious
+    // has no globals of its own, so the compiler writes this one and the
+    // programmer simply writes `the_ring` from wherever they like.
+    out << "long the_ring = 0;\n\n";
     out << "int main() {\n";
     if (entry_return == "void") {
         out << "    " << entry_name << "();\n";

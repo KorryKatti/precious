@@ -1,0 +1,6 @@
+fn the_precious() {
+    ;; num reads text into a number, never an array
+    my arr: number[2] = [1, 2];
+    my n = num(arr);
+    gives(n);
+}

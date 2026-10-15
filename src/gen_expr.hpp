@@ -29,6 +29,12 @@ void Generator::gen_term(const NodeTerm* term) {
         return;
     }
 
+    if (std::holds_alternative<NodeTermCharLit*>(term->var)) {
+        const std::string& letter = std::get<NodeTermCharLit*>(term->var)->char_lit.value.value();
+        m_output << "'" << escape_for_cpp(letter[0]) << "'";
+        return;
+    }
+
     if (std::holds_alternative<NodeTermIdent*>(term->var)) {
         m_output << std::get<NodeTermIdent*>(term->var)->ident.value.value();
         return;
@@ -98,11 +104,15 @@ void Generator::gen_term(const NodeTerm* term) {
 
     // --- Calls, indexing, literals ---
 
-    // name(arg, arg)   -- also where the `ask` built-in is handled
+    // name(arg, arg)   -- also where the built-ins are handled
     if (std::holds_alternative<NodeTermFnCall*>(term->var)) {
         auto fn_call = std::get<NodeTermFnCall*>(term->var);
         if (is_builtin_ask(fn_call->name.value.value())) {
             gen_ask(fn_call);
+            return;
+        }
+        if (is_builtin(fn_call->name.value.value())) {
+            gen_builtin_call(fn_call);
             return;
         }
         m_output << fn_call->name.value.value() << "(";
@@ -150,6 +160,17 @@ void Generator::gen_term(const NodeTerm* term) {
 
 // lhs <op> rhs
 void Generator::gen_bin_expr(const NodeBinExpr* bin_expr) {
+    // ** is not a C++ operator: it becomes a call to std::pow, so it cannot be
+    // written in the usual "left, symbol, right" order below.
+    if (bin_expr->op == BinOp::Pow) {
+        m_output << "((long)std::pow((long)";
+        gen_expr(bin_expr->lhs);
+        m_output << ", (long)";
+        gen_expr(bin_expr->rhs);
+        m_output << "))";
+        return;
+    }
+
     gen_expr(bin_expr->lhs);
 
     if (bin_expr->op == BinOp::Add) {
@@ -184,6 +205,15 @@ void Generator::gen_bin_expr(const NodeBinExpr* bin_expr) {
     }
 
     gen_expr(bin_expr->rhs);
+}
+
+// A std::string value from an expression. A string literal is already text, but
+// C++ hands it over as a `const char[]`, which has no .size() and no .c_str(),
+// so it is wrapped.
+void Generator::gen_as_string(const NodeExpr* expr) {
+    m_output << "std::string(";
+    gen_expr(expr);
+    m_output << ")";
 }
 
 // An expression is either one term, or two terms joined by an operator.

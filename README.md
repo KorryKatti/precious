@@ -25,10 +25,10 @@ i might change the theme if it gets annoying ngl idk it was just funny at that t
 cmake -B build
 cmake --build build
 ./build/precious your_file.precious
-./your_file
+./out/your_file
 ```
 
-The compiler outputs a Linux ELF binary named after the input file (e.g., `your_file` from `your_file.precious`).
+The compiler writes everything into `out/`: a Linux ELF binary named after the input file (e.g., `out/your_file` from `your_file.precious`), plus the C++ it generated on the way (`out/your_file.cpp`).
 
 ### Why C++ instead of handwritten assembly?
 
@@ -134,8 +134,27 @@ against. Undeclared variables are still left to g++ to complain about.
 my result = 2 + 3 * 4 - 1;
 my negative = -5;
 my combined = -3 + 7;
+my rest = 17 % 5;        // 2
+my big = 2 ** 10;        // 1024
 gives(result);
 ```
+
+`**` is the power operator. It binds tighter than every other operator and groups
+right to left, so `2 ** 3 ** 2` is `2 ** (3 ** 2)`, which is 512.
+
+### Gollum Numerals
+
+A number may be written in words, from `zero` to `ninety`:
+
+```
+my x = three + four;    // 7
+my y = twenty + one;    // 21
+my z = ninety;          // 90
+```
+
+A number spelled with more than one word ("three hundred") is two words, so it
+is not a number. The cost of all this is that these words are now reserved:
+`three` cannot be a variable or a function name.
 
 ### If / Elif / Else
 
@@ -157,6 +176,42 @@ my x = 5;
 {
     my y = 10;
     gives(x + y);
+}
+```
+
+### Comments
+
+Four ways to mutter to yourself. None of them produce any code.
+
+```cpp
+;; a line mutter, precious
+
+;;;
+a block mutter,
+which can take as many lines as it likes
+;;;
+
+// an ordinary comment
+/* and an ordinary block comment */
+```
+
+### The Ring
+
+One variable outlives every block and every function. It starts at `0`, needs no
+`my`, and may not have one — `my the_ring = 5;` is refused, because a local would
+hide the real one.
+
+```
+fn bump(by) {
+    the_ring = the_ring + by;
+}
+
+fn the_precious() {
+    say(the_ring);    // 0
+    bump(5);
+    say(the_ring);    // 5
+    the_ring++;
+    gives(the_ring);  // exit code 6
 }
 ```
 
@@ -209,7 +264,7 @@ Iterate over arrays without manual indexing:
 
 ```
 my arr: number[3] = [10, 20, 30];
-for (each item in arr) {
+for (item in arr) {
     say(item);
 }
 ```
@@ -346,6 +401,50 @@ Access individual characters with `[]`:
 my msg = "hello";
 say(msg[0]);       // prints h
 say(msg[4]);       // prints o
+```
+
+### Character Literals
+
+One character in apostrophes. A backslash stands for the characters you cannot
+type directly: `\n` `\t` `\r` `\0` `\a` `\b` `\f` `\v`, plus `\\` and `\'`.
+
+```
+my c: letter = 'g';
+say(c);              // prints g
+say(c + 1);          // prints 104, the character code
+say(num('\''));      // prints 39
+```
+
+A letter is a number underneath, so it can be counted, compared and put in an
+array of numbers.
+
+### len()
+
+How long a word or an array is. A built-in, not a keyword: a program that
+defines its own `fn len(...)` gets the ordinary function instead.
+
+```
+my msg: word = "hello";
+say(len(msg));                    // prints 5
+
+my arr: number[3] = [10, 20, 30];
+say(len(arr));                    // prints 3
+```
+
+### Type Conversion
+
+`str(x)` writes any value out as text, `num(s)` reads text into a whole number,
+and `decimal(s)` reads text into a decimal.
+
+```
+say(str(42));             // prints 42
+say(str(decimal("2.5"))); // prints 2.5, a decimal keeps its own spelling
+
+say(num("123") + 1);      // prints 124
+say(num("nonsense"));     // prints 0, never a crash
+
+my pi: decimal = decimal("3.14");
+say(pi * 2);              // prints 6.28
 ```
 
 ### Functions

@@ -119,9 +119,9 @@
   <div class="install">
     <code>cmake -B build && cmake --build build</code><br>
     <code>./build/precious your_file.precious</code><br>
-    <code>./out</code>
+    <code>./out/your_file</code>
   </div>
-  <p>Outputs a Linux ELF binary named after the input file via g++. The compiler generates C++ source code and lets g++ handle register allocation, optimization, and code generation.</p>
+  <p>Everything lands in <code>out/</code>: a Linux ELF binary named after the input file, plus the C++ the compiler generated on the way. The compiler generates C++ source code and lets g++ handle register allocation, optimization, and code generation.</p>
 </section>
 
 <section id="entry">
@@ -148,6 +148,8 @@ fn the_precious() {
 
 long fib(long n);
 long the_precious();
+
+long the_ring = 0;
 
 int main() {
     return the_precious();
@@ -197,12 +199,23 @@ my y = 10;              // inferred as number
 my msg = "hello";       // inferred as word</code></pre>
 </section>
 
+<section>
+  <h2>Type Checking</h2>
+  <p>Between parsing and code generation the compiler re-reads the program and refuses to build it when a value is used in the wrong place. Every mistake is reported, not just the first, and no C++ is generated if there is one.</p>
+<pre><code>my x: number = "hello";   // ERROR: cannot put a word into a number
+my y: word = 5 + 3;         // ERROR: cannot put a number into a word</code></pre>
+  <p>Types are never widened, so <code>my x: number = 2.5;</code> is an error too — exactly as in C++.</p>
+</section>
+
 <section id="operators">
   <h2>Operators</h2>
   <h3>Arithmetic</h3>
 <pre><code>my result = 2 + 3 * 4 - 1;  // 13
+my rest = 17 % 5;           // 2
+my big = 2 ** 10;           // 1024
 my negative = -5;            // unary minus
 gives(result);</code></pre>
+  <p><code>**</code> is the power operator: tighter than everything else, and it groups right to left, so <code>2 ** 3 ** 2</code> is 512. A number may also be written in words — <code>three + four</code> is 7, <code>twenty + one</code> is 21 — which reserves those words as names.</p>
   <h3>Comparison</h3>
   <p><code>==</code> <code>!=</code> <code>&lt;</code> <code>&gt;</code> <code>&lt;=</code> <code>&gt;=</code> — return 1 or 0.</p>
   <h3>Boolean</h3>
@@ -210,6 +223,11 @@ gives(result);</code></pre>
 <pre><code>if (x > 0 and x < 10) { gives(1); }
 if (!0) { gives(2); }
 if (x == 1 or x == 5) { gives(3); }</code></pre>
+  <h3>Compound &amp; Increment</h3>
+  <p>Shorthand for modifying a variable in place. <code>+=</code> on a word concatenates.</p>
+<pre><code>i += 1;         // same as i = i + 1  (also -= *= /= %=)
+msg += "!";     // words concatenate
+i++;            // post-increment  (also ++i, i--, --i)</code></pre>
 </section>
 
 <section id="control">
@@ -234,11 +252,79 @@ gives(i);</code></pre>
 </section>
 
 <section>
+  <h2>For Loop</h2>
+  <p>C-style, with init, condition and update. <code>my</code> inside the init is scoped to the loop.</p>
+<pre><code>for (my i = 0; i &lt; 5; i++) {
+    say(i);
+}</code></pre>
+</section>
+
+<section>
+  <h2>For-Each Loop</h2>
+<pre><code>my arr: number[3] = [10, 20, 30];
+for (item in arr) {
+    say(item);
+}</code></pre>
+</section>
+
+<section>
+  <h2>Break / Continue</h2>
+<pre><code>my i = 0;
+while (i &lt; 10) {
+    i = i + 1;
+    if (i % 2 == 0) { continue; }   // skip the evens
+    if (i > 7) { break; }           // leave the loop
+    say(i);
+}</code></pre>
+</section>
+
+<section>
+  <h2>Switch / Case</h2>
+  <p>Case bodies are their own blocks, so there is no fallthrough and no <code>break</code> needed. <code>default</code> is optional.</p>
+<pre><code>my x = 2;
+switch (x) {
+    case 1: say(10);
+    case 2: say(20);      // this one matches
+    default: say(99);
+}</code></pre>
+</section>
+
+<section>
   <h2>Scopes</h2>
 <pre><code>my x = 5;
 {
     my y = 10;
     gives(x + y);
+}</code></pre>
+</section>
+
+<section>
+  <h2>Comments</h2>
+  <p>Gollum mutters, plus the ordinary kind. None of them produce any code.</p>
+<pre><code>;; a line mutter, precious
+
+;;;
+a block mutter,
+which can take as many lines as it likes
+;;;
+
+// an ordinary comment
+/* and an ordinary block comment */</code></pre>
+</section>
+
+<section>
+  <h2>The Ring</h2>
+  <p>One variable outlives every block and every function. It starts at <code>0</code>, needs no <code>my</code>, and may not have one — <code>my the_ring = 5;</code> is refused, because a local would hide the real one.</p>
+<pre><code>fn bump(by) {
+    the_ring = the_ring + by;
+}
+
+fn the_precious() {
+    say(the_ring);     // prints 0
+    bump(5);
+    say(the_ring);     // prints 5
+    the_ring++;
+    gives(the_ring);   // exit code 6
 }</code></pre>
 </section>
 
@@ -250,6 +336,15 @@ say("hello");     // prints hello
 
 my msg: word = "gollum";
 say(msg);         // prints gollum</code></pre>
+</section>
+
+<section>
+  <h2>Input from Stdin</h2>
+  <p><code>ask()</code> reads a value. The prompt is optional, and the destination type decides how it reads: <code>word</code> takes a whole line, <code>number</code> and <code>decimal</code> take a single value. It is an expression, so it works anywhere a value can.</p>
+<pre><code>my name = ask("What is your precious name? ");   // reads a line
+my x: number = ask("Enter a number: ");            // reads a value
+say(name);
+say(x);</code></pre>
 </section>
 
 <section id="functions">
@@ -330,6 +425,34 @@ say(msg[4]);        // prints o</code></pre>
 </section>
 
 <section>
+  <h2>Letters and len()</h2>
+  <p>One character in apostrophes. A backslash stands for what you cannot type: <code>\n \t \r \0 \a \b \f \v \\ \'</code>.</p>
+<pre><code>my c: letter = 'g';
+say(c);                  // prints g
+say(c + 1);              // prints 104, the character code
+say(num('\''));          // prints 39</code></pre>
+  <p><code>len()</code> asks a word or an array how long it is.</p>
+<pre><code>my msg: word = "hello";
+say(len(msg));           // prints 5
+
+my arr: number[3] = [10, 20, 30];
+say(len(arr));           // prints 3</code></pre>
+</section>
+
+<section>
+  <h2>Type Conversion</h2>
+  <p><code>str()</code> writes a value out as text, <code>num()</code> and <code>decimal()</code> read text back into a number.</p>
+<pre><code>say(str(42));              // prints 42
+say(str(decimal("2.5")));  // prints 2.5
+
+say(num("123") + 1);       // prints 124
+say(num("nonsense"));      // prints 0, never a crash
+
+my pi: decimal = decimal("3.14");
+say(pi * 2);               // prints 6.28</code></pre>
+</section>
+
+<section>
   <h2>Keywords</h2>
   <table>
     <tr><th>Keyword</th><th>What it does</th></tr>
@@ -345,8 +468,11 @@ say(msg[4]);        // prints o</code></pre>
     <tr><td><code>switch</code> / <code>case</code> / <code>default</code></td><td>Pattern matching</td></tr>
     <tr><td><code>push</code> / <code>pop</code></td><td>Array push/pop</td></tr>
     <tr><td><code>and</code> / <code>or</code> / <code>!</code></td><td>Boolean logic</td></tr>
+    <tr><td><code>;;</code> / <code>;;;</code></td><td>Mutter comments</td></tr>
+    <tr><td><code>the_ring</code></td><td>Hidden global, visible everywhere</td></tr>
     <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
     <tr><td><code>[</code> <code>]</code></td><td>Array literals and index access</td></tr>
+    <tr><td><code>len</code> <code>str</code> <code>num</code> <code>decimal</code></td><td>Built-ins: length and conversion</td></tr>
   </table>
 </section>
 

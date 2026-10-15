@@ -1,0 +1,6 @@
+fn the_precious() {
+    ;; len only makes sense on a word or an array
+    my n = 5;
+    say(len(n));
+    gives(0);
+}

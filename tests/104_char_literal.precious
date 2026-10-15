@@ -1,0 +1,29 @@
+;; 'a' is a letter. It can go anywhere a number can, because C++ promotes it.
+
+fn the_precious() {
+    my c: letter = 'g';
+    my up: letter = 'G';
+
+    say(c);              // g
+    say(up);             // G
+    say(c + 1);          // 104: the character code
+    say(c == 'g');       // 1
+    say(c != up);        // 1
+
+    ;; escapes, so a letter can be something you cannot type directly
+    my nl: letter = '\n';
+    my tab: letter = '\t';
+    say(nl == '\n');     // 1
+    say(tab == '\t');    // 1
+    say(num('\''));      // 39, the code of an apostrophe
+    say(num('\\'));      // 92, the code of a backslash
+
+    my name: word = "gollum";
+    my i = 0;
+    while (i < len(name)) {
+        say(name[i]);
+        i = i + 1;
+    }
+
+    gives(c);
+}

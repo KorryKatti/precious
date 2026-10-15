@@ -1,0 +1,4 @@
+fn the_precious() {
+    my the_ring = 5;
+    gives(the_ring);
+}

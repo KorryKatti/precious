@@ -432,6 +432,12 @@ void TypeChecker::check_stmt(const NodeStmt* stmt) {
 bool TypeChecker::check() {
     collect_fn_signatures();
 
+    // The ring is there before the program starts and after it ends, so it goes
+    // in a scope of its own underneath every other one: every block that is
+    // entered later is pushed on top of it, and can see it.
+    enter_scope();
+    declare_var("the_ring", "number");
+
     for (const NodeStmt* stmt : m_prog.stmts) {
         check_stmt(stmt);
     }

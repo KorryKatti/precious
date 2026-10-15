@@ -19,7 +19,7 @@ run_test() {
     fi
 
     set +e
-    ./$name > /dev/null 2>&1
+    ./out/$name > /dev/null 2>&1
     local actual=$?
     set -e
 
@@ -47,7 +47,7 @@ run_test_output() {
 
     set +e
     local actual_output
-    actual_output=$(./$name 2>&1)
+    actual_output=$(./out/$name 2>&1)
     local actual_exit=$?
     set -e
 
@@ -84,7 +84,7 @@ run_test_stdin() {
 
     set +e
     local actual_output
-    actual_output=$(printf '%s' "$stdin_data" | ./$name 2>&1)
+    actual_output=$(printf '%s' "$stdin_data" | ./out/$name 2>&1)
     local actual_exit=$?
     set -e
 
@@ -276,6 +276,41 @@ run_test_stdin "$TESTS_DIR/95_ask_string.precious" "$(printf 'precious\nhello\n'
 run_test_stdin "$TESTS_DIR/96_ask_number.precious" "$(printf '17\n25\n')" "$(printf 'first? second? 17\n25\n42')" 0
 run_test_stdin "$TESTS_DIR/97_ask_mixed.precious" "$(printf 'gollum\n6\n7\n99\n')" "$(printf 'gollum\n42\n99')" 0
 run_test_stdin "$TESTS_DIR/98_ask_expression.precious" "$(printf '21\nword\n')" "$(printf 'value? 42\ninline? word')" 21
+
+# Gollum mutter comments (;; and ;;;)
+run_test "$TESTS_DIR/99_mutter_comments.precious" 42
+
+# the_ring hidden global state
+run_test_output "$TESTS_DIR/100_the_ring.precious" "$(printf '0\n5\n6\n60')" 60
+
+# len()
+run_test_output "$TESTS_DIR/101_len.precious" "$(printf '5\n3\n2\n6\nh\ne\nl\nl\no')" 5
+
+# str() / num() / decimal()
+run_test_output "$TESTS_DIR/102_conversions.precious" "$(printf '42\n-7\n2.5\nprecious\n124\n0\n3\n3.14\n6.28\n2024')" 42
+
+# Power operator **
+run_test_output "$TESTS_DIR/103_power.precious" "$(printf '1024\n27\n512\n32\n54\n49\n1')" 8
+
+# Character literals
+run_test_output "$TESTS_DIR/104_char_literal.precious" "g
+G
+104
+1
+1
+1
+1
+39
+92
+g
+o
+l
+l
+u
+m" 103
+
+# Gollum numerals
+run_test_output "$TESTS_DIR/105_gollum_numerals.precious" "$(printf '7\n21\n90\n0\n17\n80\n6')" 30
 
 # Type checker: types used the way they should be must still compile
 run_test_stdin "$TESTS_DIR/type_ok_mixed.precious" "$(printf 'frodo\n9\n')" "$(printf '1\n3\np\nhello there\n1\nfrodo\nfrodo\nsam\n60\n12\n2\n1\nwho? how many? frodo\n9\n0\n1')" 0

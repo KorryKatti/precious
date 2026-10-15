@@ -1,0 +1,24 @@
+;; The ring is there before the program starts, and every block and every
+;; function can see it and change it.
+
+fn bump(by) {
+    the_ring = the_ring + by;
+    gives(the_ring);
+}
+
+fn the_precious() {
+    say(the_ring);
+
+    bump(5);
+    say(the_ring);
+
+    the_ring++;
+    say(the_ring);
+
+    if (1) {
+        the_ring = the_ring * 10;
+    }
+    say(the_ring);
+
+    gives(the_ring);
+}

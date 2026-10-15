@@ -1,0 +1,19 @@
+;; Gollum numerals: a number may be written in words.
+
+fn the_precious() {
+    my x = three + four;      // 7
+    my y = twenty + one;      // 21
+    my z = ninety;            // 90
+
+    say(x);
+    say(y);
+    say(z);
+    say(zero);                // 0
+    say(seventeen);           // 17
+    say(forty + forty);       // 80
+
+    my arr: number[3] = [one, two, three];
+    say(arr[0] + arr[1] + arr[2]);   // 6
+
+    gives(five * six);
+}
