@@ -25,6 +25,22 @@
 
 #include "ast.hpp"
 
+/**
+ * @brief What one importable package needs: a header and linker flags.
+ *
+ * An `import "networking"` names one of these. The table of them lives in
+ * gen_fn.hpp; the type has to be here, because the Generator class below says
+ * what a function that looks one up returns.
+ */
+struct NativePackage {
+    std::string name;    ///< how it is written in the import: "networking"
+    std::string include; ///< what goes into the generated C++
+    std::string define;  ///< a macro the runtime header checks before it offers
+                         ///< this package's helpers, so an unimported program
+                         ///< never needs the library
+    std::string flags;   ///< what goes onto the g++ command
+};
+
 class Generator {
 public:
     Generator(NodeProg prog) : m_prog(std::move(prog)) {}
@@ -63,6 +79,10 @@ public:
     void gen_ask(const NodeTermFnCall* fn_call);
     void gen_builtin_call(const NodeTermFnCall* fn_call);
     std::string gen_prog();
+
+    // The g++ flags for everything the program imported, ready to append to the
+    // compiler command. Empty when the program imports nothing.
+    std::string package_flags() const;
 
 private:
     // ---- Function signature helpers ----
@@ -107,6 +127,14 @@ private:
     // written as a C++ literal, which is a `const char[]` with no .size() and no
     // .c_str(), so anything that needs a real string wraps it in std::string().
     void gen_as_string(const NodeExpr* expr);
+
+    // The table entry for an imported package, or nullptr when nothing by that
+    // name exists.
+    const NativePackage* find_package(const std::string& name) const;
+
+    // True if `name` is http_get or http_code and the program imported the
+    // networking package.
+    bool is_builtin_networking(const std::string& name) const;
 
     // A character written so that g++ reads it as that same character: '\n'
     // stays a backslash and an n, while a newline becomes a backslash and an n.

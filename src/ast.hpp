@@ -323,4 +323,7 @@ struct NodeProg {
     std::vector<NodeStmt*> stmts;   ///< Top level: only NodeStmtFn allowed.
     NodeStmtFn* entry_fn = nullptr; ///< `fn the_precious()` — the program entry.
                                     ///< Also present in stmts. Null while parsing.
+    std::vector<Token> imports;     ///< `import "networking"` — one name per
+                                    ///< import. Not statements: an import says
+                                    ///< what the whole program needs.
 };

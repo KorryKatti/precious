@@ -1,0 +1,5 @@
+import "telepathy";
+
+fn the_precious() {
+    gives(0);
+}

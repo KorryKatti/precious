@@ -568,6 +568,54 @@ say(sum(nums, 3));    // prints 60
 
 The compiler passes arrays as `std::vector` references to functions.
 
+### Native Libraries
+
+`import` at the top level says what the whole program needs. It adds the
+headers the generated C++ has to include and the flags g++ has to be given, so
+a program that imports nothing still compiles on a machine with no libraries
+installed.
+
+```
+import "networking";
+```
+
+Importing is a promise, not a hint: the library is linked whether or not the
+program calls anything from it. An unknown package is refused by name, and
+calling a package's built-ins without importing it is a type error.
+
+| Package | Needs |
+|---------|-------|
+| `networking` | libcurl — `apt install libcurl4-openssl-dev` (Debian/Ubuntu), `brew install curl` (macOS) |
+
+**`http_get(url, seconds)`** gives back the response body, or `""` when the
+request failed. **`http_code(url, seconds)`** gives back the status — 200, 404,
+500 — or `0` when there was no response at all. The timeout is optional and
+defaults to 10 seconds.
+
+```
+import "networking";
+
+fn the_precious() {
+    my url: word = "http://127.0.0.1:8731/page.txt";
+
+    if (http_code(url) == 200) {
+        say(http_get(url));
+    } else {
+        say("it burns us");
+    }
+    gives(0);
+}
+```
+
+A failed request and an empty body look the same, which is why `http_code` is
+worth having. There is no status-code-free way to tell them apart in the
+language yet — there is no optional type.
+
+The helpers themselves live in `out/precious_runtime.h`, the Precious standard
+library, which the compiler writes next to the generated C++ on every build.
+Its networking section is behind `#ifdef PRECIOUS_NETWORKING`, so a program
+that never imports the package never needs libcurl at all.
+
 ### Input from Stdin
 
 `ask` is a built-in that reads a value from standard input. It is an expression, so

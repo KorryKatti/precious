@@ -68,6 +68,8 @@ private:
     std::string array_lit_type(const NodeTermArrayLit* array_lit);
     std::string call_type(const NodeTermFnCall* fn_call);
     std::string builtin_call_type(const std::string& name, const NodeTermFnCall* fn_call);
+    std::string networking_call_type(const std::string& name, const NodeTermFnCall* fn_call);
+    bool has_import(const std::string& name) const;
 
     // if (...) / while (...) / for (...) want something that is true or false.
     void check_condition(const NodeExpr* expr);

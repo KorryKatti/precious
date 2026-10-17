@@ -1,0 +1,25 @@
+;; The happy path, against a local server that run_tests.sh starts for this test
+;; on port 8731. Nothing here touches the public internet: the test serves a
+;; throwaway directory and asks the compiler's own HTTP built-ins to read it.
+
+import "networking";
+
+fn the_precious() {
+    my base: word = "http://127.0.0.1:8731/";
+
+    my code = http_code(base + "page.txt");
+    my body = http_get(base + "page.txt");
+
+    say(code);           // 200
+    say(len(body));      // 21
+    say(body);           // the line the server served
+
+    my missing_code = http_code(base + "nope.txt");
+    my missing_body = http_get(base + "nope.txt");
+
+    say(missing_code);           // 404
+    say(len(missing_body) > 0);  // 1: a real 404 still sends an error page, which
+                                 // is exactly why http_code is worth having
+
+    gives(0);
+}

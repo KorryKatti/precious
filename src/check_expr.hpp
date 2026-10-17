@@ -261,6 +261,21 @@ std::string TypeChecker::call_type(const NodeTermFnCall* fn_call) {
         }
     }
 
+    // http_get and http_code exist only if the program imported the package that
+    // offers them. Without the import there is no library to link, so say so here
+    // rather than letting g++ complain about an unknown function.
+    if (m_fns.find(name) == m_fns.end()) {
+        if (name == "http_get" || name == "http_code") {
+            if (!has_import("networking")) {
+                error(fn_call->name.line,
+                      "You must 'import \"networking\";' before you " + name +
+                          ", precious!");
+                return "";
+            }
+            return networking_call_type(name, fn_call);
+        }
+    }
+
     const auto found = m_fns.find(name);
     if (found == m_fns.end()) {
         return "";  // not a function we know about: g++ will have its own say
@@ -425,6 +440,46 @@ std::string TypeChecker::builtin_call_type(const std::string& name,
     }
 
     return name == "decimal" ? "decimal" : "number";
+}
+
+// ============================================================================
+// 6. The networking built-ins
+// ============================================================================
+
+// True if the program wrote `import "name"`.
+bool TypeChecker::has_import(const std::string& name) const {
+    for (const Token& imported : m_prog.imports) {
+        if (imported.value.value() == name) {
+            return true;
+        }
+    }
+    return false;
+}
+
+// http_get(url) and http_code(url) -- a url, plus an optional timeout in seconds.
+std::string TypeChecker::networking_call_type(const std::string& name,
+                                              const NodeTermFnCall* fn_call) {
+    if (fn_call->args.empty() || fn_call->args.size() > 2) {
+        error(fn_call->name.line,
+              "'" + name + "' takes a url, and optionally a timeout in seconds, precious!");
+        return "";
+    }
+
+    const std::string url = expr_type(fn_call->args[0]);
+    if (is_array(url)) {
+        error(expr_line(fn_call->args[0]),
+              "A url must be a word, not a " + url + ", precious!");
+    }
+
+    if (fn_call->args.size() == 2) {
+        const std::string seconds = expr_type(fn_call->args[1]);
+        if (!is_number(seconds)) {
+            error(expr_line(fn_call->args[1]),
+                  "A timeout must be a number of seconds, not a " + seconds + ", precious!");
+        }
+    }
+
+    return name == "http_get" ? "word" : "number";
 }
 
 // An expression is either one term, or two terms joined by an operator.

@@ -798,10 +798,36 @@ std::optional<NodeStmt*> Parser::parse_fn() {
 // one of them must be `fn the_precious() { ... }` -- the entry point, Precious's
 // equivalent of C's main. (Imported files, once those exist, will be fn
 // libraries with no entry.)
+// import "networking";
+//
+// An import is not a statement -- it says what the whole program needs -- so it
+// is not in the statement list. This returns the package name, and leaves the
+// cursor after the semicolon.
+std::optional<Token> Parser::parse_import() {
+    if (!peek().has_value() || peek().value().type != TokenType::import_) {
+        return {};
+    }
+    consume(); // import
+
+    if (!peek().has_value() || peek().value().type != TokenType::string_lit) {
+        error_expected("a package name in quotes, like import \"networking\";");
+    }
+    const Token name = consume();
+
+    try_consume_err(TokenType::semi);
+    return name;
+}
+
 std::optional<NodeProg> Parser::parse_prog() {
     NodeProg prog;
 
     while (peek().has_value()) {
+        // An import is allowed at top level, beside the function definitions.
+        if (auto imported = parse_import()) {
+            prog.imports.push_back(imported.value());
+            continue;
+        }
+
         auto stmt = parse_stmt();
         if (!stmt.has_value()) {
             error_expected("statement");

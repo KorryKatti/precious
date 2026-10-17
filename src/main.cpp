@@ -29,11 +29,16 @@
 
 #include "generation.hpp"
 #include "parser.hpp"
+#include "precious_runtime.hpp"
 #include "typechecker.hpp"
 
 /// Everything the compiler produces lands here, so the project directory stays
 /// free of generated files.
 static const char* const OUTPUT_DIR = "out";
+
+/// The name of the standard-library header, which sits beside the generated
+/// C++ in the same directory.
+static const char* const RUNTIME_HEADER = "precious_runtime.h";
 
 /// Reads a whole file into a string. Returns an empty string if it cannot be
 /// opened -- the tokenizer will then report that it found nothing, which is a
@@ -104,18 +109,31 @@ int main(const int argc, char* argv[]) {
     const std::string base_name = base_name_of(input_path);
     const std::string cpp_path = std::string(OUTPUT_DIR) + "/" + base_name + ".cpp";
     const std::string exe_path = std::string(OUTPUT_DIR) + "/" + base_name;
+    const std::string runtime_path = std::string(OUTPUT_DIR) + "/" + RUNTIME_HEADER;
     std::error_code ignored;
     std::filesystem::create_directories(OUTPUT_DIR, ignored);
+
+    // The standard library first: the generated C++ includes it, so g++ needs it
+    // to be on disk before the command below runs.
+    write_file(runtime_path, precious_runtime_source());
 
     Generator generator(program.value());
     write_file(cpp_path, generator.gen_prog());
 
     // --- Step 6: C++ source -> executable ---
     //
+    // Anything the program imported adds its flags here. A program that imports
+    // nothing gets no extra flags at all, so it still compiles on a machine with
+    // no libraries installed.
+    //
     // -w silences warnings from the generated code. The generated C++ is not
     // something the programmer wrote, so warning about it would be noise.
-    const std::string compile_command =
+    std::string compile_command =
         "g++ -std=c++17 -o " + exe_path + " " + cpp_path + " -w";
+    const std::string package_flags = generator.package_flags();
+    if (!package_flags.empty()) {
+        compile_command += " " + package_flags;
+    }
     if (run(compile_command) != 0) {
         // g++ has already printed its own error, so just say which file it was.
         std::cerr << "[ERROR] The gollum-speak broke: g++ could not build " << base_name

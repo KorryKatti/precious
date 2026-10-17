@@ -111,7 +111,8 @@ void Generator::gen_term(const NodeTerm* term) {
             gen_ask(fn_call);
             return;
         }
-        if (is_builtin(fn_call->name.value.value())) {
+        if (is_builtin(fn_call->name.value.value()) ||
+            is_builtin_networking(fn_call->name.value.value())) {
             gen_builtin_call(fn_call);
             return;
         }

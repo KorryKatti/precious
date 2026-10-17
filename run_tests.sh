@@ -4,7 +4,22 @@ COMPILER="./build/precious"
 TESTS_DIR="tests"
 PASS=0
 FAIL=0
+SKIP=0
 TOTAL=0
+
+# A local HTTP server started for a test has to go away again, whatever happens.
+# This is the belt to the braces in run_test_http_server()'s suspenders.
+SERVER_PID=""
+cleanup_server() {
+    if [ -n "$SERVER_PID" ]; then
+        # `|| true` on both: a killed server makes `kill` and `wait` report
+        # failure, and under `set -e` that would take the script down with it.
+        kill "$SERVER_PID" 2> /dev/null || true
+        wait "$SERVER_PID" 2> /dev/null || true
+        SERVER_PID=""
+    fi
+}
+trap cleanup_server EXIT
 
 run_test() {
     local file="$1"
@@ -120,6 +135,84 @@ run_expect_rejected() {
 
     echo "PASS [$name] - correctly rejected"
     PASS=$((PASS + 1))
+}
+
+# A test that needs an HTTP server of its own, so the networking happy path can
+# be checked without touching the internet.
+#
+# It serves a throwaway directory on a fixed port, waits for the port to actually
+# accept connections rather than guessing with a sleep, and takes the server down
+# again afterwards. A test that is skipped says so, and is counted as skipped --
+# never as passed.
+run_test_http_server() {
+    local file="$1"
+    local port="$2"
+    local expected_output="$3"
+    local name=$(basename "$file" .precious)
+    TOTAL=$((TOTAL + 1))
+
+    if ! command -v python3 > /dev/null 2>&1; then
+        echo "SKIP [$name] - no python3, so no local server to talk to"
+        SKIP=$((SKIP + 1))
+        return
+    fi
+
+    if ! $COMPILER "$file" > /dev/null 2>&1; then
+        echo "FAIL [$name] - compilation error"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    local fixture
+    fixture=$(mktemp -d)
+    printf 'the ring is precious\n' > "$fixture/page.txt"
+
+    python3 -m http.server "$port" --directory "$fixture" > /dev/null 2>&1 &
+    SERVER_PID=$!
+
+    # Wait for the port, up to ten seconds. Opening a connection is the only
+    # reliable signal that the server is up.
+    #
+    # The `:` matters: `exec 3<>/dev/tcp/...` would do the same job, but when the
+    # redirection fails a non-interactive shell *exits* -- which would take this
+    # whole script down on the first failed attempt. `:` fails quietly instead.
+    local waited=0
+    until (: < /dev/tcp/127.0.0.1/"$port") 2> /dev/null; do
+        sleep 0.2
+        waited=$((waited + 1))
+        if [ "$waited" -gt 50 ]; then
+            cleanup_server
+            rm -rf "$fixture"
+            echo "FAIL [$name] - the local server never came up on port $port"
+            FAIL=$((FAIL + 1))
+            return
+        fi
+    done
+
+    set +e
+    local actual_output
+    actual_output=$(timeout 30 ./out/"$name" 2>&1)
+    local actual_exit=$?
+    set -e
+
+    cleanup_server
+    rm -rf "$fixture"
+
+    if [ "$actual_exit" -ne 0 ]; then
+        echo "FAIL [$name] - exit code: expected 0, got $actual_exit"
+        FAIL=$((FAIL + 1))
+        return
+    fi
+
+    if [ "$actual_output" = "$expected_output" ]; then
+        echo "PASS [$name] - output matches, exit: 0"
+        PASS=$((PASS + 1))
+    else
+        echo "FAIL [$name] - output mismatch"
+        echo "  expected: $expected_output"
+        echo "  got:      $actual_output"
+        FAIL=$((FAIL + 1))
+    fi
 }
 
 echo "=== Precious Language Test Suite ==="
@@ -277,6 +370,9 @@ run_test_stdin "$TESTS_DIR/96_ask_number.precious" "$(printf '17\n25\n')" "$(pri
 run_test_stdin "$TESTS_DIR/97_ask_mixed.precious" "$(printf 'gollum\n6\n7\n99\n')" "$(printf 'gollum\n42\n99')" 0
 run_test_stdin "$TESTS_DIR/98_ask_expression.precious" "$(printf '21\nword\n')" "$(printf 'value? 42\ninline? word')" 21
 
+# Every reader in the standard library: word, number, decimal, letter
+run_test_stdin "$TESTS_DIR/107_ask_types.precious" "$(printf 'frodo\n7\n2.5\ng\nARGH\nquiet\n')" "$(printf 'name? number? decimal? letter? gollum says: frodo\n7\n2.5\ng\nARGH\nquiet')" 0
+
 # Gollum mutter comments (;; and ;;;)
 run_test "$TESTS_DIR/99_mutter_comments.precious" 42
 
@@ -312,6 +408,23 @@ m" 103
 # Gollum numerals
 run_test_output "$TESTS_DIR/105_gollum_numerals.precious" "$(printf '7\n21\n90\n0\n17\n80\n6')" 30
 
+# import "networking" -- header and linker flags for a native package
+run_test_output "$TESTS_DIR/106_import_networking.precious" "one ring to " 12
+
+# http_get / http_code against a port nothing is listening on: fails instantly
+# and offline, so the suite never depends on the internet
+run_test_output "$TESTS_DIR/108_http_refused.precious" "$(printf '0\n0\n1\n0')" 0
+
+# http_get / http_code against a local server this script starts and stops.
+# The port is fixed because a Precious program cannot read a command-line
+# argument yet, so the test file has to know where to look.
+run_test_http_server "$TESTS_DIR/109_http_get_local.precious" 8731 "200
+21
+the ring is precious
+
+404
+1"
+
 # Type checker: types used the way they should be must still compile
 run_test_stdin "$TESTS_DIR/type_ok_mixed.precious" "$(printf 'frodo\n9\n')" "$(printf '1\n3\np\nhello there\n1\nfrodo\nfrodo\nsam\n60\n12\n2\n1\nwho? how many? frodo\n9\n0\n1')" 0
 
@@ -340,7 +453,7 @@ run_test_output "$TESTS_DIR/dsa/09_three_sum.precious" "3" 3
 run_test_output "$TESTS_DIR/dsa/10_plus_one.precious" "$(printf '1\n2\n4')" 1
 
 echo ""
-echo "=== Results: $PASS passed, $FAIL failed, $TOTAL total ==="
+echo "=== Results: $PASS passed, $FAIL failed, $SKIP skipped, $TOTAL total ==="
 
 if [ "$FAIL" -eq 0 ]; then
     echo "All tests passed!"

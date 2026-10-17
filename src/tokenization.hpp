@@ -124,6 +124,7 @@ enum class TokenType {
     moduloeq,        ///< %=
     plusplus,        ///< ++
     minusminus,      ///< --
+    import_,         ///< `import`
 };
 
 /**
@@ -191,6 +192,7 @@ inline std::string to_string(const TokenType type) {
     if (type == TokenType::moduloeq) return "`%=`";
     if (type == TokenType::plusplus) return "`++`";
     if (type == TokenType::minusminus) return "`--`";
+    if (type == TokenType::import_) return "`import`";
     return "unknown token type";
 }
 
@@ -213,6 +215,7 @@ inline const std::unordered_map<std::string, TokenType>& keywords() {
         {"case", TokenType::case_},       {"default", TokenType::default_},
         {"for", TokenType::for_},         {"in", TokenType::in_},
         {"push", TokenType::push_},       {"pop", TokenType::pop_},
+        {"import", TokenType::import_},
     };
     return table;
 }
@@ -646,8 +649,11 @@ char Tokenizer::char_escape(const char escaped) {
 void Tokenizer::add_token(std::vector<Token>& tokens, const TokenType type, const int line,
                           const std::string& value) {
     tokens.push_back({.type = type, .line = line});
-    // Only identifiers and literals carry text.
-    if (!value.empty()) {
+    // Identifiers, keywords and literals carry text. A literal carries it even
+    // when the text is empty -- `""` is a real string of no characters -- while
+    // operators and punctuation carry nothing at all.
+    const bool is_literal = type == TokenType::string_lit || type == TokenType::char_lit;
+    if (!value.empty() || is_literal) {
         tokens.back().value = value;
     }
 }

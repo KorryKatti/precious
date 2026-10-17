@@ -61,5 +61,8 @@ Thumbs.db
 # run_tests.sh then leaves behind in the project root.
 /*.cpp
 
+# Launch videos made by the /brag skill
+/brag-output/
+
 # Untracked
 ROADMAP.md

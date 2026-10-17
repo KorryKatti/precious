@@ -1,0 +1,23 @@
+;; Every reader in the standard library, so all four are exercised: a word, a
+;; number, a decimal and a single character. A prompt may be any expression, not
+;; just a literal, and may be left out entirely.
+
+fn the_precious() {
+    my name = ask("name? ");
+    my n: number = ask("number? ");
+    my d: decimal = ask("decimal? ");
+    my c: letter = ask("letter? ");
+
+    my who: word = "gollum";
+    my shout: word = ask(who + " says: ");
+    my bare = ask();
+
+    say(name);
+    say(n);
+    say(d);
+    say(c);
+    say(shout);
+    say(bare);
+
+    gives(0);
+}

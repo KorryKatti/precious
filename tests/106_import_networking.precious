@@ -1,0 +1,15 @@
+;; Importing a package adds its header to the generated C++ and its library to
+;; the link line. Nothing below calls into networking -- the import is a promise
+;; that the machine has what the package needs, and this program does not use it.
+
+import "networking";
+
+fn the_precious() {
+    my words: word[3] = ["one", "ring", "to"];
+    my joined = "";
+    for (w in words) {
+        joined = joined + w + " ";
+    }
+    say(joined);
+    gives(len(joined));
+}

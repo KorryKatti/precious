@@ -1,0 +1,8 @@
+;; http_get and http_code belong to the networking package, so the package has to
+;; be imported first. Without the import there is no library to link, and the
+;; checker says so rather than letting g++ complain about an unknown function.
+
+fn the_precious() {
+    my body = http_get("http://127.0.0.1:1/");
+    gives(len(body));
+}

@@ -339,6 +339,26 @@ say(msg);         // prints gollum</code></pre>
 </section>
 
 <section>
+  <h2>Native Libraries</h2>
+  <p><code>import</code> at the top level says what the whole program needs: the headers the generated C++ includes, and the flags g++ is given. A program that imports nothing still compiles on a machine with no libraries installed.</p>
+<pre><code>import "networking";   // adds &lt;curl/curl.h&gt; and -lcurl</code></pre>
+  <p>Importing is a promise, not a hint — the library is linked whether or not the program calls anything from it. An unknown package is refused by name, and calling a package's built-ins without importing it is a type error.</p>
+<pre><code>import "networking";
+
+fn the_precious() {
+    my url: word = "http://127.0.0.1:8731/page.txt";
+
+    if (http_code(url) == 200) {
+        say(http_get(url));
+    } else {
+        say("it burns us");
+    }
+    gives(0);
+}</code></pre>
+  <p><code>http_get(url, seconds)</code> gives the response body, or <code>""</code> on failure. <code>http_code(url, seconds)</code> gives the status — 200, 404, 500 — or <code>0</code> when there was no response. The timeout is optional and defaults to 10 seconds. Needs libcurl: <code>apt install libcurl4-openssl-dev</code>.</p>
+</section>
+
+<section>
   <h2>Input from Stdin</h2>
   <p><code>ask()</code> reads a value. The prompt is optional, and the destination type decides how it reads: <code>word</code> takes a whole line, <code>number</code> and <code>decimal</code> take a single value. It is an expression, so it works anywhere a value can.</p>
 <pre><code>my name = ask("What is your precious name? ");   // reads a line
@@ -473,6 +493,8 @@ say(pi * 2);               // prints 6.28</code></pre>
     <tr><td><code>number</code> / <code>word</code> / <code>question</code> / <code>decimal</code> / <code>letter</code></td><td>Types</td></tr>
     <tr><td><code>[</code> <code>]</code></td><td>Array literals and index access</td></tr>
     <tr><td><code>len</code> <code>str</code> <code>num</code> <code>decimal</code></td><td>Built-ins: length and conversion</td></tr>
+    <tr><td><code>import</code></td><td>Ask for a native library at the top level</td></tr>
+    <tr><td><code>http_get</code> <code>http_code</code></td><td>Built-ins from the networking package</td></tr>
   </table>
 </section>
 

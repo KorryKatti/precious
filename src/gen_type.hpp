@@ -142,6 +142,9 @@ std::string Generator::infer_type(const NodeExpr* expr) const {
         if (is_builtin_ask(name)) {
             return "std::string"; // ask() defaults to reading a line
         }
+        if (is_builtin_networking(name)) {
+            return name == "http_get" ? "std::string" : "long";
+        }
         if (is_builtin(name)) {
             if (name == "str") {
                 return "std::string";
@@ -214,6 +217,25 @@ bool Generator::is_builtin(const std::string& name) const {
         return false;
     }
     return m_fn_return_types.find(name) == m_fn_return_types.end();
+}
+
+// True if `name` is one of the networking built-ins, and the program imported the
+// package that offers them. Without the import there is no library to link, so
+// the name means nothing -- the type checker says so before we get this far.
+bool Generator::is_builtin_networking(const std::string& name) const {
+    if (name != "http_get" && name != "http_code") {
+        return false;
+    }
+    // A program that defines its own function of that name gets the ordinary one.
+    if (m_fn_return_types.find(name) != m_fn_return_types.end()) {
+        return false;
+    }
+    for (const Token& imported : m_prog.imports) {
+        if (imported.value.value() == "networking") {
+            return true;
+        }
+    }
+    return false;
 }
 
 // A character written out so that g++ reads it back as the same character.

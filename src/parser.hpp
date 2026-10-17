@@ -67,6 +67,10 @@ public:
     // (`my x = 1` and `x = 1` both start with a name), so the more specific one
     // has to be tried first.
     std::optional<NodeStmt*> parse_stmt();
+
+    // import "networking";  -- returns the package name, or nothing if the
+    // next token is not `import`.
+    std::optional<Token> parse_import();
     std::optional<NodeStmt*> parse_gives();           // gives(expr);
     std::optional<NodeStmt*> parse_my();              // my x[: type] = expr;
     std::optional<NodeStmt*> parse_array_assign();    // arr[i] = expr;

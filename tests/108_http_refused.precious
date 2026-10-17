@@ -1,0 +1,22 @@
+;; A request that cannot succeed: nothing is listening on port 1, so this fails
+;; instantly and without touching the network. It is the deterministic half of
+;; the networking tests -- the happy path needs a real server and is checked by
+;; hand.
+
+import "networking";
+
+fn the_precious() {
+    my url: word = "http://127.0.0.1:1/";
+
+    my body = http_get(url, 2);
+    my code = http_code(url, 2);
+
+    say(len(body));    // 0: a failed request has no body
+    say(code);         // 0: there was no response at all
+    say(body == "");   // 1
+
+    ;; the default timeout is 10 seconds, but a refused port never waits for it
+    say(http_code("http://127.0.0.1:1/"));
+
+    gives(0);
+}
